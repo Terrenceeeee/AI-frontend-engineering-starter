@@ -14,7 +14,7 @@ console.log('当前工作目录:', process.cwd());
 const pnpmDir = path.join(process.cwd(), 'node_modules', '.pnpm');
 if (fs.existsSync(pnpmDir)) {
   console.log('✅ 检测到 pnpm 的 .pnpm 目录（严格隔离模式）');
-  
+
   // 读取 .pnpm 目录下的内容，展示 pnpm 的存储结构
   const items = fs.readdirSync(pnpmDir).slice(0, 6);
   console.log('   .pnpm 目录内容（前6个）:', items.join(', '));
@@ -24,7 +24,7 @@ if (fs.existsSync(pnpmDir)) {
 
 // 验证 node_modules 顶层只有声明过的依赖
 const nodeModulesDir = path.join(process.cwd(), 'node_modules');
-const topLevelDeps = fs.readdirSync(nodeModulesDir).filter(name => !name.startsWith('.'));
+const topLevelDeps = fs.readdirSync(nodeModulesDir).filter((name) => !name.startsWith('.'));
 console.log('   node_modules 顶层依赖:', topLevelDeps.join(', '));
 console.log('==================================================\n');
 
@@ -38,13 +38,13 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     plugins: [vue()],
-    
+
     // 开发服务器配置
     server: {
       port: mode === 'test' ? 3000 : 5173,
       open: true, // 自动打开浏览器
     },
-    
+
     // 构建配置
     build: {
       sourcemap: true, // 生成 sourcemap 便于调试
