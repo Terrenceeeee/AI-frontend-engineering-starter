@@ -12,6 +12,8 @@
 
 # 相同则说明确实证明是硬链接，不是复制 这极大地省下了巨大的内存空间
 
+---
+
 # 二.Vite 多环境配置与 mode 运行时验证
 
 ![未加载成功](<screenshots/Screenshot 2026-07-27 112654.png>)
@@ -41,6 +43,63 @@
 改完之后他会在终端中显示体现
 ![alt text](<screenshots/Screenshot 2026-07-27 151241.png>)
 
+<code>
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import fs from 'fs';
+import path from 'path';
+
+// ============================================================
+// 这部分代码在 Node 环境执行（终端里看输出）
+// ============================================================
+console.log('\n========== Vite 配置文件加载（pnpm 环境）==========');
+console.log('当前命令:', process.argv[2]); // 'serve' 或 'build'
+console.log('当前工作目录:', process.cwd());
+
+// 验证 pnpm 的 .pnpm 目录是否存在
+const pnpmDir = path.join(process.cwd(), 'node_modules', '.pnpm');
+if (fs.existsSync(pnpmDir)) {
+console.log('✅ 检测到 pnpm 的 .pnpm 目录（严格隔离模式）');
+
+// 读取 .pnpm 目录下的内容，展示 pnpm 的存储结构
+const items = fs.readdirSync(pnpmDir).slice(0, 6);
+console.log(' .pnpm 目录内容（前6个）:', items.join(', '));
+} else {
+console.log('❌ 未检测到 .pnpm 目录，当前可能不是 pnpm 项目');
+}
+
+// 验证 node_modules 顶层只有声明过的依赖
+const nodeModulesDir = path.join(process.cwd(), 'node_modules');
+const topLevelDeps = fs.readdirSync(nodeModulesDir).filter((name) => !name.startsWith('.'));
+console.log(' node_modules 顶层依赖:', topLevelDeps.join(', '));
+console.log('==================================================\n');
+
+// ============================================================
+// Vite 配置导出
+// ============================================================
+export default defineConfig(({ command, mode }) => {
+console.log('>> defineConfig 接收到的 command:', command);
+console.log('>> defineConfig 接收到的 mode:', mode);
+console.log('>> 将加载 .env.' + mode + ' 文件');
+
+return {
+plugins: [vue()],
+
+    // 开发服务器配置
+    server: {
+      port: mode === 'test' ? 3000 : 5173,
+      open: true, // 自动打开浏览器
+    },
+
+    // 构建配置
+    build: {
+      sourcemap: true, // 生成 sourcemap 便于调试
+    },
+
+};
+});
+</code>
+
 # 添加的代码部分作用
 
 拓展工具：fs+path 是为了做路径处理、本地文件读写，绝大多数用来配置路径别名、本地 https 证书
@@ -52,7 +111,7 @@ pnpm build → 这里打印build -->
 
 console.log('当前工作目录:', process.cwd()); //获取你执行命令的文件夹路径（项目根目录）
 
-# 二、核心：检测是否为 pnpm 项目（最关键）
+# 2、核心：检测是否为 pnpm 项目（最关键）
 
 const pnpmDir = path.join(process.cwd(), 'node_modules', '.pnpm');
 if (fs.existsSync(pnpmDir)) { //fs.existsSync：Node 文件 API，判断这个文件夹是否存在
@@ -111,7 +170,9 @@ build.sourcemap: true 生成 .map 文件，方便调试时看到源码位置（�
 
 ## 需要切回开发模式的话 直接pnpm dev即可 毫不影响 正是工程化“构建与交付分离”的核心设计思想
 
-# 三、ESLint + Prettier + Husky + lint-staged 全流程卡点实战 （直接在Demo2内操作）
+---
+
+# DEMO3、ESLint + Prettier + Husky + lint-staged 全流程卡点实战 （直接在Demo2内操作）
 
 在项目根目录执行：
 
@@ -298,3 +359,162 @@ git add src/App.vue
 git commit -m "test: 故意提交坏代码验证 ESLint 拦截"
 </code>
 而后就会看到Husky的日志 报错 阻止提交
+
+# ESLint 和 Prettier 谁先执行？
+
+lint-staged 配置里从左到右依次执行：["eslint --fix", "prettier --write"]。先 ESLint 修代码风格，再 Prettier 格式化，避免相互覆盖
+
+# --fix 修不了的问题怎么办？
+
+自动修复失败时，lint-staged 会终止提交，你需要手动修复后再 add 提交。这是故意的——宁可不让提交，也不能让坏代码进仓库。
+
+---
+
+# DEMO4 Vite 分包策略与路由懒加载效果验证
+
+# 第一步：在现有项目里创建 3 个页面 Home User Admin
+
+# 第二步：安装并配置路由
+
+<code>pnpm add vue-router</code>
+在router/index.ts里加上
+<code>
+// src/router/index.ts
+import { createRouter, createWebHistory } from 'vue-router';
+
+// ⭐ 关键：所有页面都用 () => import() 实现懒加载
+const routes = [
+{
+path: '/',
+name: 'Home',
+component: () => import('@/views/Home.vue'),
+},
+{
+path: '/user',
+name: 'User',
+component: () => import('@/views/User.vue'),
+},
+{
+path: '/admin',
+name: 'Admin',
+component: () => import('@/views/Admin.vue'),
+},
+];
+
+const router = createRouter({
+history: createWebHistory(),
+routes,
+});
+
+export default router;
+</code>
+
+# 在这段代码中 用component:()=>import('文件地址')实现路由的懒加载
+
+# 第三步：修改(添加几行代码) src/main.ts 注册路由
+
+<code>
+import router from './router';
+
+app.use(router);
+</code>
+
+# 第四步：修改 src/App.vue 显示路由出口
+
+<code>
+<template>
+  <div style="padding: 20px; font-family: 'Courier New', monospace;">
+    <h1 style="color: #42b883;">🌍 Vite 分包验证 Demo</h1>
+    <p>当前环境：<strong>{{ mode }}</strong></p>  //import.meta.env.MODE无法在非js/ts我机组生效 此处现在替换为了mode 同时在下方声明
+
+    <nav style="margin: 20px 0; padding: 12px; background: #f5f5f5; border-radius: 6px;">
+      <router-link to="/" style="margin-right: 20px;">🏠 首页</router-link>
+      <router-link to="/user" style="margin-right: 20px;">👤 用户中心</router-link>
+      <router-link to="/admin">🔐 管理后台</router-link>
+    </nav>
+
+    <hr />
+
+    <!-- 路由出口：当前页面的内容会渲染在这里 -->
+    <router-view />
+
+  </div>
+</template>
+
+<script setup>
+console.log('App.vue 加载了（主入口）');
+const mode =import.meta.env.MODE
+</script>
+</code>
+
+# 第五步：修改 vite.config.ts 配置分包
+
+这一步是关键——让 Vite 在打包时主动拆分代码： 修改vite.config.ts
+保留所有原有配置，只新增 resolve 和 build.rollupOptions
+<code>
+
+export default defineConfig({
+plugins: [vue()],
+
+resolve: {
+// 配置路径别名，让 @ 指向 src/
+alias: {
+'@': path.resolve(\_\_dirname, 'src'),
+},
+},
+
+build: {
+// 生成 sourcemap，便于调试时定位源码位置
+sourcemap: true,
+rollupOptions: {
+output: {
+
+# 分包拆分规范：手动分包：把 Vue 核心库单独打成一个 vendor 包 !!!!此处最新版Rollup要求使用函数形式而非对象形式
+
+manualChunks(id) {
+// 所有以 'vue' 开头的包（vue、vue-router 等）都打包到 vue-vendor 中
+if (id.includes('vue') || id.includes('vue-router')) {
+return 'vue-vendor'
+}
+},
+// 每个 chunk 的文件名格式，[name] 会自动取 manualChunks 里定义的 key
+
+# chunk里的[hash]值的作用：每次构建会生成唯一的hash值，重新构建会生成一个新的hash值，浏览器就会认为他变了，会重新强制加载一次缓存；如果hash值不变，则浏览器就只会一直读缓存里的，不会重复下载
+
+chunkFileNames: 'assets/[name]-[hash].js',
+},
+},
+},
+});
+</code>
+
+# 第六步：在终端一次性验证所有场景
+
+# 在开发环境下： pnpm dev ： 不做完整打包，按需加载文件，启动，热更新极快
+
+![alt text](<Screenshot 2026-07-29 101232.png>)
+可以看出：所有 .vue 组件是通过 ?import 请求分别加载的（因为 Vite 在开发模式下不做打包合并）
+![alt text](<screenshots/Screenshot 2026-07-29 101246.png>)
+再次观察：打开其他界面时（切换路由），浏览器network面板可以看见该界面的动态加载
+
+# 在生产环境下： pnpm build
+
+1.读取环境变量2.解析入口3.构建依赖图谱4.插件转换（把输入的.vue,.ts,.less转换为.js,.css 5.摇树优化6.代码拆分7.压缩混淆8.输出dist/目录+清单（manifest）
+![alt text](<screenshots/Screenshot 2026-07-29 102514.png>)
+
+# 在预览环境下： pnpm preview（最重要的一步）
+
+![alt text](<screenshots/Screenshot 2026-07-29 102713.png>)
+明显的发现Network面板少了不少加载的东西
+没有出现 User-xxx.js 或 Admin-xxx.js。说明它们没有被加载，实现了“按需加载”
+然后点击导航栏的“用户中心”，观察 Network 面板，或者也可以观察console面板
+发现这时出现了我们点击对应的路由的名字
+![alt text](<screenshots/Screenshot 2026-07-29 103241.png>)
+
+# 这就是路由懒加载的效果——用户不访问的页面，代码不会提前加载
+
+# 如果失去分包规范，即失去manualChunks的功能 会出现：文件重复下载
+
+# manualChunks的功能：分包规范，Rollup 原生提供的手动分包配置项，Vue 核心库只加载一次，后续页面直接读浏览器缓存，减少重复下载，这个文件的 hash 只在这些库的版本号变化时才会改变——你改业务代码不会让 vendor 的 hash 变化，用户不需要重新下载 85KB 的 Vue 核心库，只下载被改动的业务 chunk
+
+# 该步骤核心：分包的核心目标就是把首页必须加载的 JS 压缩到最小
