@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import {resolve} from 'path';
 import vue from '@vitejs/plugin-vue';
 import fs from 'fs';
 import path from 'path';
@@ -46,7 +47,9 @@ export default defineConfig(({ command, mode }) => {
       port: 5173,
       open: true,
     },
-    
+    alias: {
+      '@': resolve(__dirname, 'src')
+    },
     build: {
       // ✅ 保留原有的 sourcemap
       sourcemap: true,
