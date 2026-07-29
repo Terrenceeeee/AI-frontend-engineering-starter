@@ -518,3 +518,98 @@ chunkFileNames: 'assets/[name]-[hash].js',
 # manualChunks的功能：分包规范，Rollup 原生提供的手动分包配置项，Vue 核心库只加载一次，后续页面直接读浏览器缓存，减少重复下载，这个文件的 hash 只在这些库的版本号变化时才会改变——你改业务代码不会让 vendor 的 hash 变化，用户不需要重新下载 85KB 的 Vue 核心库，只下载被改动的业务 chunk
 
 # 该步骤核心：分包的核心目标就是把首页必须加载的 JS 压缩到最小
+
+# DEMO5:基于 fs + inquirer 的自动化代码生成器
+
+# 第一步：安装依赖
+
+用 Node.js 脚本，通过命令行交互询问用户，然后自动创建 view、api、store 三个目录下的文件骨架
+inquirer 从 v9 开始是纯 ESM 包，如果项目是 ESM（"type": "module"），直接 import 即可。但我们这里用 CommonJS 方式写脚本（方便在终端直接运行），所以使用 inquirer@8.2.6（最后一个支持 CommonJS 的版本）
+最新版本：
+pnpm add -D inquirer @types/inquirer
+支持cjs写法的8.2.6版本：
+pnpm add -D inquirer@8.2.6
+
+# 第二步：创建脚本文件
+
+在项目根目录下创建scripts文件夹，然后创建 generate.ts
+解决了：日常开发每个新业务模块都要手动新建 3 个文件、重复写基础模板，效率低且格式不统一：
+不用反复复制粘贴 Vue、API、Pinia 样板代码
+强制统一全项目代码格式、命名规范（大驼峰接口 / 小驼峰文件）
+自带 TS 类型模板，不用从零手写 interface
+内置文件覆盖保护，防止误删已有代码，支持--force强制覆盖
+
+运行使用方式：
+常规唤起交互
+ts-node generate.ts
+
+# 第三步：在 package.json 中添加脚本命令
+
+"gen": "node scripts/generate.js"
+
+<!-- 优势 1：开箱即用，环境要求更低
+别的同事拉取代码后，不用安装 ts-node、typescript 等开发依赖，只要有 Node 就能跑。
+优势 2：命令极简
+不用记长路径、不用管 ts，统一用 npm run gen 新建业务模块，团队所有人操作一致。
+优势 3：工程化规范
+脚手架脚本统一收在 scripts 目录，项目结构干净，所有自动化脚本集中管理 -->
+
+# 第四步：创建必要的目录结构
+
+在 src/ 下创建 api/、stores/modules/、views/ 目录（如果还没有的话）： //mkdir = make directory -p 父目录不存在时自动逐级创建；文件夹已经存在也不会报错，静默跳过
+
+mkdir -p src/api
+mkdir -p src/stores/modules
+mkdir -p src/views
+
+同时需要创建 src/utils/request.ts（API 模板里引用了它）：
+<code>
+// src/utils/request.ts
+import axios from 'axios';
+
+const request = axios.create({
+baseURL: import.meta.env.VITE_API_BASE_URL,
+timeout: 10000,
+});
+
+// 响应拦截器：直接返回 data
+request.interceptors.response.use(
+(response) => response.data,
+(error) => Promise.reject(error)
+);
+
+export default request;
+</code>
+
+# 第六步：执行脚本生成模块
+
+pnpm gen
+![alt text](<screenshots/Screenshot 2026-07-29 145016.png>)
+
+# 第七步：验证生成的文件
+
+在src/views内部新生成了一个新的文件夹product 里面有新生成的index.vue
+以及在api/中生成的product.ts
+
+# 第八步：将生成的路由注册到 Vue Router
+
+打开 src/router/index.ts，在 routes 数组中新增一个路由：
+<code>
+// ========== 新增：自动生成的 product 路由 ==========
+{
+path: '/product',
+name: 'Product',
+component: () => import('@/views/product/index.vue'),
+},
+</code>
+
+# 第九步：在首页添加导航链接
+
+打开views/Home.vue 在导航区添加 /product 的链接
+<router-link to="/product">去产品页</router-link>
+
+# 第十步：验证完整流程
+
+pnpm dev
+
+# 真正作用：大量的模块只需要在终端输入pnpm gen输入多次 输入多次模块名，就可以省去大量时间。并且这个脚本“目录分层规范”变成了一条自动化生产线。 新人入职第一天跑一遍 pnpm gen product，生成的文件结构跟团队老员工的一模一样，不需要有人口头告诉他“你要在 api 下建文件、还要按这个格式写”————让机器帮你执行规范，而不是靠人脑记
