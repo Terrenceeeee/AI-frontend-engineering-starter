@@ -1,4 +1,4 @@
-# 一. pnpm 和npm的不同点
+# DEMO一. pnpm 和npm的不同点
 
 # 图为在Git bash中 分别创建两个不同的依赖（npm pnpm）创建的相同的vue文件
 
@@ -14,7 +14,7 @@
 
 ---
 
-# 二.Vite 多环境配置与 mode 运行时验证
+# DEMO二.Vite 多环境配置与 mode 运行时验证
 
 ![未加载成功](<screenshots/Screenshot 2026-07-27 112654.png>)
 ![未加载成功](<screenshots/Screenshot 2026-07-27 113110.png>)
@@ -519,6 +519,8 @@ chunkFileNames: 'assets/[name]-[hash].js',
 
 # 该步骤核心：分包的核心目标就是把首页必须加载的 JS 压缩到最小
 
+---
+
 # DEMO5:基于 fs + inquirer 的自动化代码生成器
 
 # 第一步：安装依赖
@@ -613,3 +615,58 @@ component: () => import('@/views/product/index.vue'),
 pnpm dev
 
 # 真正作用：大量的模块只需要在终端输入pnpm gen输入多次 输入多次模块名，就可以省去大量时间。并且这个脚本“目录分层规范”变成了一条自动化生产线。 新人入职第一天跑一遍 pnpm gen product，生成的文件结构跟团队老员工的一模一样，不需要有人口头告诉他“你要在 api 下建文件、还要按这个格式写”————让机器帮你执行规范，而不是靠人脑记
+
+---
+
+# DEMO 6 : GitHub Actions CI 流水线
+
+git push 代码到 GitHub 时，GitHub 自动拉取代码 → 安装依赖 → 代码校验（ESLint） → 执行测试（Vitest） → 打包构建。任何一步失败，流水线标红，阻止代码合并。
+
+# 第一步：在项目中安装 Vitest（测试框架）
+
+pnpm add -D vitest @vue/test-utils jsdom @vitest/coverage-v8
+:
+vitest：测试运行器（Vite 原生集成，启动极快）
+@vue/test-utils：Vue 组件测试工具库，用于挂载和交互 Vue 组件
+jsdom：在 Node 环境里模拟浏览器 DOM API（如 document、window），让组件测试能在 Node 中运行
+@vitest/coverage-v8：测试覆盖率统计工具（V8 引擎原生支持）
+
+# 第二步：写一个简单的单元测试（验证用）
+
+<code>
+// src/utils/__tests__/math.test.ts
+import { describe, it, expect } from 'vitest';
+
+// 一个简单的加法函数（直接写在测试里，不用单独建文件）
+function add(a: number, b: number): number {
+return a + b;
+}
+
+describe('add 函数', () => {
+it('1 + 2 应该等于 3', () => {
+expect(add(1, 2)).toBe(3);
+});
+
+it('-1 + 1 应该等于 0', () => {
+expect(add(-1, 1)).toBe(0);
+});
+});
+</code>
+
+# 第三步：在 package.json 中添加测试命令(加两行就行)
+
+"test": "vitest run",
+"test:coverage": "vitest run --coverage"
+
+# 第四步：本地验证测试能跑通
+
+pnpm test
+
+预期结果：
+![alt text](<screenshots/Screenshot 2026-07-30 101217.png>)
+如果显示 Test Files 1 passed，说明测试跑通了。如果没有输出或报错，检查是否安装了 vitest，以及 **tests** 目录是否在 src/utils/ 下
+
+# 第五步：在 GitHub 上创建仓库并推送代码
+
+这一步先确认你已经把代码推到 GitHub 了：
+git remote -v
