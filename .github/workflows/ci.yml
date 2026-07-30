@@ -1,0 +1,57 @@
+name: CI 流水线
+
+# 仅修改Demo2目录或当前CI配置才触发流水线，限定master分支
+on:
+  push:
+    branches: [master]
+    paths:
+      - "Demo2/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "Demo2/**"
+      - ".github/workflows/ci.yml"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    # 所有运行命令默认在 Demo2 文件夹执行，不用每次手动cd
+    defaults:
+      run:
+        working-directory: ./Demo2
+
+    steps:
+      # 拉取完整仓库代码
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      # 安装pnpm 8版本
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      # 配置Node18，精准缓存Demo2内的pnpm依赖
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "pnpm"
+          cache-dependency-path: Demo2/pnpm-lock.yaml
+
+      # Demo2内安装依赖
+      - name: 安装依赖
+        run: pnpm install
+
+      # ESLint+Prettier校验代码
+      - name: 代码规范检查
+        run: pnpm lint
+
+      # 单元测试
+      - name: 单元测试
+        run: pnpm test
+
+      # 项目打包构建
+      - name: 构建项目
+        run: pnpm build
