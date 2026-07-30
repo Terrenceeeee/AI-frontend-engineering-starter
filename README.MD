@@ -672,7 +672,7 @@ pnpm test
 git remote -v
 然后把代码推送上去，确保 GitHub 仓库里有你的代码。
 
-# 第六步：创建 GitHub Actions 流水线配置文件
+# 第六步：创建 GitHub Actions 流水线配置文件 ！！一定要在总文件的根目录配置 否则检测不出来！！
 
 创建 .github/workflows/ci.yml：
 <code>
@@ -752,3 +752,116 @@ git push
 你会看到 CI 流水线 正在运行（黄色圆点表示运行中）
 
 点击进去，可以看到每一步的执行日志
+![alt text](<screenshots/Screenshot 2026-07-30 114707.png>)
+![alt text](<screenshots/Screenshot 2026-07-30 114651.png>)报错详细说明
+流水线标红 ❌，阻止了这次提交的合并（如果你配置了分支保护规则，这个 PR 会被自动标记为不可合并）
+
+# Demo 7：Playwright 端到端（E2E）测试（对应导图中的 E2E 部分）
+
+验证： 用 Playwright 自动打开浏览器，模拟用户访问首页 → 点击“用户页” → 检查页面是否正常。
+
+对应你导图中的：
+Vitest, Playwright E2E 测试
+自动执行冒烟测试，验证页面可以正常访问，接口 500 无报错
+
+# 第一步：安装 Playwright
+
+pnpm add -D @playwright/test
+npx playwright install：npx playwright install 会下载 Chromium、Firefox 和 WebKit 三个浏览器内核，用于在不同浏览器中运行测试，下载时间可能较长
+可以只安装 Chromium 节省时间：npx playwright install Chromium
+也可以安装edge：Playwright 里 Edge 命名为 msedge ：npx playwright install msedge
+
+# 第二步:创建 E2E 测试文件
+
+创建 e2e/homepage.spec.ts：
+<code>
+// e2e/homepage.spec.ts
+import { test, expect } from '@playwright/test';
+
+test.describe('首页冒烟测试', () => {
+test('首页应该正常加载', async ({ page }) => {
+// 访问首页
+await page.goto('http://localhost:5173/');
+
+    // 检查页面标题是否包含 "Vite 分包验证 Demo"
+    await expect(page.locator('h1')).toContainText('Vite 分包验证');
+
+});
+
+test('点击用户页链接应该跳转到 /user', async ({ page }) => {
+await page.goto('http://localhost:5173/');
+
+    // 点击 "用户中心" 链接
+    await page.click('text=用户中心');
+
+    // 验证 URL 变成了 /user
+    await expect(page).toHaveURL(/.*\/user/);
+
+    // 验证页面出现了 "用户中心" 标题
+    await expect(page.locator('h1')).toContainText('用户中心');
+
+});
+});
+</code>
+
+# 第三步：在 package.json 中添加 E2E 测试命令
+
+{
+"scripts": {
+"test:e2e": "playwright test",
+"test:e2e:ui": "playwright test --ui"
+}
+}
+
+# 第四步：本地验证 E2E 测试(注意： Playwright 需要开发服务器正在运行。开两个终端：)
+
+终端 1（启动开发服务器）：
+
+pnpm dev
+
+终端 2（运行 E2E 测试）：
+
+pnpm test:e2e
+预期：
+Running 2 tests using 1 worker
+
+✓ e2e/homepage.spec.ts:4:7 › 首页冒烟测试 › 首页应该正常加载 (2.1s)
+✓ e2e/homepage.spec.ts:10:7 › 首页冒烟测试 › 点击用户页链接应该跳转到 /user (1.5s)
+
+2 passed (4.2s)
+
+# 第五步：把 E2E 测试加入 CI 流水线
+
+修改 .github/workflows/ci.yml，在 build 步骤之后添加 E2E 测试步骤：
+<code>
+
+<!-- # ... 前面的步骤保持不变 ... -->
+
+<!-- # 7. 打包构建 -->
+
+- name: 构建项目
+  run: pnpm build
+
+<!-- # 8. 启动预览服务器并运行 E2E 测试（新增） -->
+
+- name: 安装 Playwright 浏览器
+  run: npx playwright install --with-deps msedge
+
+- name: 运行 E2E 测试
+  run: |
+  pnpm preview &
+  npx wait-on http://localhost:4173
+  pnpm test:e2e
+  env:
+  CI: true
+  </code>
+
+# 第六步：提交并推送，观察流水线
+
+git add .
+git commit -m "feat: 添加 Playwright E2E 测试并集成到 CI"
+git push
+
+打开 GitHub Actions，会看到流水线中新增了 “安装 Playwright 浏览器” 和 “运行 E2E 测试” 两个步骤，全部通过后流水线变绿。
+
+Demo 8：性能监控 SDK（对应导图中的“运行时监控层”）

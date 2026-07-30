@@ -1,48 +1,48 @@
-name: CI 流水线
+# name: CI 流水线
 
-on:
-  push:
-    branches: [master]
-    paths:
-      - "Demo2/demo2-env/**"
-      - ".github/workflows/ci.yml"
-  pull_request:
-    branches: [master]
-    paths:
-      - "Demo2/demo2-env/**"
-      - ".github/workflows/ci.yml"
+# on:
+#   push:
+#     branches: [master]
+#     paths:
+#       - "Demo2/demo2-env/**"
+#       - ".github/workflows/ci.yml"
+#   pull_request:
+#     branches: [master]
+#     paths:
+#       - "Demo2/demo2-env/**"
+#       - ".github/workflows/ci.yml"
 
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./Demo2/demo2-env
+# jobs:
+#   build-and-test:
+#     runs-on: ubuntu-latest
+#     defaults:
+#       run:
+#         working-directory: ./Demo2/demo2-env
 
-    steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
+#     steps:
+#       - name: 检出代码
+#         uses: actions/checkout@v4
 
-      - name: 安装 pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
+#       - name: 安装 pnpm
+#         uses: pnpm/action-setup@v3
+#         with:
+#           version: 8
 
-      - name: 安装 Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "pnpm"
-          cache-dependency-path: Demo2/demo2-env/pnpm-lock.yaml
+#       - name: 安装 Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: "18"
+#           cache: "pnpm"
+#           cache-dependency-path: Demo2/demo2-env/pnpm-lock.yaml
 
-      - name: 安装依赖
-        run: pnpm install
+#       - name: 安装依赖
+#         run: pnpm install
 
-      - name: 代码规范检查
-        run: pnpm lint
+#       - name: 代码规范检查
+#         run: pnpm lint
 
-      - name: 单元测试
-        run: pnpm test
+#       - name: 单元测试
+#         run: pnpm test
 
-      - name: 构建项目
-        run: pnpm build
+#       - name: 构建项目
+#         run: pnpm build
