@@ -1,0 +1,8 @@
+dist/
+node_modules/
+*.log
+*.lock
+*.yaml
+*.yml
+*.html
+*.svg

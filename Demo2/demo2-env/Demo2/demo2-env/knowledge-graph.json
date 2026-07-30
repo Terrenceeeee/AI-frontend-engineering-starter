@@ -1,0 +1,59 @@
+{
+  "nodes": [
+    {
+      "id": "component:App",
+      "type": "component",
+      "name": "App",
+      "filePath": "src\\App.vue"
+    },
+    {
+      "id": "component:User",
+      "type": "component",
+      "name": "User",
+      "filePath": "src\\views\\User.vue"
+    },
+    {
+      "id": "component:Home",
+      "type": "component",
+      "name": "Home",
+      "filePath": "src\\views\\Home.vue"
+    },
+    {
+      "id": "component:Admin",
+      "type": "component",
+      "name": "Admin",
+      "filePath": "src\\views\\Admin.vue"
+    },
+    {
+      "id": "component:index",
+      "type": "component",
+      "name": "index",
+      "filePath": "src\\views\\product\\index.vue"
+    },
+    {
+      "id": "component:HelloWorld",
+      "type": "component",
+      "name": "HelloWorld",
+      "filePath": "src\\components\\HelloWorld.vue"
+    },
+    {
+      "id": "api:product",
+      "type": "api",
+      "name": "product",
+      "filePath": "src\\api\\product.ts",
+      "props": {
+        "url": "/api/product"
+      }
+    },
+    {
+      "id": "api:update",
+      "type": "api",
+      "name": "update",
+      "filePath": "src\\api\\product.ts",
+      "props": {
+        "url": "/api/product/update"
+      }
+    }
+  ],
+  "edges": []
+}

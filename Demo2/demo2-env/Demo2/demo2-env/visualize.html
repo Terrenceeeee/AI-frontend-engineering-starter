@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Vue3 项目知识图谱</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js">
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+        }
+        #cy {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 100;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        #info span {
+            color: #4ECDC4;
+            font-weight: bold;
+        }
+        #legend {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 13px;
+            z-index: 100;
+            display: flex;
+            gap: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        #stats {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            z-index: 100;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: right;
+            line-height: 1.8;
+        }
+        #stats .num {
+            color: #FFE66D;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">🔍 点击节点高亮上下游 · 滚轮缩放 · 拖拽移动</div>
+    <div id="stats">加载中...</div>
+    <div id="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#FF6B6B;"></span> 页面</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#4ECDC4;"></span> Store</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#FFE66D;"></span> API</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#A29BFE;"></span> Composable</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#55EFC4;"></span> 组件</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#FD79A8;"></span> 路由</span>
+    </div>
+    <div id="cy"></div>
+
+    <script>
+        // ========== 加载 JSON ==========
+        fetch('knowledge-graph.json')
+            .then(res => {
+                if (!res.ok) throw new Error('找不到 knowledge-graph.json，请先运行扫描脚本');
+                return res.json();
+            })
+            .then(data => {
+                // 更新统计
+                const stats = {
+                    nodes: data.nodes.length,
+                    edges: data.edges.length,
+                    pages: data.nodes.filter(n => n.type === 'page').length,
+                    stores: data.nodes.filter(n => n.type === 'store').length,
+                    apis: data.nodes.filter(n => n.type === 'api').length,
+                    composables: data.nodes.filter(n => n.type === 'composable').length,
+                    components: data.nodes.filter(n => n.type === 'component').length,
+                };
+                document.getElementById('stats').innerHTML = `
+                    🎯 节点 <span class="num">${stats.nodes}</span> · 关系 <span class="num">${stats.edges}</span><br>
+                    📄 ${stats.pages} 页 · 🗄️ ${stats.stores} Store · 🔌 ${stats.apis} API<br>
+                    🧩 ${stats.composables} Composable · 🧱 ${stats.components} 组件
+                `;
+
+                // ========== 转换数据 ==========
+                const elements = [];
+
+                // 节点
+                const colorMap = {
+                    page: '#FF6B6B',
+                    store: '#4ECDC4',
+                    api: '#FFE66D',
+                    composable: '#A29BFE',
+                    component: '#55EFC4',
+                    route: '#FD79A8',
+                };
+                const sizeMap = {
+                    page: 55,
+                    store: 45,
+                    api: 40,
+                    composable: 40,
+                    component: 35,
+                    route: 30,
+                };
+
+                data.nodes.forEach(n => {
+                    const type = n.type || 'component';
+                    elements.push({
+                        data: {
+                            id: n.id,
+                            label: n.name,
+                            type: type,
+                            file: n.filePath || '',
+                        },
+                        style: {
+                            'background-color': colorMap[type] || '#888',
+                            'width': sizeMap[type] || 35,
+                            'height': sizeMap[type] || 35,
+                        }
+                    });
+                });
+
+                // 关系
+                const edgeColorMap = {
+                    'subscribes': '#4ECDC4',
+                    'calls': '#FFE66D',
+                    'navigates-to': '#FD79A8',
+                    'renders': '#55EFC4',
+                };
+                data.edges.forEach(e => {
+                    elements.push({
+                        data: {
+                            source: e.from,
+                            target: e.to,
+                            label: e.type,
+                            color: edgeColorMap[e.type] || '#888',
+                        }
+                    });
+                });
+
+                // ========== 渲染图谱 ==========
+                const cy = cytoscape({
+                    container: document.getElementById('cy'),
+                    elements: elements,
+                    style: [
+                        {
+                            selector: 'node',
+                            style: {
+                                'width': 'data(width)',
+                                'height': 'data(height)',
+                                'background-color': 'data(background-color)',
+                                'label': 'data(label)',
+                                'color': '#fff',
+                                'font-size': '12px',
+                                'text-valign': 'center',
+                                'text-halign': 'center',
+                                'font-weight': 'bold',
+                                'text-outline-width': 2,
+                                'text-outline-color': 'rgba(0,0,0,0.8)',
+                                'border-width': 2,
+                                'border-color': 'rgba(255,255,255,0.3)',
+                                'cursor': 'pointer',
+                            }
+                        },
+                        {
+                            selector: 'node[type="page"]',
+                            style: {
+                                'font-size': '14px',
+                                'border-color': '#FF6B6B',
+                                'border-width': 3,
+                            }
+                        },
+                        {
+                            selector: 'node[type="store"]',
+                            style: {
+                                'shape': 'ellipse',
+                            }
+                        },
+                        {
+                            selector: 'node[type="api"]',
+                            style: {
+                                'shape': 'diamond',
+                            }
+                        },
+                        {
+                            selector: 'edge',
+                            style: {
+                                'width': 2,
+                                'line-color': 'data(color)',
+                                'target-arrow-color': 'data(color)',
+                                'target-arrow-shape': 'triangle',
+                                'curve-style': 'bezier',
+                                'opacity': 0.7,
+                                'label': 'data(label)',
+                                'font-size': '9px',
+                                'color': '#aaa',
+                                'text-rotation': 'autorotate',
+                                'text-outline-width': 2,
+                                'text-outline-color': 'rgba(0,0,0,0.9)',
+                            }
+                        },
+                        {
+                            selector: 'edge[label="subscribes"]',
+                            style: {
+                                'line-style': 'dashed',
+                            }
+                        },
+                        {
+                            selector: 'node:selected',
+                            style: {
+                                'border-width': 4,
+                                'border-color': '#fff',
+                                'width': 'data(width) + 10',
+                                'height': 'data(height) + 10',
+                            }
+                        },
+                        {
+                            selector: 'node.highlight',
+                            style: {
+                                'opacity': 1,
+                                'border-width': 3,
+                                'border-color': '#fff',
+                            }
+                        },
+                        {
+                            selector: 'edge.highlight',
+                            style: {
+                                'opacity': 1,
+                                'width': 4,
+                            }
+                        },
+                        {
+                            selector: 'node.faded',
+                            style: {
+                                'opacity': 0.15,
+                            }
+                        },
+                        {
+                            selector: 'edge.faded',
+                            style: {
+                                'opacity': 0.08,
+                            }
+                        },
+                    ],
+                    layout: {
+                        name: 'cose',
+                        idealEdgeLength: 180,
+                        nodeRepulsion: 10000,
+                        edgeElasticity: 100,
+                        nestingFactor: 5,
+                        gravity: 80,
+                        numIter: 2000,
+                        animate: true,
+                        animationDuration: 800,
+                    }
+                });
+
+                // ========== 交互：点击高亮 ==========
+                let selectedNodeId = null;
+
+                cy.on('tap', 'node', function(evt) {
+                    const node = evt.target;
+                    const nodeId = node.id();
+
+                    if (selectedNodeId === nodeId) {
+                        // 取消选中
+                        cy.elements().removeClass('highlight faded');
+                        selectedNodeId = null;
+                        return;
+                    }
+
+                    selectedNodeId = nodeId;
+
+                    // 获取上下游节点
+                    const neighbors = node.neighborhood().add(node);
+                    const neighborIds = new Set(neighbors.map(n => n.id()));
+
+                    cy.elements().removeClass('highlight faded');
+                    cy.elements().addClass('faded');
+
+                    neighbors.addClass('highlight').removeClass('faded');
+
+                    // 同时高亮关系上的标签
+                    node.connectedEdges().forEach(e => {
+                        e.addClass('highlight').removeClass('faded');
+                    });
+                });
+
+                // 点击空白取消选中
+                cy.on('tap', function(evt) {
+                    if (evt.target === cy) {
+                        cy.elements().removeClass('highlight faded');
+                        selectedNodeId = null;
+                    }
+                });
+
+                // 双击节点跳转文件（如果有文件路径）
+                cy.on('dblclick', 'node', function(evt) {
+                    const node = evt.target;
+                    const file = node.data('file');
+                    if (file) {
+                        console.log(`📂 文件路径: ${file}`);
+                        alert(`组件文件: ${file}\n(可在 VS Code 中搜索打开)`);
+                    }
+                });
+
+                console.log('✅ 图谱渲染完成！点击节点查看上下游依赖。');
+
+            })
+            .catch(err => {
+                console.error('❌ 加载失败:', err);
+                document.getElementById('stats').innerHTML = `
+                    ❌ 错误: ${err.message}<br>
+                    <span style="font-size:12px;color:#aaa;">请确保 knowledge-graph.json 在项目根目录</span>
+                `;
+                document.getElementById('info').textContent = '⚠️ 未找到 knowledge-graph.json';
+            });
+    </script>
+</body>
+</html>

@@ -673,3 +673,82 @@ git remote -v
 然后把代码推送上去，确保 GitHub 仓库里有你的代码。
 
 # 第六步：创建 GitHub Actions 流水线配置文件
+
+创建 .github/workflows/ci.yml：
+<code>
+
+name: CI 流水线
+
+<!-- # 触发条件：push 到 main 分支，或任何 pull_request -->
+
+on:
+push:
+branches: [main]
+pull_request:
+branches: [main]
+
+<!-- # 流水线要执行的任务列表 -->
+
+jobs:
+build-and-test: # 运行环境：最新 Ubuntu
+runs-on: ubuntu-latest
+
+<!-- # 任务步骤 -->
+
+steps:
+
+<!-- # 1. 拉取代码 -->
+
+- name: 检出代码
+  uses: actions/checkout@v4
+
+<!-- # 2. 安装 pnpm -->
+
+- name: 安装 pnpm
+  uses: pnpm/action-setup@v3
+  with:
+  version: 8
+
+<!-- # 3. 安装 Node.js -->
+
+- name: 安装 Node.js
+  uses: actions/setup-node@v4
+  with:
+  node-version: '18'
+  cache: 'pnpm'
+
+<!-- # 4. 安装依赖 -->
+
+- name: 安装依赖
+  run: pnpm install
+
+<!-- # 5. 代码规范检查（ESLint + Prettier） -->
+
+- name: 代码规范检查
+  run: pnpm lint
+
+<!-- # 6. 单元测试 -->
+
+- name: 单元测试
+  run: pnpm test
+
+<!-- # 7. 打包构建 -->
+
+- name: 构建项目
+  run: pnpm build
+
+</code>
+提交并推送:
+git add .github/workflows/ci.yml
+git commit -m "feat: 添加 GitHub Actions CI 流水线"
+git push
+
+# 第七步：观察流水线执行结果
+
+打开你的 GitHub 仓库页面
+
+点击 Actions 标签页
+
+你会看到 CI 流水线 正在运行（黄色圆点表示运行中）
+
+点击进去，可以看到每一步的执行日志

@@ -4,9 +4,9 @@ name: CI 流水线
 # 触发条件：push 到 main 分支，或任何 pull_request
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 # 流水线要执行的任务列表
 jobs:
