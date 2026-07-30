@@ -1,14 +1,14 @@
-import { Project, SyntaxKind, Node } from 'ts-morph'
-import { parse as parseVue } from '@vue/compiler-sfc'
-import { globSync } from 'glob'
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
+import { Project, SyntaxKind, Node } from 'ts-morph';
+import { parse as parseVue } from '@vue/compiler-sfc';
+import { globSync } from 'glob';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 // 还原 __dirname、__filename
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // ============ 类型定义 ============
 interface GraphNode {
@@ -16,7 +16,7 @@ interface GraphNode {
   type: 'component' | 'page' | 'store' | 'composable' | 'api' | 'util' | 'directive' | 'global-component'
   name: string
   filePath: string
-  props?: Record<string, any>
+  props?: Record<string>
 }
 
 interface GraphEdge {
@@ -32,20 +32,20 @@ interface Graph {
 
 // ============ 1. 扫描所有 Vue 组件 ============
 function scanVueComponents(projectRoot: string): GraphNode[] {
-  const files = globSync('src/**/*.vue', { cwd: projectRoot, absolute: true })
-  const nodes: GraphNode[] = []
+  const files = globSync('src/**/*.vue', { cwd: projectRoot, absolute: true });
+  const nodes: GraphNode[] = [];
 
   for (const file of files) {
-    const content = fs.readFileSync(file, 'utf-8')
-    const { descriptor } = parseVue(content, { filename: file })
+    const content = fs.readFileSync(file, 'utf-8');
+    const { descriptor } = parseVue(content, { filename: file });
     
-    const isPage = file.includes('/views/') || file.includes('/pages/') || file.includes('/page/')
+    const isPage = file.includes('/views/') || file.includes('/pages/') || file.includes('/page/');
     
-    let name = path.basename(file, '.vue')
+    let name = path.basename(file, '.vue');
     if (descriptor.scriptSetup) {
-      const scriptContent = descriptor.scriptSetup.content
-      const match = scriptContent.match(/defineOptions\(\s*{\s*name:\s*['"](.+)['"]\s*}\s*\)/)
-      if (match) name = match[1]
+      const scriptContent = descriptor.scriptSetup.content;
+      const match = scriptContent.match(/defineOptions\(\s*{\s*name:\s*['"](.+)['"]\s*}\s*\)/);
+      if (match) name = match[1];
     }
 
     nodes.push({
@@ -53,118 +53,118 @@ function scanVueComponents(projectRoot: string): GraphNode[] {
       type: isPage ? 'page' : 'component',
       name,
       filePath: path.relative(projectRoot, file),
-    })
+    });
   }
 
-  return nodes
+  return nodes;
 }
 
 // ============ 2. 扫描 Pinia Store ============
 function scanPiniaStores(projectRoot: string): GraphNode[] {
   const project = new Project({
     tsConfigFilePath: path.join(projectRoot, 'tsconfig.json'),
-  })
+  });
   
-  const storeFiles = globSync('src/**/*.store.ts', { cwd: projectRoot, absolute: true })
-  const nodes: GraphNode[] = []
+  const storeFiles = globSync('src/**/*.store.ts', { cwd: projectRoot, absolute: true });
+  const nodes: GraphNode[] = [];
 
   for (const file of storeFiles) {
-    const sourceFile = project.addSourceFileAtPath(file)
+    const sourceFile = project.addSourceFileAtPath(file);
     
     const defineStoreCalls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression)
-      .filter(call => call.getExpression().getText() === 'defineStore')
+      .filter(call => call.getExpression().getText() === 'defineStore');
     
     for (const call of defineStoreCalls) {
-      const args = call.getArguments()
-      if (args.length === 0) continue
+      const args = call.getArguments();
+      if (args.length === 0) continue;
       
-      let storeName = ''
+      let storeName = '';
       if (Node.isStringLiteral(args[0])) {
-        storeName = args[0].getLiteralValue()
+        storeName = args[0].getLiteralValue();
       } else {
-        storeName = args[0].getText()
-      }
-      
+        storeName = args[0].getText();
+      };
+    
       nodes.push({
         id: `store:${storeName}`,
         type: 'store',
         name: storeName,
         filePath: path.relative(projectRoot, file),
-      })
+      });
     }
   }
 
-  return nodes
+  return nodes;
 }
 
 // ============ 3. 扫描 Composable ============
 function scanComposables(projectRoot: string): GraphNode[] {
   const project = new Project({
     tsConfigFilePath: path.join(projectRoot, 'tsconfig.json'),
-  })
+  });
   
-  const files = globSync('src/**/use*.ts', { cwd: projectRoot, absolute: true })
-  const filteredFiles = files.filter(f => !f.includes('.store.'))
-  const nodes: GraphNode[] = []
+  const files = globSync('src/**/use*.ts', { cwd: projectRoot, absolute: true });
+  const filteredFiles = files.filter(f => !f.includes('.store.'));
+  const nodes: GraphNode[] = [];
 
   for (const file of filteredFiles) {
-    const sourceFile = project.addSourceFileAtPath(file)
-    const functions = sourceFile.getFunctions()
+    const sourceFile = project.addSourceFileAtPath(file);
+    const functions = sourceFile.getFunctions();
     
     for (const func of functions) {
-      const name = func.getName()
+      const name = func.getName();
       if (name && name.startsWith('use') && name !== 'useStore' && !name.endsWith('Store')) {
         nodes.push({
           id: `composable:${name}`,
           type: 'composable',
           name,
           filePath: path.relative(projectRoot, file),
-        })
+        });
       }
     }
   }
 
-  return nodes
+  return nodes;
 }
 
 // ============ 4. 扫描 API 调用 ============
 function scanAPICalls(projectRoot: string): GraphNode[] {
   const project = new Project({
     tsConfigFilePath: path.join(projectRoot, 'tsconfig.json'),
-  })
+  });
   
   const files = globSync('src/**/*.{vue,ts,js}', { cwd: projectRoot, absolute: true })
-  const apiSet = new Set<string>()
-  const nodes: GraphNode[] = []
+  const apiSet = new Set<string>();
+  const nodes: GraphNode[] = [];
 
   for (const file of files) {
-    if (file.includes('node_modules')) continue
+    if (file.includes('node_modules')) continue;
     
     try {
-      const sourceFile = project.addSourceFileAtPath(file)
-      const calls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression)
+      const sourceFile = project.addSourceFileAtPath(file);
+      const calls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
       
       for (const call of calls) {
-        const exprText = call.getExpression().getText()
+        const exprText = call.getExpression().getText();
         
         if (/request\.(get|post|put|delete|patch)/.test(exprText) || 
             /http\.(get|post|put|delete|patch)/.test(exprText) ||
             /api\.(get|post|put|delete|patch)/.test(exprText)) {
-          const args = call.getArguments()
+          const args = call.getArguments();
           if (args.length > 0 && Node.isStringLiteral(args[0])) {
-            const url = args[0].getLiteralValue()
-            const apiName = url.split('/').pop() || url
-            const id = `api:${apiName}`
+            const url = args[0].getLiteralValue();
+            const apiName = url.split('/').pop() || url;
+            const id = `api:${apiName}`;
             
             if (!apiSet.has(id)) {
-              apiSet.add(id)
+              apiSet.add(id);
               nodes.push({
                 id,
                 type: 'api',
                 name: apiName,
                 filePath: path.relative(projectRoot, file),
                 props: { url },
-              })
+              });
             }
           }
         }
@@ -174,7 +174,7 @@ function scanAPICalls(projectRoot: string): GraphNode[] {
     }
   }
 
-  return nodes
+  return nodes;
 }
 
 // ============ 5. 建立关系 ============

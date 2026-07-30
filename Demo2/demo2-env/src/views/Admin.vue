@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 // 这里写逻辑
-console.log('管理页加载了');
+// console.log('管理页加载了');
 </script>
 
 <style scoped></style>

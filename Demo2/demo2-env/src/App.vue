@@ -17,6 +17,6 @@
 </template>
 
 <script setup>
-console.log('App.vue 加载了（主入口）');
-const mode = import.meta.env.MODE
+// console.log('App.vue 加载了（主入口）');
+const mode = import.meta.env.MODE;
 </script>

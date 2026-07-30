@@ -1,4 +1,3 @@
-# .github/workflows/ci.yml
 name: CI 流水线
 
 # 触发条件：push 到 main 分支，或任何 pull_request

@@ -58,7 +58,7 @@ export default defineConfig(({ command, mode }) => {
         output: {
           manualChunks(id) {
             if (id.includes('vue') || id.includes('vue-router')) {
-              return 'vue-vendor'
+              return 'vue-vendor';
             }
           },
           chunkFileNames: 'assets/[name]-[hash].js',
