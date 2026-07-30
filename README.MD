@@ -670,3 +670,6 @@ pnpm test
 
 这一步先确认你已经把代码推到 GitHub 了：
 git remote -v
+然后把代码推送上去，确保 GitHub 仓库里有你的代码。
+
+# 第六步：创建 GitHub Actions 流水线配置文件
