@@ -22,7 +22,7 @@ module.exports = {
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
     indent: ['error', 2],
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'no-console': 'off',
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     'vue/multi-word-component-names': 'off',
   },

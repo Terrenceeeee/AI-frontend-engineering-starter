@@ -17,7 +17,10 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "deploy": "pnpm build && node scripts/deploy.ts",
+    "rollback": "node scripts/rollback.ts",
+    "serve:cdn": "http-server dist --port 8080 --cors"
   },
   "lint-staged": {
     "*.{js,ts,vue}": [
@@ -53,6 +56,7 @@
     "eslint-plugin-vue": "^9.0.0",
     "fast-glob": "^3.3.3",
     "glob": "^13.0.6",
+    "http-server": "^14.1.1",
     "husky": "^9.1.7",
     "inquirer": "8.2.6",
     "jsdom": "^30.0.0",

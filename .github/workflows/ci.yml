@@ -46,3 +46,14 @@
 
 #       - name: 构建项目
 #         run: pnpm build
+
+# - name: 安装 Playwright 浏览器
+#   run: npx playwright install --with-deps msedge
+
+# - name: 运行 E2E 测试
+#   run: |
+#   pnpm preview &
+#   npx wait-on http://localhost:4173
+#   pnpm test:e2e
+#   env:
+#   CI: true

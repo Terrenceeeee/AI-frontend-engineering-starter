@@ -3,9 +3,9 @@
 // ============================================================
 // 1. 引入依赖 + 类型定义
 // ============================================================
-import fs from "fs";
-import path from "path";
-import inquirer from "inquirer";
+import fs from 'fs';
+import path from 'path';
+import inquirer from 'inquirer';
 
 /** 待生成文件结构类型 */
 interface FileItem {
@@ -139,7 +139,7 @@ function generateFiles(rawName: string, opts: GenerateOpts): boolean {
   // 检测已存在文件
   const existFiles = files.filter((item) => fs.existsSync(item.path));
   if (existFiles.length > 0 && !force) {
-    console.error("\n❌ 以下文件已存在（请使用 --force 强制覆盖）：");
+    console.error('\n❌ 以下文件已存在（请使用 --force 强制覆盖）：');
     existFiles.forEach((item) => console.log(`   - ${item.path}`));
     return false;
   }
@@ -151,7 +151,7 @@ function generateFiles(rawName: string, opts: GenerateOpts): boolean {
       fs.mkdirSync(dir, { recursive: true });
       console.log(`📁 创建目录: ${dir}`);
     }
-    fs.writeFileSync(filePath, content.trim(), "utf8");
+    fs.writeFileSync(filePath, content.trim(), 'utf8');
     console.log(`✅ 生成文件: ${filePath}`);
   });
 
@@ -164,26 +164,26 @@ function generateFiles(rawName: string, opts: GenerateOpts): boolean {
 async function main() {
   // 读取命令行参数
   const cliArgs = process.argv.slice(2);
-  const force = cliArgs.includes("--force");
+  const force = cliArgs.includes('--force');
 
   // 交互式问答
   const answers = await inquirer.prompt([
     {
-      type: "input",
-      name: "name",
-      message: "📝 请输入模块名称（如：user、product、order）：",
+      type: 'input',
+      name: 'name',
+      message: '📝 请输入模块名称（如：user、product、order）：',
       validate: (input: string) => {
         const val = input.trim();
-        if (!val) return "❌ 模块名称不能为空";
+        if (!val) return '❌ 模块名称不能为空';
         if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(val)) {
-          return "❌ 模块名称只能包含字母和数字，必须以字母开头";
+          return '❌ 模块名称只能包含字母和数字，必须以字母开头';
         }
         return true;
       },
     },
     {
-      type: "confirm",
-      name: "confirm",
+      type: 'confirm',
+      name: 'confirm',
       message: (ans: Partial<PromptAnswers>) =>
         `即将生成 ${ans.name} 模块的 view + api + store，确认继续？`,
       default: true,
@@ -191,7 +191,7 @@ async function main() {
   ]) as PromptAnswers;
 
   if (!answers.confirm) {
-    console.log("👋 已取消生成");
+    console.log('👋 已取消生成');
     return;
   }
 
@@ -200,8 +200,8 @@ async function main() {
 
   if (success) {
     const lower = moduleName.toLowerCase();
-    console.log("\n🎉 模块生成完成！");
-    console.log(`📌 接下来请执行：`);
+    console.log('\n🎉 模块生成完成！');
+    console.log('📌 接下来请执行：');
     console.log(`   1. 在 router 中配置路由: /${lower}`);
     console.log(`   2. 在 api/${lower}.ts 中完善接口参数与返回类型`);
     console.log(`   3. 在 stores/modules/${lower}.ts 完善接口调用与业务`);
@@ -212,6 +212,6 @@ async function main() {
 // 6. 捕获全局异常
 // ============================================================
 main().catch((err: Error) => {
-  console.error("❌ 执行失败:", err.message);
+  console.error('❌ 执行失败:', err.message);
   process.exit(1);
 });

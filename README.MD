@@ -158,8 +158,6 @@ build.sourcemap: true 生成 .map 文件，方便调试时看到源码位置（�
 
 ![alt text](<screenshots/Screenshot 2026-07-27 164314.png>)
 
-# 检测生产环境 pnpm build
-
 # 检测自定义 staging 环境 pnpm build -- --mode staging
 
 ![alt text](<screenshots/Screenshot 2026-07-27 164455.png>)
@@ -756,6 +754,8 @@ git push
 ![alt text](<screenshots/Screenshot 2026-07-30 114651.png>)报错详细说明
 流水线标红 ❌，阻止了这次提交的合并（如果你配置了分支保护规则，这个 PR 会被自动标记为不可合并）
 
+---
+
 # Demo 7：Playwright 端到端（E2E）测试（对应导图中的 E2E 部分）
 
 验证： 用 Playwright 自动打开浏览器，模拟用户访问首页 → 点击“用户页” → 检查页面是否正常。
@@ -864,4 +864,403 @@ git push
 
 打开 GitHub Actions，会看到流水线中新增了 “安装 Playwright 浏览器” 和 “运行 E2E 测试” 两个步骤，全部通过后流水线变绿。
 
-Demo 8：性能监控 SDK（对应导图中的“运行时监控层”）
+---
+
+# Demo 8：性能监控 SDK（对应导图中的“运行时监控层”）
+
+监控LCP、CLS、FID 等 Web Vitals 指标，并上报到监控平台。
+LCP → 页面主要内容加载完成
+FID → 用户首次交互响应延迟
+CLS → 页面视觉稳定性
+采集LCP/CLS/FID/FCP/TTFB五大前端性能指标，打印日志，可对接接口上报后端
+
+# 第一步：创建性能监控脚本
+
+创建 src/utils/performanceReporter.ts：
+
+<code>
+// src/utils/performanceReporter.ts
+// 定义性能指标上报的数据TS类型约束
+interface ReportData {
+  // 当前页面完整URL地址
+  url: string;
+  // 最大内容绘制，可选，单位ms
+  lcp?: number;
+  // 累积布局偏移，可选
+  cls?: number;
+  // 首次输入延迟，可选（FID已废弃，浏览器主推INP）
+  fid?: number;
+  // 首次内容绘制，可选，ms
+  fcp?: number;
+  // 首字节时间，服务器返回首个字节耗时，ms
+  ttfb?: number;
+  // 性能采集时间戳（毫秒时间戳）
+  timestamp: number;
+}
+
+/\*\*
+
+- 页面核心Web Vitals性能采集函数
+- 采集LCP/CLS/FID/FCP/TTFB五大前端性能指标，打印日志，可对接接口上报后端
+  \*/
+  export function reportWebVitals() {
+  // 初始化性能上报对象，基础字段：当前页面地址、采集时间戳
+  const report: ReportData = {
+  url: window.location.href,
+  timestamp: Date.now(),
+  };
+
+// ====================== 1. 监听 LCP 最大内容绘制 ======================
+// PerformanceObserver：浏览器原生性能监听API，异步捕获性能条目
+new PerformanceObserver((list) => {
+// 获取本次回调所有性能条目数组
+const entries = list.getEntries();
+// LCP会多次触发，取最后一次（最终最大元素）
+const lastEntry = entries[entries.length - 1];
+if (lastEntry) {
+// 赋值LCP耗时：页面开始加载到最大可视元素渲染完成的毫秒数
+report.lcp = lastEntry.startTime;
+console.log('[性能监控] LCP:', report.lcp);
+// 可放开注释，把完整指标上报后端接口
+// sendToServer(report);
+}
+// 监听的性能类型：largest-contentful-paint 专门对应LCP指标
+}).observe({ entryTypes: ['largest-contentful-paint'] });
+
+// ====================== 2. 监听 CLS 累积布局偏移 ======================
+// 用来累加所有布局偏移值
+let clsValue = 0;
+new PerformanceObserver((list) => {
+// 遍历本次所有布局偏移记录
+for (const entry of list.getEntries() as any[]) {
+// hadRecentInput：用户近期是否有点击/输入操作
+// 规范要求：用户主动交互引发的布局偏移不计入CLS，只算意外抖动
+if (!entry.hadRecentInput) {
+clsValue += entry.value;
+}
+}
+// 把累加后的总偏移存入上报对象
+report.cls = clsValue;
+console.log('[性能监控] CLS:', report.cls);
+// 监听页面布局变动事件
+}).observe({ entryTypes: ['layout-shift'] });
+
+// ====================== 3. 监听 FID 首次输入延迟 ======================
+new PerformanceObserver((list) => {
+const entries = list.getEntries();
+// FID只取页面第一次用户交互的记录
+const firstEntry = entries[0] as any;
+if (firstEntry) {
+// 计算延迟：浏览器收到用户输入时间 → 浏览器真正开始处理输入的时间差
+report.fid = firstEntry.processingStart - firstEntry.startTime;
+console.log('[性能监控] FID:', report.fid);
+}
+// first-input：浏览器首次用户输入行为（点击、按键等）
+}).observe({ entryTypes: ['first-input'] });
+
+// ====================== 4. 监听 FCP 首次内容绘制 ======================
+new PerformanceObserver((list) => {
+const entries = list.getEntries();
+const firstEntry = entries[0];
+if (firstEntry) {
+// startTime：从页面初始化到页面第一次渲染出文字/图片等内容的耗时
+report.fcp = firstEntry.startTime;
+console.log('[性能监控] FCP:', report.fcp);
+}
+// paint 绘制类指标，包含 FCP / LCP 等绘制事件
+}).observe({ entryTypes: ['paint'] });
+
+// ====================== 5. 监听 TTFB 首字节时间 ======================
+new PerformanceObserver((list) => {
+const entries = list.getEntries();
+// 遍历导航性能条目
+for (const entry of entries) {
+// 筛选页面导航类型的性能数据
+if (entry.entryType === 'navigation') {
+// 类型断言成导航详细性能对象
+const navEntry = entry as PerformanceNavigationTiming;
+// TTFB = 浏览器发起请求开始 到 接收到服务器第一个字节的间隔
+report.ttfb = navEntry.responseStart - navEntry.requestStart;
+console.log('[性能监控] TTFB:', report.ttfb);
+}
+}
+// 监听页面导航（页面刷新、跳转）全链路耗时
+}).observe({ entryTypes: ['navigation'] });
+}
+</code>
+
+# 第二步：在 main.ts 中启用性能监控
+
+<!-- // src/main.ts
+import { createApp } from 'vue';
+import App from './App.vue';
+import router from './router';
+import { reportWebVitals } from './utils/performanceReporter';
+
+const app = createApp(App);
+app.use(router);
+app.mount('#app');
+
+// ✅ 只在生产环境启用性能监控（减少开发环境的噪音）
+if (import.meta.env.PROD) {
+  reportWebVitals();
+} -->
+
+# 第三步：验证（用 Lighthouse 跑分对比）
+
+打开 Chrome DevTools → Lighthouse 面板
+点击 Analyze page load（分析页面加载）
+运行完成后，你会看到 LCP、CLS、FID 的官方评分
+对比脚本里 console.log 打印出来的数值，应该基本一致
+
+# 但是我们前面ESLint把console全部都给Error了 所以现在需要去把他关闭掉才会让她再次显示
+
+在eslint里把eslintrc.cjs里的rule里的 no-console的内容 改成 'off' （必须是单引号）
+
+<!-- 预期输出（控制台）： -->
+<!-- [性能监控] FCP: 456.2
+[性能监控] LCP: 1234.5
+[性能监控] CLS: 0.02
+[性能监控] TTFB: 42.8 -->
+
+# Demo 9：自动化部署脚本
+
+这个demo验证： 写一个 Node.js 脚本，模拟 Jenkins/GitLab CI 的部署流程——备份当前版本 → 上传新版本 → 刷新 Nginx → 验证页面可访问（在本地模拟，不真的操作服务器）。
+
+# 第一步：创建部署脚本
+
+创建 scripts/deploy.ts：
+<code>
+#!/usr/bin/env ts-node
+// scripts/deploy.ts
+import _ as fs from 'fs';
+import _ as path from 'path';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+
+const **filename = fileURLToPath(import.meta.url);
+const **dirname = path.dirname(\_\_filename);
+
+const DIST_DIR = path.join(**dirname, '../dist');
+const BACKUP_DIR = path.join(**dirname, '../backups');
+
+// 1. 校验dist文件夹存在
+if (!fs.existsSync(DIST_DIR)) {
+console.error('❌ dist 目录不存在，请先执行 pnpm build');
+process.exit(1);
+}
+
+// 2. 创建备份目录（递归创建）
+if (!fs.existsSync(BACKUP_DIR)) {
+fs.mkdirSync(BACKUP_DIR, { recursive: true });
+}
+
+// 3. 生成时间戳版本号，替换冒号小数点避免路径非法字符
+const version = new Date().toISOString().replace(/[:.]/g, '-');
+const backupPath = path.join(BACKUP_DIR, `dist-${version}`);
+
+console.log(`📦 备份当前版本到: ${backupPath}`);
+fs.cpSync(DIST_DIR, backupPath, { recursive: true });
+
+// 4. 复制产物到部署目录
+const DEPLOY_DIR = path.join(\_\_dirname, '../deploy');
+if (!fs.existsSync(DEPLOY_DIR)) {
+fs.mkdirSync(DEPLOY_DIR, { recursive: true });
+}
+
+console.log('📤 上传新版本到部署目录...');
+fs.cpSync(DIST_DIR, DEPLOY_DIR, { recursive: true });
+
+// 5. 模拟重载Nginx
+console.log('🔄 模拟重载 Nginx...');
+
+// 6. 冒烟测试
+console.log('🧪 执行冒烟测试...');
+try {
+const result = execSync('curl -s -o /dev/null -w "%{http_code}" http://localhost:5173', {
+timeout: 5000,
+}).toString().trim();
+
+if (result === '200') {
+console.log('✅ 冒烟测试通过！首页可访问');
+} else {
+console.log(`⚠️ 冒烟测试异常：HTTP ${result}`);
+}
+} catch (error) {
+console.log('⚠️ 冒烟测试失败（开发服务器未启动，请先 pnpm dev）');
+}
+
+console.log(`\n🎉 部署完成！版本号: ${version}`);
+console.log(`📌 备份位置: ${backupPath}`);
+console.log(`📌 回滚命令: cp -r ${backupPath}/* ${DIST_DIR}/`);
+</code>
+
+# 第二步：在 package.json 中添加部署命令
+
+<code>
+{
+  "scripts": {
+    "deploy": "pnpm build && node scripts/deploy.js"
+  }
+}
+</code>
+
+# 第三步：验证
+
+pnpm deploy
+
+# 预计输出结果：
+
+![未加载成功](<screenshots/Screenshot 2026-08-03 145847.png>)
+
+# Demo 10：版本回滚机制（ 写一个回滚脚本，列出所有备份版本，选择其中一个快速恢复，模拟线上出问题后秒级回滚）
+
+# 第一步：创建回滚脚本 scripts/rollback.ts
+
+<code>
+#!/usr/bin/env ts-node
+// scripts/rollback.ts
+
+import _ as fs from 'fs';
+import _ as path from 'path';
+import \* as readline from 'readline';
+import { fileURLToPath } from 'url';
+
+const **filename = fileURLToPath(import.meta.url);
+const **dirname = path.dirname(\_\_filename);
+
+<!-- ../：路径向上跳一级目录（从 scripts 文件夹回到项目根目录）
+拼接结果：项目根目录/dist
+含义：拿到打包产物 dist 文件夹的完整绝对路径，也就是你执行pnpm build生成静态资源的目录。 -->
+
+const DIST_DIR = path.join(**dirname, '../dist');
+const BACKUP_DIR = path.join(**dirname, '../backups');
+
+// 1. 检查备份目录
+if (!fs.existsSync(BACKUP_DIR)) {
+console.error('❌ 没有找到备份目录');
+process.exit(1);
+}
+
+// 2. 列出所有备份版本
+const backups = fs.readdirSync(BACKUP_DIR)
+// 过滤：只保留以 dist- 开头的备份文件夹，排除无关文件
+.filter(name => name.startsWith('dist-'))
+// 按字符串升序排序（时间戳命名，旧版本靠前）
+.sort()
+// 数组倒序翻转，最新的备份排在最前面
+.reverse();
+
+if (backups.length === 0) {
+console.error('❌ 没有找到任何备份版本');
+process.exit(1); // 终止node进程，返回异常退出码
+}
+
+// 打印提示文案
+console.log('📋 可用的备份版本：');
+// 遍历所有备份，按序号打印给用户看
+backups.forEach((name, index) => {
+console.log(`  ${index + 1}. ${name}`);
+});
+
+// ========== 开始交互式命令行输入 ==========
+// 引入readline模块，创建命令行交互实例，读取键盘输入、控制台输出
+const rl = readline.createInterface({
+input: process.stdin, // 输入来源：终端键盘
+output: process.stdout, // 输出位置：终端控制台
+});
+
+// 弹出问题，等待用户输入版本数字，回车后执行回调函数
+rl.question('\n请选择要回滚到的版本编号（输入数字）：', (answer) => {
+// 用户输入是字符串，转数字；用户看到的序号从1开始，数组下标从0开始，所以-1
+const index = parseInt(answer.trim()) - 1;
+
+// 合法性校验：不是数字 / 下标小于0 / 下标超过备份总数 → 输入非法
+if (isNaN(index) || index < 0 || index >= backups.length) {
+console.error('❌ 无效的选择');
+rl.close(); // 关闭命令行交互
+process.exit(1); // 异常退出
+}
+
+// 根据合法下标拿到选中的备份文件夹名称
+const selectedVersion = backups[index];
+// 拼接得到该备份文件夹的完整绝对路径
+const backupPath = path.join(BACKUP_DIR, selectedVersion);
+
+// 二次风险提醒：告知用户要回滚的版本，提示dist会被全覆盖
+console.log(`\n⚠️ 即将回滚到: ${selectedVersion}`);
+console.log(`   当前 dist 将被完全替换`);
+
+// 再次弹窗确认，询问是否真的执行回滚
+rl.question('确认继续？(y/N)：', (confirm) => {
+// 用户输入不是y/Y，判定取消回滚
+if (confirm.toLowerCase() !== 'y') {
+console.log('👋 已取消回滚');
+rl.close();
+return; // 终止后续逻辑
+}
+
+    // 开始执行回滚操作
+    console.log(`🔄 正在回滚到 ${selectedVersion}...`);
+
+    // 如果当前dist文件夹存在
+    if (fs.existsSync(DIST_DIR)) {
+      // 强制递归删除整个dist目录，recursive删文件夹、force无视权限/只读强制删除
+      fs.rmSync(DIST_DIR, { recursive: true, force: true });
+    }
+    // 将选中的备份文件夹完整复制覆盖到dist
+    fs.cpSync(backupPath, DIST_DIR, { recursive: true });
+
+    // 回滚成功提示
+    console.log(`✅ 回滚完成！当前版本: ${selectedVersion}`);
+    rl.close(); // 关闭命令行交互，脚本正常结束
+
+});
+});
+
+</code>
+
+# 第二步：在 package.json 中添加回滚命令
+
+{
+"scripts": {
+"rollback": "node scripts/rollback.js"
+}
+}
+
+# 第三步：验证(先创建几个备份版本（多次执行 pnpm deploy），然后执行回滚：)
+
+pnpm rollback
+
+效果如图所示：
+![未成功加载](<screenshots/Screenshot 2026-08-03 160551.png>)
+
+# Demo 11：CDN 加速模拟
+
+配置 Vite 的 base 选项，让构建产物的所有资源路径指向 CDN 地址，而不是相对路径。然后用 http-server 模拟 CDN 服务器，观察资源加载变化
+
+# 第一步：修改 vite.config.ts 配置 CDN 地址
+
+base: mode === 'production'
+? 'https://cdn.example.com/demo2-env/' // 生产环境走 CDN
+: '/', // 开发环境走相对路径
+
+# 第二步：构建并观察产物路径变化
+
+pnpm build
+打开 dist/index.html，会看到:![未成功加载](<screenshots/Screenshot 2026-08-03 162345.png>)
+原本的绝对路径 变为了相对路径
+
+# 第三步：用 http-server 模拟 CDN 服务器 (pnpm add -D http-server)
+
+在 package.json 中添加模拟 CDN 的命令:
+"serve:cdn": "http-server dist --port 8080 --cors"(scripts下加)
+
+# 第四步：验证 CDN 加载效果
+
+在一个终端启动 CDN 服务器：pnpm serve:cdn（此时 dist/ 下的资源可以通过 http://localhost:8080/assets/xxx.js 访问）
+在另一个终端启动预览：pnpm preview（预览服务器会加载 dist/index.html，里面的资源 URL 指向 https://cdn.example.com/...，但因为 CDN 地址是假的，资源会 404）
+![未成功加载](<screenshots/Screenshot 2026-08-03 162757.png>)就像这样404
+
+那怎么验证 CDN 生效了？ 将 vite.config.ts 中的 base 改为 http://localhost:8080/（指向本地 CDN 模拟服务器），重新构建，再预览，此时资源就能正常加载了：
+更进一步： 如果你有一个真实的 CDN 域名（比如阿里云 OSS、腾讯云 COS），可以把构建产物上传上去，然后把 base 改成真实的 CDN 域名，就完成了生产环境的 CDN 部署。
