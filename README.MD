@@ -36,7 +36,7 @@
 
 1.端口 5173 2.不自动打开浏览器3.不生成 sourcemap 4.不区分环境加载变量（只能用默认的 development/production）
 
-修改它，你可以定制 Vite 的行为：
+修改它，可以定制 Vite 的行为：
 
 1.改端口2.自动打开浏览器3.生成 sourcemap 4.根据 command 和 mode 做条件判断5.配置代理、别名、插件等
 
@@ -1023,6 +1023,8 @@ if (import.meta.env.PROD) {
 [性能监控] CLS: 0.02
 [性能监控] TTFB: 42.8 -->
 
+---
+
 # Demo 9：自动化部署脚本
 
 这个demo验证： 写一个 Node.js 脚本，模拟 Jenkins/GitLab CI 的部署流程——备份当前版本 → 上传新版本 → 刷新 Nginx → 验证页面可访问（在本地模拟，不真的操作服务器）。
@@ -1100,10 +1102,33 @@ console.log(`📌 回滚命令: cp -r ${backupPath}/* ${DIST_DIR}/`);
 <code>
 {
   "scripts": {
-    "deploy": "pnpm build && node scripts/deploy.js"
+    "deploy": "pnpm build && node scripts/deploy.ts"
   }
 }
 </code>
+
+# deploy文件夹
+
+相当于：生产服务器上正在运行的 Web 服务根目录（比如 Nginx 指向的 /usr/share/nginx/html）。
+
+里面的内容：assets/ 目录下存放着 index-yMkJyNDY...（入口 JS）和 vue-vendor-Ys7F...（第三方库 JS）。
+
+怎么生成的：当执行 pnpm deploy 时，脚本会把构建好的 dist/ 文件夹完整复制一份到这里。如果服务器部署，运维就会把这里的内容挂载给用户访问。
+
+# backup文件夹
+
+2.（操作2） Backups 文件夹（历史版本快照）
+相当于：生产环境上的“版本历史仓库”。每次你执行 pnpm deploy，脚本都会先把当前的 deploy 文件夹压缩打包（以时间戳命名），放进 Backups 里。
+
+为什么要有它：为了 Demo 10（版本回滚）。如果新的 deploy 版本出了严重 Bug，你可以执行 pnpm rollback，脚本会从 Backups 里挑一个旧版本，直接覆盖回 deploy，实现“秒级回滚”。
+
+# 这两个文件夹作用：deploy 是正在运行的现场，Backups 是时间机器。你不需要真的买一台云服务器，就在本机把“持续交付（CD）”的核心流程亲手跑了一遍
+
+# 为什么文件名全是乱码？（DEMO4
+
+这是 Vite 构建时加的 Hash（哈希值）。
+index-yMkJyNDY.js 里的 yMkJyNDY 是根据 index.js 的文件内容算出来的。内容变了，Hash 就变。
+作用：强制浏览器刷新缓存。如果你改了一行代码，新版本的 index-新Hash.js 会被加载，而旧的 index-旧Hash.js 会留在 Backups 里，不会被浏览器误用
 
 # 第三步：验证
 
@@ -1112,6 +1137,8 @@ pnpm deploy
 # 预计输出结果：
 
 ![未加载成功](<screenshots/Screenshot 2026-08-03 145847.png>)
+
+---
 
 # Demo 10：版本回滚机制（ 写一个回滚脚本，列出所有备份版本，选择其中一个快速恢复，模拟线上出问题后秒级回滚）
 
@@ -1235,6 +1262,8 @@ pnpm rollback
 效果如图所示：
 ![未成功加载](<screenshots/Screenshot 2026-08-03 160551.png>)
 
+---
+
 # Demo 11：CDN 加速模拟
 
 配置 Vite 的 base 选项，让构建产物的所有资源路径指向 CDN 地址，而不是相对路径。然后用 http-server 模拟 CDN 服务器，观察资源加载变化
@@ -1265,6 +1294,8 @@ pnpm build
 那怎么验证 CDN 生效了？ 将 vite.config.ts 中的 base 改为 http://localhost:8080/（指向本地 CDN 模拟服务器），重新构建，再预览，此时资源就能正常加载了：
 更进一步： 如果你有一个真实的 CDN 域名（比如阿里云 OSS、腾讯云 COS），可以把构建产物上传上去，然后把 base 改成真实的 CDN 域名，就完成了生产环境的 CDN 部署。
 
+---
+
 # Demo12:请求池与并发控制
 
 # 验证： 模拟在一个页面里同时发起 100 个接口请求，但通过请求池控制，同一时刻最多只发 6 个（浏览器同域名并发限制），剩下的排队等待，防止浏览器崩溃或页面卡死。
@@ -1278,13 +1309,15 @@ pnpm build
 
 /\*\*
 
-- 请求池：控制并发请求数量，防止浏览器因并发过多崩溃
-- 浏览器对同一域名的并发连接数有限制（HTTP/1.1 约 6 个）
-  \*/
-  export class RequestPool {
-  private limit: number;
-  private running: number;
-  private queue: Array<() => void>;
+# - 请求池：控制并发请求数量，防止浏览器因并发过多崩溃
+
+# - 浏览器对同一域名的并发连接数有限制（HTTP/1.1 约 6 个 HTTP/2大得多）
+
+\*/
+export class RequestPool {
+private limit: number;
+private running: number;
+private queue: Array<() => void>;
 
 constructor(limit = 6) {
 this.limit = limit; // 最大并发数
@@ -1447,3 +1480,185 @@ const clearLogs = () => {
 注意：这个依旧是FIFO 而不是SJF 不是按发起顺序先后完成，因为每个请求设置了【随机耗时】 设置了const delay=1000+Math.random()\*2000
 
 # 如果不用请求池会发生什么？ 20 个请求同时发起，浏览器的网络调度器会把它们全部排队，但由于没有“主动控制并发”的逻辑，20 个请求会瞬间占满所有可用连接，页面可能变得响应缓慢。
+
+---
+
+# Demo 13：指数退避重试（限制最大重试次数，杜绝无限死循环）
+
+“指数退避”就是：重试的间隔越来越长。比如：第一次失败等 500ms 重试，第二次失败等 1000ms 重试，第三次失败等 2000ms 重试。既给了服务器恢复的时间，又不会造成“重试风暴”——如果所有客户端都在 500ms 后同时重试，服务器可能刚恢复又被冲垮。指数退避让重试请求分散到不同的时间点，错峰重试，降低了集群雪崩的风险。
+
+验证： 模拟接口请求失败（返回 500 错误或超时），自动按 500ms → 1000ms → 2000ms 的间隔重试，最多重试 3 次
+
+# 第一步：创建重试工具
+
+创建 src/utils/retry.ts：
+<code>
+// src/utils/retry.ts
+
+// 1. 定义一个类型守卫，检查错误是否具有类似 Axios 错误的特征
+function isAxiosError(error: unknown): error is {
+response?: { status: number };
+code?: string;
+message?: string;
+} {
+return typeof error === 'object' && error !== null;
+}
+
+export interface RetryOptions {
+maxRetries?: number; // 最大重试次数，默认 3
+baseDelay?: number; // 基础延迟（毫秒），默认 500
+maxDelay?: number; // 最大延迟上限（毫秒），默认 10000
+// ⭐ 这里把 any 改成了 unknown
+shouldRetry?: (error: unknown) => boolean;
+}
+
+/\*\*
+
+- 指数退避重试
+  \*/
+  export async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions = {}
+  ): Promise<T> {
+  const {
+  maxRetries = 3,
+  baseDelay = 500,
+  maxDelay = 10000,
+  // 默认的重试判断逻辑
+  shouldRetry = (error: unknown) => {
+  // 如果不是对象类型，直接不重试
+  if (!isAxiosError(error)) return false;
+
+        // 只有 5xx 错误才重试（服务端错误）
+        if (error.response?.status && error.response.status >= 500) return true;
+        // 网络超时错误（Axios 的 ECONNABORTED）
+        if (error.code === 'ECONNABORTED') return true;
+        // 其他包含 timeout 关键字的错误
+        if (error.message?.includes('timeout')) return true;
+
+        return false;
+      },
+
+  } = options;
+
+// ⭐ lastError 也改为 unknown
+let lastError: unknown = null;
+
+for (let attempt = 1; attempt <= maxRetries; attempt++) {
+try {
+if (attempt > 1) {
+console.log(`[重试] 第 ${attempt - 1} 次重试...`);
+}
+return await fn();
+} catch (error) {
+lastError = error;
+
+      // 判断是否需要重试
+      if (!shouldRetry(error)) {
+        console.log('[重试] 错误类型不支持重试，直接抛出');
+        throw error;
+      }
+
+      if (attempt === maxRetries) {
+        console.log(`[重试] 已达最大重试次数 ${maxRetries}，停止重试`);
+        throw error;
+      }
+
+      // 计算退避延迟：2^(attempt-1) * baseDelay
+      const delay = Math.min(baseDelay * Math.pow(2, attempt - 1), maxDelay);
+      console.log(`[重试] ${delay}ms 后重试 (尝试 ${attempt}/${maxRetries})`);
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+
+}
+
+throw lastError;
+}
+</code>
+any在eslintd的recommand模式里是默认被判断为error的 可以把any换成unknown 他比他的类型更强
+注意使用unknown的时候要加一个类型守卫 不然无法使用
+// 1.声明
+function isAxiosError(error: unknown): error is {
+response?: { status: number };
+code?: string;
+message?: string;
+} {
+return typeof error === 'object' && error !== null;
+}
+// 2. 在重试逻辑里使用它
+catch (error) { // 这里 error 是 unknown（未知包裹）
+
+    // ⭐ 类型守卫在这里发挥作用！
+    // 我们调用 isAxiosError，如果返回 true，那么在这个 if 块内部，
+    // TypeScript 就知道 error 不再是“未知包裹”，而是“拆开后的具体对象”
+    if (isAxiosError(error)) {
+
+      // ✅ 这里可以安全地访问 response.status 了！
+      // 因为 isAxiosError 保证了 error 是一个对象，并且有 response 和 code 属性
+      if (error.response?.status >= 500) {
+        // 服务端错误，决定重试...
+      }
+
+      if (error.code === 'ECONNABORTED') {
+        // 超时错误，决定重试...
+      }
+    }
+
+其他逻辑.....
+
+# 第二步：创建测试 API（模拟失败）
+
+(error as any).response = { status: 500 };如果报错说不让使用any 可以声明
+(error as Error & { response: { status: number } }).response = { status: 500 };
+表明：这是一个 Error，同时还有一个 response 属性”
+创建 src/api/testApi.ts：
+
+# 第三步：在 App.vue 中添加测试按钮
+
+保持原有内容不变 新增一点内容 其实就是加了个按钮 ！！！但要注意@click要在style之后 不然会被warning
+<code>
+
+<div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+  <button @click="testRetry" style="padding: 12px 24px; font-size: 16px; cursor: pointer; background: #f0ad4e; border: none; border-radius: 4px; color: white;">
+    🔄 测试重试 (前2次失败，第3次成功)
+  </button>
+  <button @click="resetTest" style="padding: 12px 24px; font-size: 16px; cursor: pointer;">
+    🔄 重置状态
+  </button>
+</div>
+</code>
+
+在script部分里
+<code>
+import { fetchWithRetry, resetAttemptCount } from '@/api/testApi';const testRetry = async () => {
+addLog('🔁 开始测试重试...');
+try {
+const result = await fetchWithRetry();
+addLog(`✅ 请求成功: ${result.data}`);
+} catch (error) {
+addLog(`❌ 请求失败: ${(error as Error).message}`);
+}
+};
+
+const resetTest = () => {
+resetAttemptCount();
+addLog('🔄 已重置计数器');
+};
+</code>
+
+# 第四步：验证
+
+点击 "测试重试"，观察控制台输出：
+
+第 1 次调用失败 → [重试] 500ms 后重试
+
+第 2 次调用失败 → [重试] 1000ms 后重试
+
+第 3 次调用成功 → 请求成功！
+
+点击 "重置状态" 后再次测试，会重复上述过程
+如图：
+![未能加载成功](<screenshots/Screenshot 2026-08-04 164946.png>)
+
+# 这一步是在浏览器console控制台里输出的 不是界面的输出处输出的 界面的输出处不会输出这些内容！！

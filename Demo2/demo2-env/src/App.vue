@@ -2,10 +2,10 @@
   <div style="padding: 40px; font-family: 'Courier New', monospace;">
     <h1 style="color: #42b883;">🌍 请求池并发控制 Demo</h1>
 
-    <button @click="sendRequests" style="padding: 12px 24px; font-size: 16px; cursor: pointer;">
+    <button style="padding: 12px 24px; font-size: 16px; cursor: pointer;" @click="sendRequests">
       🚀 发送 20 个并发请求
     </button>
-    <button @click="clearLogs" style="padding: 12px 24px; font-size: 16px; cursor: pointer; margin-left: 12px;">
+    <button style="padding: 12px 24px; font-size: 16px; cursor: pointer; margin-left: 12px;" @click="clearLogs">
       🗑️ 清空日志
     </button>
 
@@ -16,13 +16,24 @@
       </div>
     </div>
   </div>
+  <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+    <button
+      style="padding: 12px 24px; font-size: 16px; cursor: pointer; background: #f0ad4e; border: none; border-radius: 4px; color: white;"
+      @click="testRetry">
+      🔄 测试重试 (前2次失败，第3次成功)
+    </button>
+    <button style="padding: 12px 24px; font-size: 16px; cursor: pointer;" @click="resetTest">
+      🔄 重置状态
+    </button>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { requestPool } from '@/utils/requestPool';
+import { fetchWithRetry, resetAttemptCount } from '@/api/testApi';
 
-const logs = ref < string[] > ([]);
+const logs = ref<string[]>([]);
 
 const addLog = (msg: string) => {
   logs.value.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
@@ -39,7 +50,7 @@ const sendRequests = () => {
     const requestFn = () => {
       // 模拟一个耗时 1-3 秒的请求
       const delay = 1000 + Math.random() * 2000;
-      return new Promise < { id: number; delay: number } > ((resolve) => {
+      return new Promise<{ id: number; delay: number }>((resolve) => {
         setTimeout(() => {
           resolve({ id: i, delay });
         }, delay);
@@ -57,8 +68,23 @@ const sendRequests = () => {
     addLog('🎉 所有请求已完成！');
   });
 };
+const testRetry = async () => {
+  addLog('🔁 开始测试重试...');
+  try {
+    const result = await fetchWithRetry();
+    addLog(`✅ 请求成功: ${result.data}`);
+  } catch (error) {
+    addLog(`❌ 请求失败: ${(error as Error).message}`);
+  }
+};
+
+const resetTest = () => {
+  resetAttemptCount();
+  addLog('🔄 已重置计数器');
+};
 
 const clearLogs = () => {
   logs.value = [];
 };
+
 </script>
