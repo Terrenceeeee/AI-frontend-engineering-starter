@@ -1264,3 +1264,186 @@ pnpm build
 
 那怎么验证 CDN 生效了？ 将 vite.config.ts 中的 base 改为 http://localhost:8080/（指向本地 CDN 模拟服务器），重新构建，再预览，此时资源就能正常加载了：
 更进一步： 如果你有一个真实的 CDN 域名（比如阿里云 OSS、腾讯云 COS），可以把构建产物上传上去，然后把 base 改成真实的 CDN 域名，就完成了生产环境的 CDN 部署。
+
+# Demo12:请求池与并发控制
+
+# 验证： 模拟在一个页面里同时发起 100 个接口请求，但通过请求池控制，同一时刻最多只发 6 个（浏览器同域名并发限制），剩下的排队等待，防止浏览器崩溃或页面卡死。
+
+# 第一步：创建请求池工具
+
+创建 src/utils/requestPool.ts：
+
+<code>
+// src/utils/requestPool.ts
+
+/\*\*
+
+- 请求池：控制并发请求数量，防止浏览器因并发过多崩溃
+- 浏览器对同一域名的并发连接数有限制（HTTP/1.1 约 6 个）
+  \*/
+  export class RequestPool {
+  private limit: number;
+  private running: number;
+  private queue: Array<() => void>;
+
+constructor(limit = 6) {
+this.limit = limit; // 最大并发数
+this.running = 0; // 当前正在运行的请求数
+this.queue = []; // 等待队列
+}
+
+/\*\*
+
+- 执行请求
+- @param fn 返回 Promise 的请求函数（如 () => axios.get('/api')）
+- @returns 请求结果
+  \*/
+  async request<T>(fn: () => Promise<T>): Promise<T> {
+  // 1. 如果当前并发数已达上限，进入排队等待
+  if (this.running >= this.limit) {
+  await new Promise<void>((resolve) => {
+  this.queue.push(resolve);
+  });
+  }
+
+  // 2. 拿到执行名额，开始执行
+  this.running++;
+  console.log(`[请求池] 当前并发数: ${this.running}/${this.limit}`);
+
+  try {
+  // 3. 执行真实请求
+  const result = await fn();
+  return result;
+  } finally {
+  // 4. 请求结束（无论成功/失败），释放名额
+  this.running--;
+  console.log(`[请求池] 释放并发，剩余: ${this.running}/${this.limit}`);
+
+      // 5. 如果队列里还有等待的任务，唤醒下一个
+      if (this.queue.length > 0) {
+        const next = this.queue.shift();
+        if (next) {
+          next(); // 唤醒等待的 request 调用
+        }
+      }
+
+  }
+
+}
+}
+
+// 导出单例（整个应用共享一个请求池）
+export const requestPool = new RequestPool(6);
+</code>
+
+# 第二步：在 Vue 组件中模拟并发请求
+
+<code>
+<template>
+  <!-- 外层容器，设置内边距、等宽字体，控制台风格 -->
+  <div style="padding: 40px; font-family: 'Courier New', monospace;">
+    <h1 style="color: #42b883;">🌍 请求池并发控制 Demo</h1>
+    
+    <!-- 按钮：点击触发批量发起20个请求 -->
+    <button @click="sendRequests" style="padding: 12px 24px; font-size: 16px; cursor: pointer;">
+      🚀 发送 20 个并发请求
+    </button>
+    <!-- 清空日志按钮 -->
+    <button @click="clearLogs" style="padding: 12px 24px; font-size: 16px; cursor: pointer; margin-left: 12px;">
+      🗑️ 清空日志
+    </button>
+
+    <!-- 黑色日志面板，模拟终端控制台 -->
+    <div style="margin-top: 20px; padding: 16px; background: #1e1e1e; color: #d4d4d4; border-radius: 8px; max-height: 400px; overflow-y: auto; font-size: 13px;">
+      <!-- 循环渲染每一条日志，index作为key（简易日志场景可用） -->
+      <div v-for="(log, index) in logs" :key="index" style="padding: 2px 0; border-bottom: 1px solid #333;">
+        {{ log }}
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+// 导入我们实现好的全局请求池单例
+import { requestPool } from '@/utils/requestPool';
+
+// 响应式数组：存放页面上展示的所有日志文本
+const logs = ref<string[]>([]);
+
+/**
+ * ✅ 就是你问的 addLog 函数！
+ * 作用：统一新增一条日志，自动带上当前时间，推入logs数组
+ * 数组更新后页面自动渲染这条日志
+ */
+const addLog = (msg: string) => {
+  logs.value.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
+};
+
+// 点击按钮触发的主函数：一次性发起20个模拟请求
+const sendRequests = () => {
+  logs.value = []; // 先清空旧日志
+  addLog('🚀 开始发送 20 个并发请求...');
+  addLog(`📌 最大并发数: 6，超出部分将排队等待`);
+
+  // 收集所有请求Promise，最后统一监听全部完成
+  const promises: Promise<void>[] = [];
+
+  // 循环创建20个请求任务
+  for (let i = 1; i <= 20; i++) {
+    // 请求函数：交给请求池调度的任务
+    const requestFn = () => {
+      // 模拟接口耗时：1000 ~ 3000ms 随机延迟
+      const delay = 1000 + Math.random() * 2000;
+      // 模拟异步接口
+      return new Promise<{ id: number; delay: number }>((resolve) => {
+        setTimeout(() => {
+          resolve({ id: i, delay });
+        }, delay);
+      }).then((result) => {
+        // 请求完成后打印日志到页面
+        addLog(`✅ 请求 #${result.id} 完成 (耗时 ${result.delay.toFixed(0)}ms)`);
+      });
+    };
+
+    // 交给请求池管控执行（核心！限制最多同时跑6个）
+    const promise = requestPool.request(requestFn);
+    promises.push(promise);
+  }
+
+  // 等待20个请求全部执行完毕，打印结束提示
+  Promise.all(promises).then(() => {
+    addLog('🎉 所有请求已完成！');
+  });
+};
+
+// 清空日志数组，页面日志随之消失
+const clearLogs = () => {
+  logs.value = [];
+};
+</script>
+</code>
+
+# 第三步：验证
+
+启动项目：pnpm dev
+
+打开页面，点击 "发送 20 个并发请求"
+
+观察控制台输出和页面日志面板
+
+# 预期结果：
+
+![未加载成功](<screenshots/Screenshot 2026-08-04 110302.png>)
+
+1.控制台显示 当前并发数: 1/6 → 2/6 → ... → 6/6
+
+2.当并发数达到 6 后，第 7 个请求会等待，不会立即发起
+
+3.一个请求完成后，并发数降为 5，下一个等待的请求立即顶上来
+
+4.最终 20 个请求全部完成，整个过程并发数始终不超过 6
+注意：这个依旧是FIFO 而不是SJF 不是按发起顺序先后完成，因为每个请求设置了【随机耗时】 设置了const delay=1000+Math.random()\*2000
+
+# 如果不用请求池会发生什么？ 20 个请求同时发起，浏览器的网络调度器会把它们全部排队，但由于没有“主动控制并发”的逻辑，20 个请求会瞬间占满所有可用连接，页面可能变得响应缓慢。
