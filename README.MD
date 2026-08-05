@@ -1016,6 +1016,8 @@ if (import.meta.env.PROD) {
 # 但是我们前面ESLint把console全部都给Error了 所以现在需要去把他关闭掉才会让她再次显示
 
 在eslint里把eslintrc.cjs里的rule里的 no-console的内容 改成 'off' （必须是单引号）
+就像这样：
+![alt text](<screenshots/Screenshot 2026-08-05 153938.png>)
 
 <!-- 预期输出（控制台）： -->
 <!-- [性能监控] FCP: 456.2
@@ -1516,10 +1518,17 @@ shouldRetry?: (error: unknown) => boolean;
 
 - 指数退避重试
   \*/
+  // fn: () => Promise<T>：参数1，传入一个无参函数，执行后返回Promise<T>
+  // options: RetryOptions = {}：参数2，配置对象，不传则默认是空对象{}
+  // ): Promise<T>：整个函数最终返回Promise，内部解析值类型为T
   export async function retryWithBackoff<T>(
   fn: () => Promise<T>,
-  options: RetryOptions = {}
-  ): Promise<T> {
+  options: RetryOptions = {} //这是函数两个形参 把请求逻辑 “包成一个函数” 交给重试函数，让重试代码内部可以反复执行它。
+  ❗如果不包函数，直接传 Promise<T>（错误思路） 一开始promise就执行了 后面没法重新跑 这两段代码是和后端交互用的形参
+  ): Promise<T> { //options：参数名
+  RetryOptions：TS 接口，约束配置对象的结构（maxRetries /baseDelay/maxDelay /shouldRetry）
+  = {}：默认值，代表调用时不传第二个参数，options默认等于空对象{}
+  // 对象解构，取出配置，同时设置每一项的默认值
   const {
   maxRetries = 3,
   baseDelay = 500,
@@ -1529,15 +1538,15 @@ shouldRetry?: (error: unknown) => boolean;
   // 如果不是对象类型，直接不重试
   if (!isAxiosError(error)) return false;
 
-        // 只有 5xx 错误才重试（服务端错误）
-        if (error.response?.status && error.response.status >= 500) return true;
-        // 网络超时错误（Axios 的 ECONNABORTED）
-        if (error.code === 'ECONNABORTED') return true;
-        // 其他包含 timeout 关键字的错误
-        if (error.message?.includes('timeout')) return true;
+              // 只有 5xx 错误才重试（服务端错误）
+              if (error.response?.status && error.response.status >= 500) return true;
+              // 网络超时错误（Axios 的 ECONNABORTED）
+              if (error.code === 'ECONNABORTED') return true;
+              // 其他包含 timeout 关键字的错误
+              if (error.message?.includes('timeout')) return true;
 
-        return false;
-      },
+              return false;
+            },
 
   } = options;
 
@@ -1662,3 +1671,273 @@ addLog('🔄 已重置计数器');
 ![未能加载成功](<screenshots/Screenshot 2026-08-04 164946.png>)
 
 # 这一步是在浏览器console控制台里输出的 不是界面的输出处输出的 界面的输出处不会输出这些内容！！
+
+---
+
+# Demo 14：Service Worker 离线缓存(断网依旧可以加载资源)
+
+验证： 注册 Service Worker，在第一次访问时缓存关键资源（index.html、核心 JS 等），然后断网刷新页面，依然能正常显示首页。
+
+# 第一步：创建 Service Worker 文件
+
+# 在项目根目录（demo2-env/ 下，不是 src/）创建 sw.js： 注意是项目根目录！！！
+
+<code>
+// 定义缓存版本标识，修改后缀v1→v2 代表缓存版本更新，触发清理旧缓存
+const CACHE_NAME = 'demo-cache-v1';
+
+// 预缓存资源清单：install阶段主动缓存的静态资源
+const urlsToCache = [
+'/',
+'/index.html',
+// Vite 构建产物JS/CSS带有hash，文件名每次构建变化，手动维护不现实
+// 正式项目推荐使用 Workbox，构建时自动注入资源清单
+// 本示例仅演示基础原理，采用运行时动态缓存策略
+];
+
+// ===================== 1. Service Worker 安装事件 =====================
+// sw脚本首次被浏览器下载解析完成后，浏览器自动触发 install 生命周期
+self.addEventListener('install', (event) => {
+console.log('[Service Worker] 安装中...');
+
+// event.waitUntil()：告诉浏览器【等待内部异步操作全部完成】，再结束install阶段
+// 如果不包裹，浏览器可能提前终止sw，缓存操作中途失败
+event.waitUntil(
+// 打开指定名称的缓存存储空间，不存在则自动创建
+caches.open(CACHE_NAME)
+.then((cache) => {
+console.log('[Service Worker] 缓存资源...');
+// 批量请求清单内所有资源，并存入缓存；任意一个资源加载失败，整体失败
+return cache.addAll(urlsToCache);
+})
+.then(() => {
+console.log('[Service Worker] 安装完成');
+// self.skipWaiting()：强制跳过等待阶段，新sw立即进入activate激活状态
+// 不调用的话：新sw会处于waiting，等待所有旧页面关闭后才激活
+return self.skipWaiting();
+})
+);
+});
+
+// ===================== 2. Service Worker 激活事件 =====================
+// install成功、执行完skipWaiting后，浏览器触发 activate
+// 作用：清理过期缓存、接管页面
+self.addEventListener('activate', (event) => {
+console.log('[Service Worker] 激活中...');
+
+event.waitUntil(
+// 获取当前浏览器存在的所有缓存名称列表
+caches.keys()
+.then((cacheNames) => {
+// Promise.all 并行执行所有删除操作
+return Promise.all(
+cacheNames.map((cacheName) => {
+// 和当前缓存版本对比，删除所有旧版本缓存
+if (cacheName !== CACHE_NAME) {
+console.log(`[Service Worker] 删除旧缓存: ${cacheName}`);
+return caches.delete(cacheName);
+}
+})
+);
+})
+.then(() => {
+console.log('[Service Worker] 激活完成');
+// self.clients.claim()：让当前激活的sw，立刻接管所有已打开的页面
+// 不调用：只有后续新打开页面才会被sw控制
+return self.clients.claim();
+})
+);
+});
+
+// ===================== 3. 全局请求拦截 fetch 事件 =====================
+// 页面发起任意网络请求（img/fetch/axios/css/js）时，浏览器触发fetch事件
+self.addEventListener('fetch', (event) => {
+// 解析请求完整URL，方便判断域名、路径
+const requestUrl = new URL(event.request.url);
+
+// 规则1：非同源请求（CDN、第三方接口），不经过缓存逻辑，直接放行走网络
+if (requestUrl.origin !== self.location.origin) {
+// event.respondWith：自定义本次请求返回的响应
+event.respondWith(fetch(event.request));
+return;
+}
+
+// 规则2：只缓存GET请求，POST/PUT/DELETE等写操作不缓存
+if (event.request.method !== 'GET') {
+event.respondWith(fetch(event.request));
+return;
+}
+
+console.log(`[Service Worker] 拦截请求: ${event.request.url}`);
+
+// 自定义本次请求的响应逻辑：缓存优先策略（Cache-First）
+event.respondWith(
+// 在缓存中查找匹配当前请求的资源
+caches.match(event.request)
+.then((cachedResponse) => {
+// ✅ 缓存命中：直接返回缓存资源，不去请求网络
+if (cachedResponse) {
+console.log(`[Service Worker] ✅ 命中缓存: ${event.request.url}`);
+return cachedResponse;
+}
+
+        // ❌ 缓存未命中：发起真实网络请求
+        console.log(`[Service Worker] 缓存未命中，请求网络: ${event.request.url}`);
+        return fetch(event.request)
+          .then((response) => {
+            // 仅缓存HTTP状态200的成功响应，404/500等错误不存入缓存
+            if (response.status === 200) {
+              // ⚠️ Response对象是流，只能读取一次！必须clone一份副本存入缓存
+              const responseToCache = response.clone();
+              caches.open(CACHE_NAME)
+                .then((cache) => {
+                  // 将 请求-响应 键值对存入缓存
+                  cache.put(event.request, responseToCache);
+                });
+            }
+            // 返回原始响应给页面
+            return response;
+          })
+          .catch(() => {
+            // 网络彻底断开、fetch失败，进入离线兜底逻辑
+            console.error(`[Service Worker] ❌ 网络请求失败: ${event.request.url}`);
+            // 如果请求的是HTML页面（SPA路由），返回缓存中的首页index.html，实现离线访问
+            if (event.request.headers.get('accept')?.includes('text/html')) {
+              return caches.match('/');
+            }
+            // 其他资源兜底返回404响应
+            return new Response('Not Found', { status: 404 });
+          });
+      })
+
+);
+});
+</code>
+
+# 第二步：配置 Vite 构建，把 sw.js 复制到 dist/
+
+修改 vite.config.ts，添加 rollupOptions.input 和 publicDir 配置：
+<code>
+// vite.config.ts
+
+    // ========== 新增：让 sw.js 也被构建 ==========
+    build: {
+      rollupOptions: {
+        // 确保 sw.js 作为入口被处理
+        input: {
+          main: path.resolve(__dirname, 'index.html'),
+          sw: path.resolve(__dirname, 'sw.js'),
+        },
+        output: {
+
+          // 让 sw.js 输出到根目录（而不是 assets 里）
+          entryFileNames: (chunkInfo) => {
+            if (chunkInfo.name === 'sw') {
+              return '[name].js';
+            }
+          },
+        },
+      },
+    },
+
+};
+});
+</code>
+
+但更简单的方式： 把 sw.js 放到 public/ 目录下，Vite 构建时会自动复制到 dist/，不需要改 rollupOptions。
+
+# bash中
+
+# 创建 public 目录
+
+mkdir -p public
+
+# 把 sw.js 移到 public/
+
+mv sw.js public/
+
+# Vite 默认会将 public/ 下的文件原样复制到 dist/ 根目录。这是最简单的方式。
+
+# 第三步：注册 Service Worker
+
+修改 src/main.ts：
+
+<!-- 添加一个注册 Service Worker -->
+
+// 条件1：'serviceWorker' in navigator
+// navigator 是浏览器全局对象，检测浏览器是否具备 Service Worker 能力
+// 老旧浏览器、部分无痕模式、部分移动端webview可能不存在该API
+
+// 条件2：import.meta.env.PROD
+// Vite 内置环境变量：true = 生产打包环境；false = npm run dev 开发环境
+// 👉 含义：开发环境不注册sw，避免缓存导致调试时资源不刷新
+<code>
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+window.addEventListener('load', () => {
+// 核心API：注册 Service Worker
+// 参数：sw脚本路径 /sw.js
+navigator.serviceWorker.register('/sw.js')
+.then((registration) => {
+// registration 对象包含sw状态、等待中的sw、激活的sw等信息
+console.log('[SW] 注册成功:', registration);
+})
+.catch((error) => {
+// 注册失败常见原因：
+// 1. sw.js 404 路径写错
+// 2. 协议不是 HTTPS（localhost本地开发除外）
+// 3. 浏览器禁用service worker
+console.log('[SW] 注册失败:', error);
+});
+});
+}
+</code>
+
+# 第四步：验证离线缓存
+
+# 第一步：构建并启动
+
+pnpm build
+pnpm preview
+
+# 第二步：首次访问
+
+打开 http://localhost:4173，查看 DevTools → Console，应该看到
+![未能加载成功](<screenshots/Screenshot 2026-08-05 150604.png>)
+为什么会发生这种情况？（问题根源）
+在demo11中修改了vite.config.ts 导致这个配置会让 Vite 在构建时，把所有资源路径（JS、CSS、图片）都加上 https://cdn.example.com/demo2-env/ 前缀
+在 Demo 14 中，注册了 Service Worker。
+当访问 http://localhost:4173 时，页面加载了。
+但页面里的资源（index-xxx.js）请求的是 https://cdn.example.com/demo2-env/assets/...。
+电脑无法解析 cdn.example.com（因为这只是个假域名），所以资源加载失败（报错 ERR_NAME_NOT_RESOLVED）。
+Service Worker 的 fetch 事件监听到这些失败请求，尝试缓存它们，结果把“404 错误页面”也缓存下来了。
+之后刷新页面，SW 直接从缓存里取出“404 错误页面”，导致白屏。
+
+# 解决方案
+
+方案 A：清除 Service Worker 缓存（立即修复）1.在浏览器里手动清除 SW 缓存：2.打开 http://localhost:4173（或你的页面）。3.按 F12 打开 DevTools。4.切换到 Application 面板。5.左侧菜单选择 Service Workers。6.点击 Unregister 按钮（注销当前 SW）。7.左侧菜单选择 Cache Storage。8.右键点击 demo-cache-v1（或任何缓存），选择 Delete。9.硬刷新页面：按 Ctrl + Shift + R（Windows）或 Cmd + Shift + R（Mac）。
+
+方案 B：把 CDN 地址改回相对路径（永久修复）
+如果你只是想跑通 Demo 14，不想用假 CDN，把 vite.config.ts 里的 base 改回默认值：
+<code>
+// vite.config.ts
+export default defineConfig({
+base: '/', // 改回相对路径
+})
+</code>
+然后重新构建（pnpm build）、重新预览（pnpm preview）。这样所有资源请求都会走本地 localhost，不会去请求 cdn.example.com。
+
+方案 C：在真实项目中使用（正确的 CDN 用法）
+如果将来真的想用 CDN，需要把 base 改成真实的 CDN 地址（比如阿里云 OSS 或腾讯云 COS 分配的域名），并确保：
+CDN 服务器上确实有 demo2-env/assets/ 下的文件（需要把 dist/ 上传上去）。
+CDN 域名是真实可访问的（不是 cdn.example.com 这种假地址）。
+
+# 推荐使用方案B：
+
+开发时尽量用 base: '/' 跑通所有 Demo，CDN 配置单独作为一个演示分支，避免互相干扰。
+
+# 且谨记 Service Worker 规范要求：SW 脚本必须是 JavaScript 文件，且 MIME 类型必须是 text/javascript 或 application/javascript。如果是ts类型 就会拿到视频类型，直接拒绝注册。
+
+就像这样：
+![alt text](<screenshots/Screenshot 2026-08-05 153315.png>)
+改正后 正常运行
+![alt text](<screenshots/Screenshot 2026-08-05 153938.png>)

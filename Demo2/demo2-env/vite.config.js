@@ -47,9 +47,10 @@ export default defineConfig(({ command, mode }) => {
       port: 5173,
       open: true,
     },
-    base: mode === 'production' 
-      ? 'https://cdn.example.com/demo2-env/'  // 生产环境走 CDN
-      : '/',                                   // 开发环境走相对路径
+    base: '/',
+    // base: mode === 'production' 
+    //   ? 'https://cdn.example.com/demo2-env/'  // 生产环境走 CDN
+    //   : '/',                                   // 开发环境走相对路径    需要cdn的时候把它打开 不用的话就用相对路径 '/'
     alias: {
       '@': resolve(__dirname, 'src')
     },
