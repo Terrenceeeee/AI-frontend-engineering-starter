@@ -1941,3 +1941,172 @@ CDN 域名是真实可访问的（不是 cdn.example.com 这种假地址）。
 ![alt text](<screenshots/Screenshot 2026-08-05 153315.png>)
 改正后 正常运行
 ![alt text](<screenshots/Screenshot 2026-08-05 153938.png>)
+
+---
+
+# Demo 15：本地抓包环境配置 + HTTPS 解密验证
+
+1.拦截 HTTP/HTTPS 请求，查看明文数据。
+
+2.把线上域名代理到本地开发服务。
+
+3.理解 HTTPS 中间人解密原理。
+
+# 在日常开发中的体现：
+
+1.后端接口还没写好，但要先写页面（Mock 数据）
+Whistle 体现：你在 Whistle 里配一条规则，把 api.xxx.com/user/info 这个请求，直接返回你写好的 {name:'张三', age:18} 的 JSON 数据。
+效果：页面正常发请求，拿到假数据，UI 渲染完毕。等后端好了，把规则删掉，无缝切换到真实接口。不比后端慢，甚至还快。
+
+2.线上页面出了 Bug，但本地死活复现不出来（热替换调试）
+Whistle 体现：把线上 https://www.xxx.com/app.js 的请求，代理到本地修改后的 app.js 文件（file:// 规则）。
+效果：在本地改代码，保存，刷新线上页面，立刻生效。把线上页面当成你的“开发调试环境”，不用等发版就能验证修复。
+
+3.开发时接口跨域（CORS）问题：本地 localhost:5173 请求 api.xxx.com，浏览器报错 Access-Control-Allow-Origin
+方案 A（Vite 自带）：配 vite.config.ts 的 proxy，把 /api 转发到后端。（这是最常见的开发方式，本质就是一个轻量级的代理）
+方案 B（Whistle）：直接配规则 api.xxx.com 127.0.0.1:3000，让浏览器认为你在请求同源接口。
+效果：跨域问题被“绕”过去了。 你甚至不需要后端配 CORS 响应头，自己就能解决开发环境联调问题。
+
+4.手机真机调试 H5（微信/浏览器）：手机上打开 H5 页面，发现点击按钮没反应，但手机上没控制台，看不到报错
+Whistle 体现：1.手机 WiFi 设置代理指向你电脑（Whistle）。
+2.Whistle 注入 vConsole 脚本（htmlAppend 规则）。3.手机上自动出现绿色 vConsole 按钮。
+效果：在手机上点按钮，手机上实时显示 Console.log 和报错信息。在手机上拥有了 PC 浏览器的“F12 调试能力”。
+
+5.模拟极端网络环境（弱网/超时）：用户说“我们这儿网不好，页面总转圈”。自己是千兆光纤，永远复现不了慢网情况。
+Whistle 体现：配一条规则 api.xxx.com resDelay://3000（所有接口延迟 3 秒返回）。
+效果：你的页面瞬间变成“3G 弱网模式”。你可以亲自体验 Loading 动画、超时重试逻辑是否正常，提前优化用户体验，而不是等用户投诉后再改代码。
+
+如图：
+![alt text](<screenshots/Screenshot 2026-08-06 091253.png>)
+这些东西不需要天天用，但当你碰到“后端没写好”、“线上报错复现不了”、“手机上看不到报错”时，你心里得清楚
+——Whistle（或类似的代理工具）就是专门解决这些“非代码本身”的环境问题的。 这就是它在日常开发里的“隐形价值”——它是你的后备武器，不是日常主武器。
+
+# 第一步：安装 Whistle 优点：规则配置灵活（类正则）、支持HTTP/HTTPS/WebSocket、自带界面
+
+Whistle 是一个基于 Node.js 的跨平台抓包代理工具，安装前确保 Node.js 已安装whistle：
+C 端项目（电商、资讯、H5），线上出了 Bug 但本地无法复现时，Whistle 能把线上页面的 JS 替换成本地文件帮你调试，这是 DevTools 做不到的。
+
+ <!-- 全局安装 whistle -->
+
+pnpm install -g whistle
+可能会出现：
+![alt text](<screenshots/Screenshot 2026-08-06 091746.png>)
+这是因为pnpm 全局命令的存放目录 C:\Users\29453\AppData\Local\pnpm\bin 没有加入系统环境变量 PATH。
+在powershell 直接输入 pnpm setup pnpm setup 会自动把 pnpm 的全局 bin 目录写入 Windows 用户环境变量。
+然后关掉powershell 重新打开 再次输入即可
+如果还是报错呢 就可以使用非全局安装whistle 直接使用 npx 临时启动，完全规避这个报错
+npx whistle
+首次运行会自动下载 whistle，之后直接启动代理，不需要任何全局安装、不需要修改 PATH。
+
+<!-- #启动 whistle 服务 -->
+
+w2 start
+但如果是npx非全局安装 就需要输入npx whistle start 否则会出现：
+![alt text](<screenshots/Screenshot 2026-08-06 093530.png>)
+
+<!-- # 启动后会在终端输出访问地址，通常是 http://127.0.0.1:8899 -->
+
+# 补充说明： Whistle 启动后会在后台运行一个代理服务器，默认监听 8899 端口。可以在终端执行 w2 stop 停止服务，w2 restart 重启服务。
+
+# 第二步：配置浏览器代理
+
+方式 A：使用 SwitchyOmega 插件（推荐）
+在 Chrome 应用商店搜索安装 SwitchyOmega。（edge也行）
+![alt text](<screenshots/Screenshot 2026-08-06 094918.png>)选这个 稳定
+新建情景模式 → 选择“代理服务器”：
+协议：HTTP
+服务器：127.0.0.1
+端口：8899
+
+点击“应用选项”，然后点击插件图标选择该情景模式。
+
+方式 B：系统代理（不推荐，会代理所有流量）
+Mac：系统偏好设置 → 网络 → 高级 → 代理 → 网页代理(HTTP) 和 安全网页代理(HTTPS)，都填 127.0.0.1:8899。
+Windows：设置 → 网络和Internet → 代理 → 手动设置代理，地址填 127.0.0.1，端口填 8899。
+
+# 注意： 用系统代理会影响所有应用（包括系统更新、其他软件），建议用完切回“无代理”。SwitchyOmega 可以一键切换，更方便。
+
+# 第三步：访问 Whistle 管理界面
+
+打开浏览器，访问 http://127.0.0.1:8899，你会看到一个仪表盘界面：
+![alt text](<screenshots/Screenshot 2026-08-06 100139.png>)
+Network 面板：查看所有经过代理的请求列表，点开任意请求可以看到完整的请求头、响应头、响应体（明文）。要看接口返回了什么 -> 点 Network 标签页，找请求。
+
+Rules 面板：配置代理规则（把 api.xxx.com 指向 localhost:3000、修改请求/响应内容等）。要写 Mock 数据 -> 点 Rules 标签页，写规则
+
+HTTPS 面板：管理 HTTPS 解密需要的根证书。要抓手机包或看 HTTPS 明文 -> 点 HTTPS 区域下载证书，然后手机连代理，再回来看 Network 里的请求（此时不再是 Tunnel）。
+要看 WebSocket 消息 -> 点 WS 过滤。
+
+# 只需要记住：遇到网络问题，开 Whistle -> 点 Network 看日志；要改网络数据，点 Rules 写配置。
+
+# 第四步：安装 Whistle 根证书（HTTPS 解密的关键）
+
+为什么要装根证书？
+HTTPS 抓包的本质是“中间人劫持（MITM）”，Whistle 需要用自己的根证书动态生成目标域名的假证书。浏览器信任这个假证书的前提是——它信任签发这个假证书的根证书。所以你必须手动把 Whistle 的根证书安装到系统信任区。
+
+安装步骤：
+在 Whistle 管理界面，点击顶部菜单 HTTPS。
+点击 下载根证书，保存到本地。
+
+Mac 安装：
+双击 .crt 文件，自动打开钥匙串访问。
+找到 whistle 证书，双击 → 展开“信任” → 选择“始终信任”。
+
+Windows 安装：
+双击 .crt 文件 → 点击“安装证书” → 选择“本地计算机” → 选择“将所有证书放入下列存储” → 浏览选择“受信任的根证书颁发机构” → 完成。
+![alt text](<screenshots/Screenshot 2026-08-06 101944.png>)
+
+# 验证 HTTPS 解密是否生效：
+
+# 安装完成后，重启 Whistle（终端执行 w2 restart），
+
+然后访问一个 HTTPS 网站（比如 https://www.baidu.com），回到 Whistle 管理界面（http://127.0.0.1:8899）的 Network 面板。如果你看到 HTTPS 请求的状态是 200 而不是 Tunnel，点击请求能看到明文响应内容，就说明根证书安装成功了。
+但是此处极易出现这样的情况
+![alt text](<screenshots/Screenshot 2026-08-06 103219.png>)
+
+# 这是因为没有在浏览器自带的扩展里 打开设置的预先配置（对应第二步）
+
+这样就可以了：
+![alt text](<screenshots/Screenshot 2026-08-06 104010.png>)
+在 Whistle 的 Network 面板里，应该能看到百度首页的所有 HTTPS 请求（www.baidu.com、sp0.baidu.com 等）。
+
+点击任意一个请求，右侧查看 Response 标签页，能看到 HTML 源码（明文）。
+这里也会出现这样的问题 没有在右侧面板里看到对应的response标签页
+
+# 这也是因为没有打开一些设置
+
+在setting里打开response设置：
+![alt text](<screenshots/Screenshot 2026-08-06 104753.png>)
+在http里打开
+![alt text](<screenshots/Screenshot 2026-08-06 105444.png>)
+直至http显示为
+![alt text](<screenshots/Screenshot 2026-08-06 105455.png>)
+就可以在Inspector里底部看见Response界面了
+![alt text](<screenshots/Screenshot 2026-08-06 105722.png>)
+
+# 对比不开启代理时，HTTPS 请求的内容在浏览器 DevTools 里虽然也能看到，但 Whistle 里能看到的是“明文传输内容”，证明了 HTTPS 抓包解密的成功。
+
+# 第五步：配置代理规则（把线上域名指向本地）
+
+这是前端开发中最常用的场景之一。在 Whistle 管理界面，点击 Rules 菜单，在左侧编辑区输入：
+
+# 将线上 api 请求代理到本地 dev 服务
+
+api.xxx.com/api 127.0.0.1:3000
+
+# 将线上某个 JS 文件替换为本地文件（用于调试线上页面）
+
+https://cdn.xxx.com/app.js file:///Users/你的用户名/project/dist/app.js
+
+# 模拟接口返回数据（Mock，不依赖后端）
+
+api.xxx.com/user resBody://{code:0, data:{name:'test'}}
+
+# 模拟慢网络（延迟 500ms 返回）
+
+api.xxx.com/api resDelay://500
+
+# 第六步：验证代理生效
+
+在你自己的 Vue 项目里，发起一个请求到 api.xxx.com/api/test，然后打开 Whistle 的 Network 面板，你会看到这个请求被捕获。如果配置了 resBody:// 规则，会看到接口返回了你指定的 Mock 数据，而不是真实后端的数据。
+这意味着不需要等后端接口开发完成，就可以提前模拟数据调试页面逻辑了。
