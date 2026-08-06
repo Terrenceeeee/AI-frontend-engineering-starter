@@ -2111,6 +2111,10 @@ api.xxx.com/api resDelay://500
 在本 Vue 项目里，发起一个请求到 api.xxx.com/api/test，然后打开 Whistle 的 Network 面板，你会看到这个请求被捕获。如果配置了 resBody:// 规则，会看到接口返回了你指定的 Mock 数据，而不是真实后端的数据。
 这意味着不需要等后端接口开发完成，就可以提前模拟数据调试页面逻辑了。
 
+---
+
+# PS：具体实现步骤
+
 那么第六步如何实施呢？：
 第一步：在项目中添加一个“发请求”的按钮（如果没有的话）
 <template>
@@ -2210,3 +2214,6 @@ Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
 Access-Control-Allow-Headers: Content-Type, Authorization
 
 就可以使用whistle了
+![alt text](<screenshots/Screenshot 2026-08-06 152939.png>)
+
+---
