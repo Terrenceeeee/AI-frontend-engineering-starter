@@ -2108,5 +2108,105 @@ api.xxx.com/api resDelay://500
 
 # 第六步：验证代理生效
 
-在你自己的 Vue 项目里，发起一个请求到 api.xxx.com/api/test，然后打开 Whistle 的 Network 面板，你会看到这个请求被捕获。如果配置了 resBody:// 规则，会看到接口返回了你指定的 Mock 数据，而不是真实后端的数据。
+在本 Vue 项目里，发起一个请求到 api.xxx.com/api/test，然后打开 Whistle 的 Network 面板，你会看到这个请求被捕获。如果配置了 resBody:// 规则，会看到接口返回了你指定的 Mock 数据，而不是真实后端的数据。
 这意味着不需要等后端接口开发完成，就可以提前模拟数据调试页面逻辑了。
+
+那么第六步如何实施呢？：
+第一步：在项目中添加一个“发请求”的按钮（如果没有的话）
+<template>
+
+  <div style="padding: 40px; font-family: 'Courier New', monospace;">
+    <h1 style="color: #42b883;">🌍 Whistle Mock 测试 Demo</h1>
+
+    <button
+      @click="fetchUserInfo"
+      style="padding: 12px 24px; font-size: 16px; cursor: pointer; background: #42b883; border: none; border-radius: 4px; color: white;"
+    >
+      📡 请求用户信息
+    </button>
+
+    <div style="margin-top: 20px; padding: 16px; background: #f5f5f5; border-radius: 8px;">
+      <h4>返回结果：</h4>
+      <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 4px; overflow-x: auto;">
+        {{ responseData }}
+      </pre>
+    </div>
+
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const responseData = ref('等待请求...');
+
+const fetchUserInfo = async () => {
+  responseData.value = '⏳ 加载中...';
+  try {
+    // ⚠️ 注意：这里的域名要和 Whistle 规则匹配！
+    const res = await fetch('https://api.example.com/user/info');
+    const data = await res.json();
+    responseData.value = JSON.stringify(data, null, 2);
+  } catch (error) {
+    responseData.value = `❌ 请求失败：${error}`;
+  }
+};
+</script>
+
+第二步：在 Whistle 里创建 Mock 数据 1.打开 Whistle 管理界面 http://127.0.0.1:8899。
+
+2.点击顶部菜单 Values。
+
+3.在左侧的 “Create” 输入框中输入 userInfo（这是数据名，后面要在 Rules 里引用它）。
+
+4.点击 “Create” 按钮（或按回车）。
+
+5.在右侧编辑区输入以下 JSON 数据：
+<code>
+{
+"code": 0,
+"message": "success",
+"data": {
+"id": 1001,
+"name": "张三",
+"avatar": "https://avatars.githubusercontent.com/u/1?v=4",
+"email": "zhangsan@example.com",
+"role": "管理员",
+"permissions": ["read", "write", "delete"]
+}
+}
+</code>
+
+# 第三步：在 Whistle 里配置拦截规则
+
+1.点击顶部菜单 Rules。2.在左侧编辑区输入以下规则：
+
+https://api.example.com/user/info resBody://{userInfo}
+
+这行规则的解读：
+https://api.example.com/user/info：匹配你代码里请求的完整 URL。
+resBody://{userInfo}：把该 URL 的响应内容替换为 Values 里 userInfo 中存储的数据。
+点击右上角的 Save 保存。
+
+# 第四步：验证 Mock 生效
+
+1.回到浏览器，打开你的项目页面 http://localhost:5173。2.点击 “请求用户信息” 按钮。3.观察页面显示的内容
+就会发现
+![alt text](<screenshots/Screenshot 2026-08-06 140453.png>)
+![alt text](<screenshots/Screenshot 2026-08-06 141457.png>)
+这是因为localhost:5173和我们既定的https://api.example.com/user/info产生了跨域 引发了CORS警报
+
+# 解决方案：在 Whistle 里直接加上 CORS 响应头
+
+这是最“工程化”的解法。你不需要改项目代码，直接在 Whistle Rules 里告诉它：“除了返回 Mock 数据，还要告诉浏览器允许跨域。”
+
+把 Whistle Rules 改成这样：
+https://api.example.com/user/info resBody://{userInfo} resHeaders://{corsHeaders}
+
+然后在 Values 里新建一个 corsHeaders，内容写：
+
+Access-Control-Allow-Origin: \*
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+
+就可以使用whistle了

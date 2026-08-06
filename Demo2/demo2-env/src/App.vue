@@ -26,6 +26,22 @@
       🔄 重置状态
     </button>
   </div>
+  <div style="padding: 40px; font-family: 'Courier New', monospace;">
+    <h1 style="color: #42b883;">🌍 Whistle Mock 测试 Demo</h1>
+
+    <button
+      style="padding: 12px 24px; font-size: 16px; cursor: pointer; background: #42b883; border: none; border-radius: 4px; color: white;"
+      @click="fetchUserInfo">
+      📡 请求用户信息
+    </button>
+
+    <div style="margin-top: 20px; padding: 16px; background: #f5f5f5; border-radius: 8px;">
+      <h4>返回结果：</h4>
+      <pre style="background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 4px; overflow-x: auto;">
+        {{ responseData }}
+      </pre>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -86,5 +102,17 @@ const resetTest = () => {
 const clearLogs = () => {
   logs.value = [];
 };
+const responseData = ref('等待请求...');
 
+const fetchUserInfo = async () => {
+  responseData.value = '⏳ 加载中...';
+  try {
+    // ⚠️ 注意：这里的域名要和 Whistle 规则匹配！
+    const res = await fetch('https://api.example.com/user/info');
+    const data = await res.json();
+    responseData.value = JSON.stringify(data, null, 2);
+  } catch (error) {
+    responseData.value = `❌ 请求失败：${error}`;
+  }
+};
 </script>
