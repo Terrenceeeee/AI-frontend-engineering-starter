@@ -469,6 +469,21 @@ output: {
 
 # 分包拆分规范：手动分包：把 Vue 核心库单独打成一个 vendor 包 !!!!此处最新版Rollup要求使用函数形式而非对象形式
 
+# sourcemap的作用不只是为了便于调试时定位源码位置 当你开启 sourcemap: true，Vite 构建时会生成一个 .map 文件
+
+# .map 文件里记录了“压缩后的代码”和“原始代码”之间的映射关系（JSON 格式），比如：浏览器会自动读取 .map 文件（只要 DevTools 是打开状态），在 Sources 面板里直接显示你原始的 math.ts 代码。
+
+现在报错看到的是：
+
+text
+add@src/utils/math.ts:3
+而不是：
+
+text
+o@index-abc123.js:1
+
+# Debug 效率提升 10 倍。 这就是 SourceMap 的价值。
+
 manualChunks(id) {
 // 所有以 'vue' 开头的包（vue、vue-router 等）都打包到 vue-vendor 中
 if (id.includes('vue') || id.includes('vue-router')) {
@@ -2217,3 +2232,64 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 ![alt text](<screenshots/Screenshot 2026-08-06 152939.png>)
 
 ---
+
+# Demo 16：vConsole 调试钩子 + SourceMap 配置
+
+用处：
+// 1.在项目中嵌入vConsole 调试面板（移动端H5调试利器）
+// 2.通过URL参数？debug=1控制vConsole是否加载
+// 3.配置Vite生成SourceMap文件（用于线上报错定位）
+
+# 第一步：安装 vConsole
+
+pnpm add -D vconsole
+
+# 第二步：在 main.ts 中实现动态调试钩子
+
+<!--
+你导图里已经画了逻辑：“只有开发环境或 URL 带 ?debug=1 时才加载”。 -->
+
+修改 src/main.js：
+<code>
+// ========== vConsole 调试钩子 ==========
+// 条件：开发模式 或 URL 中有 ?debug=1
+const isDev = import.meta.env.MODE === 'development';
+const hasDebugParam = window.location.search.includes('debug=1');
+
+if (isDev || hasDebugParam) {
+// 动态导入 vConsole（仅在需要时加载，减少首屏体积）
+import('vconsole').then(({ default: VConsole }) => {
+// 如果已经有 vConsole 实例，不重复创建
+if (!window.vConsole) {
+window.vConsole = new VConsole();
+console.log('[vConsole] 调试面板已开启');
+}
+});
+}
+</code>
+
+# 第三步：配置 Vite 生成 SourceMap
+
+修改 vite.config.js
+// ========== 新增：开启 SourceMap ==========
+build: {
+sourcemap: true, // 构建时生成 .map 文件
+},
+
+# 第四步：验证 vConsole
+
+1.执行 pnpm dev，打开 http://localhost:5173。
+
+2.预期结果：页面右下角出现绿色的 vConsole 按钮。点击它，可以看到 Console、Network、Elements 等调试面板。
+![alt text](<screenshots/Screenshot 2026-08-07 090116.png>)
+![alt text](<screenshots/Screenshot 2026-08-07 090226.png>)
+
+3.执行 pnpm build，然后 pnpm preview，打开 http://localhost:4173。
+
+4.预期结果：默认不显示 vConsole 按钮（因为生产环境，且 URL 中没有 debug=1）。
+![alt text](<screenshots/Screenshot 2026-08-07 090818.png>) 因为判断为import.meta.env.MODE != 'development' 所以不执行下面的内容
+
+5.在 URL 后加 ?debug=1（如 http://localhost:4173/?debug=1），刷新页面。
+![alt text](<screenshots/Screenshot 2026-08-07 090959.png>) 因为判断为hasDebugParam = window.location.search.includes('debug=1'); 所以执行下面的内容
+
+6.预期结果：vConsole 按钮出现 ✅
