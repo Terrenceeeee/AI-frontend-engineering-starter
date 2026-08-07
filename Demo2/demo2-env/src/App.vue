@@ -42,12 +42,17 @@
       </pre>
     </div>
   </div>
+  <div style="padding: 40px; font-family: 'Courier New', monospace;">
+    <h1 style="color: #42b883;">🌍 WebSocket 双向通信 Demo</h1>
+    <WebSocketDemo />
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { requestPool } from '@/utils/requestPool';
 import { fetchWithRetry, resetAttemptCount } from '@/api/testApi';
+import WebSocketDemo from './components/WebSocketDemo.vue';
 
 const logs = ref<string[]>([]);
 

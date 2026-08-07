@@ -1693,9 +1693,9 @@ addLog('🔄 已重置计数器');
 
 验证： 注册 Service Worker，在第一次访问时缓存关键资源（index.html、核心 JS 等），然后断网刷新页面，依然能正常显示首页。
 
-# 第一步：创建 Service Worker 文件
+## 第一步：创建 Service Worker 文件
 
-# 在项目根目录（demo2-env/ 下，不是 src/）创建 sw.js： 注意是项目根目录！！！
+### 在项目根目录（demo2-env/ 下，不是 src/）创建 sw.js： 注意是项目根目录！！！
 
 <code>
 // 定义缓存版本标识，修改后缀v1→v2 代表缓存版本更新，触发清理旧缓存
@@ -1829,7 +1829,7 @@ return cachedResponse;
 });
 </code>
 
-# 第二步：配置 Vite 构建，把 sw.js 复制到 dist/
+## 第二步：配置 Vite 构建，把 sw.js 复制到 dist/
 
 修改 vite.config.ts，添加 rollupOptions.input 和 publicDir 配置：
 <code>
@@ -1861,19 +1861,19 @@ return cachedResponse;
 
 但更简单的方式： 把 sw.js 放到 public/ 目录下，Vite 构建时会自动复制到 dist/，不需要改 rollupOptions。
 
-# bash中
+### bash中
 
-# 创建 public 目录
+### 创建 public 目录
 
 mkdir -p public
 
-# 把 sw.js 移到 public/
+### 把 sw.js 移到 public/
 
 mv sw.js public/
 
-# Vite 默认会将 public/ 下的文件原样复制到 dist/ 根目录。这是最简单的方式。
+### Vite 默认会将 public/ 下的文件原样复制到 dist/ 根目录。这是最简单的方式。
 
-# 第三步：注册 Service Worker
+## 第三步：注册 Service Worker
 
 修改 src/main.ts：
 
@@ -1907,14 +1907,14 @@ console.log('[SW] 注册失败:', error);
 }
 </code>
 
-# 第四步：验证离线缓存
+## 第四步：验证离线缓存
 
-# 第一步：构建并启动
+### 第一步：构建并启动
 
 pnpm build
 pnpm preview
 
-# 第二步：首次访问
+### 第二步：首次访问
 
 打开 http://localhost:4173，查看 DevTools → Console，应该看到
 ![未能加载成功](<screenshots/Screenshot 2026-08-05 150604.png>)
@@ -1927,7 +1927,7 @@ pnpm preview
 Service Worker 的 fetch 事件监听到这些失败请求，尝试缓存它们，结果把“404 错误页面”也缓存下来了。
 之后刷新页面，SW 直接从缓存里取出“404 错误页面”，导致白屏。
 
-# 解决方案
+#### 解决方案
 
 方案 A：清除 Service Worker 缓存（立即修复）1.在浏览器里手动清除 SW 缓存：2.打开 http://localhost:4173（或你的页面）。3.按 F12 打开 DevTools。4.切换到 Application 面板。5.左侧菜单选择 Service Workers。6.点击 Unregister 按钮（注销当前 SW）。7.左侧菜单选择 Cache Storage。8.右键点击 demo-cache-v1（或任何缓存），选择 Delete。9.硬刷新页面：按 Ctrl + Shift + R（Windows）或 Cmd + Shift + R（Mac）。
 
@@ -1946,11 +1946,11 @@ base: '/', // 改回相对路径
 CDN 服务器上确实有 demo2-env/assets/ 下的文件（需要把 dist/ 上传上去）。
 CDN 域名是真实可访问的（不是 cdn.example.com 这种假地址）。
 
-# 推荐使用方案B：
+#### 推荐使用方案B：
 
 开发时尽量用 base: '/' 跑通所有 Demo，CDN 配置单独作为一个演示分支，避免互相干扰。
 
-# 且谨记 Service Worker 规范要求：SW 脚本必须是 JavaScript 文件，且 MIME 类型必须是 text/javascript 或 application/javascript。如果是ts类型 就会拿到视频类型，直接拒绝注册。
+#### 且谨记 Service Worker 规范要求：SW 脚本必须是 JavaScript 文件，且 MIME 类型必须是 text/javascript 或 application/javascript。如果是ts类型 就会拿到视频类型，直接拒绝注册。
 
 就像这样：
 ![alt text](<screenshots/Screenshot 2026-08-05 153315.png>)
@@ -1967,7 +1967,7 @@ CDN 域名是真实可访问的（不是 cdn.example.com 这种假地址）。
 
 3.理解 HTTPS 中间人解密原理。
 
-# 在日常开发中的体现：
+## 在日常开发中的体现：
 
 1.后端接口还没写好，但要先写页面（Mock 数据）
 Whistle 体现：你在 Whistle 里配一条规则，把 api.xxx.com/user/info 这个请求，直接返回你写好的 {name:'张三', age:18} 的 JSON 数据。
@@ -1996,7 +1996,7 @@ Whistle 体现：配一条规则 api.xxx.com resDelay://3000（所有接口延�
 这些东西不需要天天用，但当你碰到“后端没写好”、“线上报错复现不了”、“手机上看不到报错”时，你心里得清楚
 ——Whistle（或类似的代理工具）就是专门解决这些“非代码本身”的环境问题的。 这就是它在日常开发里的“隐形价值”——它是你的后备武器，不是日常主武器。
 
-# 第一步：安装 Whistle 优点：规则配置灵活（类正则）、支持HTTP/HTTPS/WebSocket、自带界面
+## 第一步：安装 Whistle 优点：规则配置灵活（类正则）、支持HTTP/HTTPS/WebSocket、自带界面
 
 Whistle 是一个基于 Node.js 的跨平台抓包代理工具，安装前确保 Node.js 已安装whistle：
 C 端项目（电商、资讯、H5），线上出了 Bug 但本地无法复现时，Whistle 能把线上页面的 JS 替换成本地文件帮你调试，这是 DevTools 做不到的。
@@ -2021,9 +2021,9 @@ w2 start
 
 <!-- # 启动后会在终端输出访问地址，通常是 http://127.0.0.1:8899 -->
 
-# 补充说明： Whistle 启动后会在后台运行一个代理服务器，默认监听 8899 端口。可以在终端执行 w2 stop 停止服务，w2 restart 重启服务。
+### 补充说明： Whistle 启动后会在后台运行一个代理服务器，默认监听 8899 端口。可以在终端执行 w2 stop 停止服务，w2 restart 重启服务。
 
-# 第二步：配置浏览器代理
+## 第二步：配置浏览器代理
 
 方式 A：使用 SwitchyOmega 插件（推荐）
 在 Chrome 应用商店搜索安装 SwitchyOmega。（edge也行）
@@ -2039,9 +2039,9 @@ w2 start
 Mac：系统偏好设置 → 网络 → 高级 → 代理 → 网页代理(HTTP) 和 安全网页代理(HTTPS)，都填 127.0.0.1:8899。
 Windows：设置 → 网络和Internet → 代理 → 手动设置代理，地址填 127.0.0.1，端口填 8899。
 
-# 注意： 用系统代理会影响所有应用（包括系统更新、其他软件），建议用完切回“无代理”。SwitchyOmega 可以一键切换，更方便。
+### 注意： 用系统代理会影响所有应用（包括系统更新、其他软件），建议用完切回“无代理”。SwitchyOmega 可以一键切换，更方便。
 
-# 第三步：访问 Whistle 管理界面
+## 第三步：访问 Whistle 管理界面
 
 打开浏览器，访问 http://127.0.0.1:8899，你会看到一个仪表盘界面：
 ![alt text](<screenshots/Screenshot 2026-08-06 100139.png>)
@@ -2052,9 +2052,9 @@ Rules 面板：配置代理规则（把 api.xxx.com 指向 localhost:3000、修�
 HTTPS 面板：管理 HTTPS 解密需要的根证书。要抓手机包或看 HTTPS 明文 -> 点 HTTPS 区域下载证书，然后手机连代理，再回来看 Network 里的请求（此时不再是 Tunnel）。
 要看 WebSocket 消息 -> 点 WS 过滤。
 
-# 只需要记住：遇到网络问题，开 Whistle -> 点 Network 看日志；要改网络数据，点 Rules 写配置。
+### 只需要记住：遇到网络问题，开 Whistle -> 点 Network 看日志；要改网络数据，点 Rules 写配置。
 
-# 第四步：安装 Whistle 根证书（HTTPS 解密的关键）
+## 第四步：安装 Whistle 根证书（HTTPS 解密的关键）
 
 为什么要装根证书？
 HTTPS 抓包的本质是“中间人劫持（MITM）”，Whistle 需要用自己的根证书动态生成目标域名的假证书。浏览器信任这个假证书的前提是——它信任签发这个假证书的根证书。所以你必须手动把 Whistle 的根证书安装到系统信任区。
@@ -2071,15 +2071,15 @@ Windows 安装：
 双击 .crt 文件 → 点击“安装证书” → 选择“本地计算机” → 选择“将所有证书放入下列存储” → 浏览选择“受信任的根证书颁发机构” → 完成。
 ![alt text](<screenshots/Screenshot 2026-08-06 101944.png>)
 
-# 验证 HTTPS 解密是否生效：
+### 验证 HTTPS 解密是否生效：
 
-# 安装完成后，重启 Whistle（终端执行 w2 restart），
+### 安装完成后，重启 Whistle（终端执行 w2 restart），
 
 然后访问一个 HTTPS 网站（比如 https://www.baidu.com），回到 Whistle 管理界面（http://127.0.0.1:8899）的 Network 面板。如果你看到 HTTPS 请求的状态是 200 而不是 Tunnel，点击请求能看到明文响应内容，就说明根证书安装成功了。
 但是此处极易出现这样的情况
 ![alt text](<screenshots/Screenshot 2026-08-06 103219.png>)
 
-# 这是因为没有在浏览器自带的扩展里 打开设置的预先配置（对应第二步）
+### 这是因为没有在浏览器自带的扩展里 打开设置的预先配置（对应第二步）
 
 这样就可以了：
 ![alt text](<screenshots/Screenshot 2026-08-06 104010.png>)
@@ -2088,7 +2088,7 @@ Windows 安装：
 点击任意一个请求，右侧查看 Response 标签页，能看到 HTML 源码（明文）。
 这里也会出现这样的问题 没有在右侧面板里看到对应的response标签页
 
-# 这也是因为没有打开一些设置
+### 这也是因为没有打开一些设置
 
 在setting里打开response设置：
 ![alt text](<screenshots/Screenshot 2026-08-06 104753.png>)
@@ -2099,39 +2099,41 @@ Windows 安装：
 就可以在Inspector里底部看见Response界面了
 ![alt text](<screenshots/Screenshot 2026-08-06 105722.png>)
 
-# 对比不开启代理时，HTTPS 请求的内容在浏览器 DevTools 里虽然也能看到，但 Whistle 里能看到的是“明文传输内容”，证明了 HTTPS 抓包解密的成功。
+### 对比不开启代理时，HTTPS 请求的内容在浏览器 DevTools 里虽然也能看到，但 Whistle 里能看到的是“明文传输内容”，证明了 HTTPS 抓包解密的成功。
 
-# 第五步：配置代理规则（把线上域名指向本地）
+## 第五步：配置代理规则（把线上域名指向本地）
 
 这是前端开发中最常用的场景之一。在 Whistle 管理界面，点击 Rules 菜单，在左侧编辑区输入：
 
-# 将线上 api 请求代理到本地 dev 服务
+### 将线上 api 请求代理到本地 dev 服务
 
 api.xxx.com/api 127.0.0.1:3000
 
-# 将线上某个 JS 文件替换为本地文件（用于调试线上页面）
+### 将线上某个 JS 文件替换为本地文件（用于调试线上页面）
 
 https://cdn.xxx.com/app.js file:///Users/你的用户名/project/dist/app.js
 
-# 模拟接口返回数据（Mock，不依赖后端）
+### 模拟接口返回数据（Mock，不依赖后端）
 
 api.xxx.com/user resBody://{code:0, data:{name:'test'}}
 
-# 模拟慢网络（延迟 500ms 返回）
+### 模拟慢网络（延迟 500ms 返回）
 
 api.xxx.com/api resDelay://500
 
-# 第六步：验证代理生效
+## 第六步：验证代理生效
 
 在本 Vue 项目里，发起一个请求到 api.xxx.com/api/test，然后打开 Whistle 的 Network 面板，你会看到这个请求被捕获。如果配置了 resBody:// 规则，会看到接口返回了你指定的 Mock 数据，而不是真实后端的数据。
 这意味着不需要等后端接口开发完成，就可以提前模拟数据调试页面逻辑了。
 
 ---
 
-# PS：具体实现步骤
+## PS：具体实现步骤
 
 那么第六步如何实施呢？：
-第一步：在项目中添加一个“发请求”的按钮（如果没有的话）
+
+### 第一步：在项目中添加一个“发请求”的按钮（如果没有的话）
+
 <template>
 
   <div style="padding: 40px; font-family: 'Courier New', monospace;">
@@ -2172,7 +2174,7 @@ const fetchUserInfo = async () => {
 };
 </script>
 
-第二步：在 Whistle 里创建 Mock 数据 1.打开 Whistle 管理界面 http://127.0.0.1:8899。
+### 第二步：在 Whistle 里创建 Mock 数据 1.打开 Whistle 管理界面 http://127.0.0.1:8899。
 
 2.点击顶部菜单 Values。
 
@@ -2196,7 +2198,7 @@ const fetchUserInfo = async () => {
 }
 </code>
 
-# 第三步：在 Whistle 里配置拦截规则
+### 第三步：在 Whistle 里配置拦截规则
 
 1.点击顶部菜单 Rules。2.在左侧编辑区输入以下规则：
 
@@ -2207,7 +2209,7 @@ https://api.example.com/user/info：匹配你代码里请求的完整 URL。
 resBody://{userInfo}：把该 URL 的响应内容替换为 Values 里 userInfo 中存储的数据。
 点击右上角的 Save 保存。
 
-# 第四步：验证 Mock 生效
+### 第四步：验证 Mock 生效
 
 1.回到浏览器，打开你的项目页面 http://localhost:5173。2.点击 “请求用户信息” 按钮。3.观察页面显示的内容
 就会发现
@@ -2215,7 +2217,7 @@ resBody://{userInfo}：把该 URL 的响应内容替换为 Values 里 userInfo �
 ![alt text](<screenshots/Screenshot 2026-08-06 141457.png>)
 这是因为localhost:5173和我们既定的https://api.example.com/user/info产生了跨域 引发了CORS警报
 
-# 解决方案：在 Whistle 里直接加上 CORS 响应头
+### 解决方案：在 Whistle 里直接加上 CORS 响应头
 
 这是最“工程化”的解法。你不需要改项目代码，直接在 Whistle Rules 里告诉它：“除了返回 Mock 数据，还要告诉浏览器允许跨域。”
 
@@ -2240,11 +2242,11 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 // 2.通过URL参数？debug=1控制vConsole是否加载
 // 3.配置Vite生成SourceMap文件（用于线上报错定位）
 
-# 第一步：安装 vConsole
+## 第一步：安装 vConsole
 
 pnpm add -D vconsole
 
-# 第二步：在 main.ts 中实现动态调试钩子
+## 第二步：在 main.ts 中实现动态调试钩子
 
 <!--
 你导图里已经画了逻辑：“只有开发环境或 URL 带 ?debug=1 时才加载”。 -->
@@ -2268,7 +2270,7 @@ console.log('[vConsole] 调试面板已开启');
 }
 </code>
 
-# 第三步：配置 Vite 生成 SourceMap
+## 第三步：配置 Vite 生成 SourceMap
 
 修改 vite.config.js
 // ========== 新增：开启 SourceMap ==========
@@ -2276,7 +2278,7 @@ build: {
 sourcemap: true, // 构建时生成 .map 文件
 },
 
-# 第四步：验证 vConsole
+## 第四步：验证 vConsole
 
 1.执行 pnpm dev，打开 http://localhost:5173。
 
@@ -2293,3 +2295,224 @@ sourcemap: true, // 构建时生成 .map 文件
 ![alt text](<screenshots/Screenshot 2026-08-07 090959.png>) 因为判断为hasDebugParam = window.location.search.includes('debug=1'); 所以执行下面的内容
 
 6.预期结果：vConsole 按钮出现 ✅
+
+---
+
+# Demo 17：WebSocket 双向通信验证
+
+## 一、为什么会有这个 Demo？（痛点场景
+
+在传统的 HTTP 通信中，有一个根本性的限制：只能由客户端主动发起请求，服务器被动响应。
+
+想象这些真实业务场景：
+聊天应用：别人给你发消息，你必须刷新页面才能看到？
+股票行情：价格变动了，你要手动刷新页面才能看到最新价格？
+订单推送：用户下单了，你要不断刷新后台才能看到新订单？
+游戏对战：对手出招了，你要等页面刷新才能看到？
+如果只能用 HTTP 实现，唯一的办法是轮询（Polling）：
+短轮询：每隔 1 秒发一次 HTTP 请求“有新消息吗？”
+长轮询：发一个请求，有消息时返回，否则挂住，但有超时限制，超时后重新发请求
+
+### 这两种方式的共同问题： 大量无意义的请求浪费带宽、消耗服务器资源、实时性差。HTTP 协议本身是无状态的“一问一答”模式，服务器无法主动“推”数据给客户端，这就是 WebSocket 诞生的根本原因。
+
+## 二、Demo 17 的功效（它能做什么）
+
+这个 Demo 在浏览器里建立了一条 WebSocket 长连接，实现：
+
+#### 全双工实时通信：客户端可以发消息给服务器，服务器也可以随时主动推送消息给客户端，互不干扰。
+
+#### 极低延迟：消息发出后毫秒级到达，不需要等待下次请求周期（HTTP 轮询最短也要 1 秒以上）。
+
+#### 极低开销：连接建立后，传输消息只需要很小的帧头，不需要每次请求都携带 Header（HTTP 每次都要带 Cookie、User-Agent 等几百字节的 Header）。
+
+#### 连接持久化：一次握手，长期保持，不会断开（除非网络故障或主动关闭）。
+
+## 三、要从中学到什么
+
+### 理解 WebSocket 的核心概念：全双工、长连接、服务端推送
+
+### 掌握 WebSocket 的浏览器 API ：new WebSocket()、onopen、onmessage、onclose、send()
+
+### 对比 HTTP 和 WebSocket ：短轮询 vs 长轮询 vs WebSocket 的优劣
+
+### 掌握 WebSocket 的调试方法 ：Chrome DevTools → Network → WS 标签页查看帧
+
+### 建立“实时通信”的技术选型思维 ：什么场景用 HTTP，什么场景用 WebSocket
+
+## 第一步：创建 WebSocket 测试组件
+
+在 src/components/WebSocketDemo.vue 中创建：
+<code>
+<template>
+
+  <div style="padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin: 20px 0;">
+    <h3>📡 WebSocket 实时推送 Demo</h3>
+
+    <div style="margin: 12px 0;">
+      <button @click="connect" :disabled="connected" style="padding: 6px 16px; cursor: pointer;">
+        🔗 连接
+      </button>
+      <button @click="disconnect" :disabled="!connected" style="padding: 6px 16px; margin-left: 8px; cursor: pointer;">
+        ❌ 断开
+      </button>
+      <button @click="clearMessages" style="padding: 6px 16px; margin-left: 8px; cursor: pointer;">
+        🗑️ 清空消息
+      </button>
+      <span style="margin-left: 16px; font-size: 14px;">
+        状态: <strong :style="{ color: connected ? '#42b883' : '#ff6b6b' }">
+          {{ connected ? '✅ 已连接' : '❌ 未连接' }}
+        </strong>
+      </span>
+      <span style="margin-left: 16px; font-size: 14px; color: #666;">
+        消息数: {{ messages.length }}
+      </span>
+    </div>
+
+    <div style="max-height: 300px; overflow-y: auto; background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; font-size: 13px; font-family: 'Courier New', monospace;">
+      <div v-for="(msg, idx) in messages" :key="idx" style="padding: 4px 0; border-bottom: 1px solid #333;">
+        <span style="color: #888;">[{{ msg.time }}]</span>
+        <span :style="{ color: msg.type === 'recv' ? '#4ec9b0' : '#dcdcaa' }">
+          {{ msg.type === 'recv' ? '⬅️ 收到' : '➡️ 发送' }}
+        </span>
+        {{ msg.content }}
+      </div>
+    </div>
+
+    <div style="margin-top: 12px; display: flex; gap: 8px;">
+      <input
+        v-model="inputMessage"
+        placeholder="输入消息..."
+        @keyup.enter="sendMessage"
+        style="flex: 1; padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px;"
+      />
+      <button @click="sendMessage" :disabled="!connected" style="padding: 6px 16px; cursor: pointer;">
+        📤 发送
+      </button>
+    </div>
+
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onUnmounted } from 'vue';
+
+const messages = ref<{ time: string; type: string; content: string }[]>([]);
+const connected = ref(false);
+const inputMessage = ref('');
+let ws: WebSocket | null = null;
+
+const addMessage = (type: string, content: string) => {
+  const now = new Date();
+  const time = now.toLocaleTimeString();
+  messages.value.push({ time, type, content });
+};
+
+const connect = () => {
+  if (ws && ws.readyState === WebSocket.OPEN) return;
+
+  // 使用公共 WebSocket 测试服务（会回显你发的任何消息）
+  ws = new WebSocket('wss://echo.websocket.org');
+
+  ws.onopen = () => {
+    connected.value = true;
+    addMessage('sys', '🔗 连接已建立');
+  };
+
+  ws.onmessage = (event) => {
+    addMessage('recv', event.data);
+  };
+
+  ws.onclose = () => {
+    connected.value = false;
+    addMessage('sys', '🔌 连接已断开');
+    ws = null;
+  };
+
+  ws.onerror = () => {
+    addMessage('sys', '❌ 连接出错，请检查网络');
+  };
+};
+
+const disconnect = () => {
+  if (ws) {
+    ws.close();
+    ws = null;
+    connected.value = false;
+  }
+};
+
+const sendMessage = () => {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    alert('请先连接 WebSocket');
+    return;
+  }
+  const msg = inputMessage.value.trim();
+  if (!msg) return;
+
+  ws.send(msg);
+  addMessage('send', msg);
+  inputMessage.value = '';
+};
+
+const clearMessages = () => {
+  messages.value = [];
+};
+
+// 组件销毁时自动断开 WebSocket 连接
+onUnmounted(() => {
+  disconnect();
+});
+</script>
+</code>
+
+## 第二步：在 App.vue 中引入 WebSocketDemo 组件
+
+<code>
+<template>
+  <div style="padding: 40px; font-family: 'Courier New', monospace;">
+    <h1 style="color: #42b883;">🌍 WebSocket 双向通信 Demo</h1>
+    <WebSocketDemo />
+  </div>
+</template>
+
+<script setup lang="ts">
+import WebSocketDemo from './components/WebSocketDemo.vue';
+</script>
+</code>
+
+## 第三步：验证 WebSocket
+
+执行 pnpm dev，打开 http://localhost:5173。
+
+点击 “连接” 按钮。
+
+预期结果：按钮上方显示“✅ 已连接”，消息框出现 [时间] 🔗 连接已建立。
+![alt text](<screenshots/Screenshot 2026-08-07 170056.png>)
+在输入框中输入任意文字（如 Hello），点击 “发送”。
+
+预期结果：消息框出现 [时间] ➡️ 发送 Hello，紧接着出现 [时间] ⬅️ 收到 Hello（回显）。
+![alt text](<screenshots/Screenshot 2026-08-07 170130.png>)
+点击 “断开” 按钮。
+
+预期结果：状态变为“❌ 未连接”，消息框出现 [时间] 🔌 连接已断开。
+![alt text](<screenshots/Screenshot 2026-08-07 170220.png>)
+
+## 第四步：观察 WebSocket 长连接（对比 HTTP）
+
+在浏览器中按 F12 打开 DevTools。
+
+切换到 Network 面板，点击 WS 标签（过滤 WebSocket 请求）。
+
+点击页面上的 “连接” 按钮。
+
+预期结果：Network 面板中出现一条 WebSocket 连接记录（wss://echo.websocket.org）。
+![alt text](<screenshots/Screenshot 2026-08-07 170456.png>)
+点击该记录，切换到 Messages 标签页。
+
+预期结果：你可以看到所有发送和接收的消息帧（Frame）。
+![alt text](<screenshots/Screenshot 2026-08-07 171342.png>)
+关键观察：连接建立后，即使不发送任何消息，连接也会一直保持（长连接），不会像 HTTP 那样每次请求都断开。
+
+---
+
+# Demo18:
