@@ -3500,9 +3500,9 @@ function onDebugLoadError(error: string): void {
 
 #### 只在生产环境验证 Demo 19
 
-##### 因为在生产环境（MODE === 'production'）下，Demo 16 的自动加载条件不满足（通常是 if (isDev || hasDebugParam)，isDev 为 false），vConsole 不会自动出现。此时 Demo 19 的隐藏入口就能正常工作了。
+#### 因为在生产环境（MODE === 'production'）下，Demo 16 的自动加载条件不满足（通常是 if (isDev || hasDebugParam)，isDev 为 false），vConsole 不会自动出现。此时 Demo 19 的隐藏入口就能正常工作了。
 
-#####　也可以把demo16声明的按钮先注释掉（最快）（采用）
+####　也可以把demo16声明的按钮先注释掉（最快）（采用）
 ![alt text](<screenshots/Screenshot 2026-08-10 171743.png>)注释掉之后
 ![alt text](<screenshots/Screenshot 2026-08-10 171732.png>)效果成功展示
 
