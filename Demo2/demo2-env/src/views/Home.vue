@@ -6,6 +6,7 @@
     <router-link to="/admin">去管理员页面</router-link>
     <router-link to="/product">去产品页</router-link>
   </div>
+
 </template>
 
 <script setup lang="ts">

@@ -3493,3 +3493,17 @@ function onDebugLoadError(error: string): void {
 ### 2.pnpm dev 即可观察效果
 
 ![alt text](<screenshots/Screenshot 2026-08-10 164701.png>)
+但是我们会发现这个vconsole按钮一直显示在右下角
+![alt text](<screenshots/Screenshot 2026-08-10 170721.png>)
+这是因为在demo16中我们也使用了vconsole 所以他一直在
+为了可以使我们更加直观的看见demo19的效果 我们可以选择
+
+#### 只在生产环境验证 Demo 19
+
+##### 因为在生产环境（MODE === 'production'）下，Demo 16 的自动加载条件不满足（通常是 if (isDev || hasDebugParam)，isDev 为 false），vConsole 不会自动出现。此时 Demo 19 的隐藏入口就能正常工作了。
+
+#####　也可以把demo16声明的按钮先注释掉（最快）（采用）
+![alt text](<screenshots/Screenshot 2026-08-10 171743.png>)注释掉之后
+![alt text](<screenshots/Screenshot 2026-08-10 171732.png>)效果成功展示
+
+#### 需要常显示的话记得把注释的Demo16代码在main.js中解除注释即可
