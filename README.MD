@@ -3126,3 +3126,370 @@ onMounted(() => {
 ![alt text](<screenshots/Screenshot 2026-08-10 145709.png>)
 ![alt text](<screenshots/Screenshot 2026-08-10 145717.png>)
 ![alt text](<screenshots/Screenshot 2026-08-10 145721.png>)
+
+# Demo 19：线上隐藏调试入口
+
+## 核心功能
+
+### 连续点击 Logo 5 次，动态加载 vConsole
+
+### 适用于线上环境救急（用户反馈问题后，无需发版即可启用调试面板）
+
+### 2 秒内没有继续点击，自动重置计数（防止误触）
+
+## 文件创建顺序（按依赖关系排列）
+
+顺序 文件路径 说明
+1 src/types/vconsole.d.ts vConsole 第三方库的类型声明
+2 src/types/global.d.ts 全局 Window 接口扩展
+3 src/composables/useVConsole.ts vConsole 加载逻辑（Composable 封装）
+4 src/components/LogoDebugTrigger.vue 隐藏入口 UI 组件
+5 src/App.vue 集成到主应用
+
+## 第一步：创建 src/types/vconsole.d.ts
+
+```
+// src/types/vconsole.d.ts
+
+declare module 'vconsole' {
+  export default class VConsole {
+    constructor(options?: {
+      theme?: 'light' | 'dark';
+      maxLogNumber?: number;
+      onReady?: () => void;
+    });
+    show(): void;
+    hide(): void;
+    destroy(): void;
+    setSwitchPosition(x: number, y: number): void;
+  }
+}
+```
+
+## 第二步：创建 src/types/global.d.ts
+
+```
+// src/types/global.d.ts
+
+import type VConsole from 'vconsole';
+
+declare global {
+  interface Window {
+    vConsole?: VConsole;
+    __vConsoleLoaded?: boolean;
+  }
+}
+
+export {};
+```
+
+## 第三步：创建 src/composables/useVConsole.ts
+
+```
+// src/composables/useVConsole.ts
+
+import type VConsole from 'vconsole';
+
+interface VConsoleState {
+  loaded: boolean;
+  loading: boolean;
+  error: string | null;
+}
+
+export function useVConsole() {
+  const state: VConsoleState = {
+    loaded: false,
+    loading: false,
+    error: null,
+  };
+
+  async function load(): Promise<VConsole | null> {
+    if (state.loaded) return window.vConsole || null;
+    if (state.loading) {
+      return new Promise((resolve) => {
+        const check = setInterval(() => {
+          if (!state.loading) {
+            clearInterval(check);
+            resolve(window.vConsole || null);
+          }
+        }, 100);
+      });
+    }
+
+    state.loading = true;
+    state.error = null;
+
+    try {
+      const module = await import('vconsole');
+      const instance = new module.default({
+        theme: 'light',
+        maxLogNumber: 1000,
+      });
+      window.vConsole = instance;
+      window.__vConsoleLoaded = true;
+      state.loaded = true;
+      state.loading = false;
+      console.log('[useVConsole] ✅ vConsole 已加载');
+      return instance;
+    } catch (error) {
+      state.loading = false;
+      state.error = error instanceof Error ? error.message : '加载失败';
+      console.error('[useVConsole] ❌ 加载失败:', error);
+      return null;
+    }
+  }
+
+  function destroy(): void {
+    if (window.vConsole) {
+      try {
+        window.vConsole.destroy();
+      } catch {
+        /* 忽略销毁错误 */
+      }
+      window.vConsole = undefined;
+      window.__vConsoleLoaded = false;
+      state.loaded = false;
+      state.error = null;
+      console.log('[useVConsole] vConsole 已销毁');
+    }
+  }
+
+  function toggle(): void {
+    if (!window.vConsole) {
+      console.warn('[useVConsole] vConsole 未加载');
+      return;
+    }
+    try {
+      const panel = document.querySelector('#__vconsole');
+      if (panel?.getAttribute('style')?.includes('display: none')) {
+        window.vConsole.show();
+      } else {
+        window.vConsole.hide();
+      }
+    } catch (error) {
+      console.warn('[useVConsole] 切换面板失败:', error);
+    }
+  }
+
+  return { state, load, destroy, toggle };
+}
+```
+
+## 第四步：创建 src/components/LogoDebugTrigger.vue
+
+```
+<template>
+  <div
+    class="logo-debug-trigger"
+    @click="handleClick"
+    @keydown.enter="handleClick"
+    role="button"
+    tabindex="0"
+  >
+    <slot>
+      <span style="font-size: 24px;">🚀</span>
+      <span style="font-size: 14px; color: #888;">
+        {{ remainingClicks > 0 ? `点击 ${remainingClicks} 次` : '✨ 已触发' }}
+      </span>
+    </slot>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
+import { useVConsole } from '@/composables/useVConsole';
+
+const props = withDefaults(
+  defineProps<{
+    clickCount?: number;
+    timeout?: number;
+    autoLoad?: boolean;
+  }>(),
+  {
+    clickCount: 5,
+    timeout: 2000,
+    autoLoad: true,
+  }
+);
+
+const emit = defineEmits<{
+  (e: 'trigger'): void;
+  (e: 'load-success'): void;
+  (e: 'load-error', error: string): void;
+}>();
+
+const clickCount = ref(0);
+const remainingClicks = ref(props.clickCount);
+let clickTimer: ReturnType<typeof setTimeout> | null = null;
+const { load } = useVConsole();
+
+function handleClick(): void {
+  clickCount.value++;
+  remainingClicks.value = props.clickCount - clickCount.value;
+
+  if (clickTimer) {
+    clearTimeout(clickTimer);
+    clickTimer = null;
+  }
+
+  if (clickCount.value >= props.clickCount) {
+    clickCount.value = 0;
+    remainingClicks.value = props.clickCount;
+    emit('trigger');
+    if (props.autoLoad) {
+      loadVConsole();
+    }
+    return;
+  }
+
+  clickTimer = setTimeout(() => {
+    clickCount.value = 0;
+    remainingClicks.value = props.clickCount;
+    console.log('[LogoDebugTrigger] 点击超时，已重置计数');
+  }, props.timeout);
+}
+
+async function loadVConsole(): Promise<void> {
+  const instance = await load();
+  if (instance) {
+    emit('load-success');
+    showFeedback('🔧 调试面板已开启！', 'success');
+  } else {
+    emit('load-error', '加载失败');
+    showFeedback('❌ 调试面板加载失败', 'error');
+  }
+}
+
+function showFeedback(message: string, type: 'success' | 'error'): void {
+  const color = type === 'success' ? '#42b883' : '#d9534f';
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    background: ${color};
+    color: white;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    z-index: 99999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: fadeInUp 0.3s ease;
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => {
+      if (toast.parentNode) {
+        document.body.removeChild(toast);
+      }
+    }, 300);
+  }, 3000);
+}
+
+onMounted(() => {
+  if (window.__vConsoleLoaded) {
+    remainingClicks.value = 0;
+  }
+});
+
+onUnmounted(() => {
+  if (clickTimer) {
+    clearTimeout(clickTimer);
+    clickTimer = null;
+  }
+});
+</script>
+
+<style scoped>
+.logo-debug-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 2px dashed #42b883;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+.logo-debug-trigger:hover {
+  background: rgba(66, 184, 131, 0.1);
+  transform: scale(1.02);
+}
+.logo-debug-trigger:active {
+  transform: scale(0.95);
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+</style>
+```
+
+## 第五步：在 src/App.vue 中集成
+
+```
+<template>
+  <div style="padding: 40px; font-family: 'Courier New', monospace;">
+    <h1 style="color: #42b883;">🌍 Demo 19：线上隐藏调试入口</h1>
+
+    <!-- 隐藏入口组件 -->
+    <LogoDebugTrigger
+      :click-count="5"
+      :timeout="2000"
+      @trigger="onDebugTrigger"
+      @load-success="onDebugLoadSuccess"
+      @load-error="onDebugLoadError"
+    />
+
+    <p style="color: #888; font-size: 14px; margin-top: 8px;">
+      提示：连续点击上方 Logo 5 次，会加载 vConsole 调试面板
+    </p>
+
+    <hr style="margin: 20px 0;" />
+
+    <div
+      style="padding: 16px; background: #1e1e1e; color: #d4d4d4; border-radius: 6px; font-size: 13px; min-height: 100px;"
+    >
+      <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">{{ displayContent }}</pre>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+import LogoDebugTrigger from '@/components/LogoDebugTrigger.vue';
+
+const displayContent = ref('等待操作...');
+
+function onDebugTrigger(): void {
+  displayContent.value = '🔧 正在加载 vConsole...';
+}
+
+function onDebugLoadSuccess(): void {
+  displayContent.value =
+    '✅ vConsole 调试面板已开启！\n\n点击页面右下角的绿色按钮，查看控制台、网络请求、DOM 结构等调试信息。';
+}
+
+function onDebugLoadError(error: string): void {
+  displayContent.value = `❌ vConsole 加载失败：${error}\n\n请检查网络连接后重试。`;
+}
+</script>
+```
+
+### 然后在终端输入：1.pnpm add -D pnpm
+
+### 2.pnpm dev 即可观察效果
+
+![alt text](<screenshots/Screenshot 2026-08-10 164701.png>)

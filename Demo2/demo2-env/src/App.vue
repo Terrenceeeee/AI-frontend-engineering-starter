@@ -78,6 +78,24 @@
       <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">{{ displayContent }}</pre>
     </div>
   </div>
+  <div style="padding: 40px; font-family: 'Courier New', monospace;">
+    <h1 style="color: #42b883;">🌍 Demo 19：线上隐藏调试入口</h1>
+
+    <!-- 隐藏入口组件 -->
+    <LogoDebugTrigger :click-count="5" :timeout="2000" @trigger="onDebugTrigger" @load-success="onDebugLoadSuccess"
+      @load-error="onDebugLoadError" />
+
+    <p style="color: #888; font-size: 14px; margin-top: 8px;">
+      提示：连续点击上方 Logo 5 次，会加载 vConsole 调试面板
+    </p>
+
+    <hr style="margin: 20px 0;" />
+
+    <div
+      style="padding: 16px; background: #1e1e1e; color: #d4d4d4; border-radius: 6px; font-size: 13px; min-height: 100px;">
+      <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">{{ displayContent }}</pre>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -277,4 +295,21 @@ onMounted(() => {
   updateLogCount();
   console.log('[Demo 18] 已加载，当前日志条数：', logCount.value);
 });
+
+import LogoDebugTrigger from '@/components/LogoDebugTrigger.vue';
+
+
+
+function onDebugTrigger(): void {
+  displayContent.value = '🔧 正在加载 vConsole...';
+}
+
+function onDebugLoadSuccess(): void {
+  displayContent.value =
+    '✅ vConsole 调试面板已开启！\n\n点击页面右下角的绿色按钮，查看控制台、网络请求、DOM 结构等调试信息。';
+}
+
+function onDebugLoadError(error: string): void {
+  displayContent.value = `❌ vConsole 加载失败：${error}\n\n请检查网络连接后重试。`;
+}
 </script>
