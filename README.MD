@@ -53,6 +53,7 @@
 改完之后他会在终端中显示体现
 ![alt text](<screenshots/Screenshot 2026-07-27 151241.png>)
 
+```
 <code>
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
@@ -109,6 +110,7 @@ plugins: [vue()],
 };
 });
 </code>
+```
 
 ### 添加的代码部分作用
 
@@ -116,13 +118,14 @@ plugins: [vue()],
 
 console.log('当前命令:', process.argv[2]); // 'serve' 或 'build' process.argv[]是node函数内置数组，记录终端启动的整条命令
 
-<!-- pnpm dev → 这里打印serve
-pnpm build → 这里打印build -->
+pnpm dev → 这里打印serve
+pnpm build → 这里打印build
 
 console.log('当前工作目录:', process.cwd()); //获取你执行命令的文件夹路径（项目根目录）
 
 ## 2、核心：检测是否为 pnpm 项目（最关键）
 
+```
 const pnpmDir = path.join(process.cwd(), 'node_modules', '.pnpm');
 if (fs.existsSync(pnpmDir)) { //fs.existsSync：Node 文件 API，判断这个文件夹是否存在
 // 找到node_modules/.pnpm，判定是pnpm
@@ -132,10 +135,11 @@ console.log(' .pnpm 目录内容(前6个):', items.join(','));
 } else {
 console.log('❌ 未检测到 .pnpm 目录，当前可能不是 pnpm 项目');
 }
+```
 
-<!-- pnpm 独有特征：安装依赖后，node_modules里一定会有.pnpm隐藏文件夹。
+pnpm 独有特征：安装依赖后，node_modules里一定会有.pnpm隐藏文件夹。
 所有真实依赖文件都存放在.pnpm，外面的包全是硬链接；
-npm 没有.pnpm文件夹，因此只要检测这个文件夹存在，就能百分百确定是 pnpm 安装的依赖。 -->
+npm 没有.pnpm文件夹，因此只要检测这个文件夹存在，就能百分百确定是 pnpm 安装的依赖。
 
 const nodeModulesDir = path.join(process.cwd(), 'node_modules'); // 拼接路径：获取当前命令行所在根目录下 node_modules 文件夹的绝对路径
 
@@ -154,11 +158,13 @@ plugins: [vue()],
 
 ## 开发服务相关配置，只在pnpm dev生效
 
+```
     server: {
       port: mode === 'test' ? 3000 : 5173, // 固定本地开发端口为5173，不使用随机端口
       <!-- defineConfig 回调写法优势：可以根据mode/command做动态配置 -->
       open: true, // 启动服务后自动打开默认浏览器访问项目地址
     },
+```
 
 ## 打包构建配置，只在pnpm build打包时生效
 
@@ -189,26 +195,26 @@ build.sourcemap: true 生成 .map 文件，方便调试时看到源码位置（�
 pnpm add -D eslint eslint-plugin-vue @vue/eslint-config-typescript @typescript-eslint/eslint-plugin @typescript-eslint/parser
 包的作用：
 
-<!-- eslint	JavaScript/TypeScript 代码检查核心库 -->
-<!-- eslint-plugin-vue：	Vue 3 专用规则（检查 .vue 文件的模板和 script） -->
-<!-- @vue/eslint-config-typescript	Vue 官方推荐的 TypeScript ESLint 配置 -->
-<!-- @typescript-eslint/parser	让 ESLint 能解析 TypeScript 语法 -->
-<!-- @typescript-eslint/eslint-pluginESLint： 专门适配 TypeScript 的规则插件。 -->
+eslint JavaScript/TypeScript 代码检查核心库
+eslint-plugin-vue： Vue 3 专用规则（检查 .vue 文件的模板和 script）
+@vue/eslint-config-typescript Vue 官方推荐的 TypeScript ESLint 配置
+@typescript-eslint/parser 让 ESLint 能解析 TypeScript 语法
+@typescript-eslint/eslint-pluginESLint： 专门适配 TypeScript 的规则插件。
 
 ### 安装 Prettier 及相关插件
 
 pnpm add -D prettier eslint-config-prettier eslint-plugin-prettier
 
-<!-- prettier	：代码格式化工具（自动统一风格） -->
-<!-- eslint-config-prettier	：关闭 ESLint 中与 Prettier 冲突的规则 -->
-<!-- eslint-plugin-prettier	：把 Prettier 的格式化能力以 ESLint 规则形式运行 -->
+prettier ：代码格式化工具（自动统一风格）
+eslint-config-prettier ：关闭 ESLint 中与 Prettier 冲突的规则
+eslint-plugin-prettier ：把 Prettier 的格式化能力以 ESLint 规则形式运行
 
 ### 安装 Husky 和 lint-staged
 
 pnpm add -D husky lint-staged
 
-<!-- husky	Git Hooks ：管理工具（在 .git/hooks/ 中插入脚本） -->
-<!-- lint-staged	：只对 Git 暂存区文件执行检查 -->
+husky Git Hooks ：管理工具（在 .git/hooks/ 中插入脚本）
+lint-staged ：只对 Git 暂存区文件执行检查
 
 ## 第二步：配置ESLint cjs文件
 
@@ -244,6 +250,7 @@ _.html
 
 1. 在 "scripts" 里添加 5 个新命令（原有的 dev、build、preview 不要动）
    json
+   ```
    {
    "scripts": {
    "lint": "eslint . --ext .vue,.js,.ts --fix", // ← 新增
@@ -253,8 +260,10 @@ _.html
    "prepare": "husky" // ← 新增 //"prepare": "husky" 的作用是让 pnpm install 时自动初始化 Husky，这样团队成员克隆项目后只需 pnpm install，Git Hooks 就会自动配置好
    }
    }
+   ```
 2. 在 package.json 的根节点（和 "scripts" 平级）添加 "lint-staged" 字段
    json
+   ```
    {
    "name": "demo2-env",
    "private": true,
@@ -275,14 +284,17 @@ _.html
    "dependencies": { /_ ... _/ },
    "devDependencies": { /_ ... \*/ } // ← 新增的 devDependencies 也在这里
    }
+   ```
 3. 在 "devDependencies" 中添加新包的列表（原有的 @vitejs/plugin-vue、vite、vue 等都要保留）
    json
+   ```
    {
    "devDependencies": {
    "typescript": "^5.5.3",
    "vue-eslint-parser": "^9.4.3"
    }
    }
+   ```
 
 ## 第六步：初始化 Husky 在Git bash终端中输入
 
@@ -386,6 +398,8 @@ lint-staged 配置里从左到右依次执行：["eslint --fix", "prettier --wri
 
 <code>pnpm add vue-router</code>
 在router/index.ts里加上
+
+```
 <code>
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router';
@@ -426,6 +440,7 @@ import router from './router';
 
 app.use(router);
 </code>
+```
 
 ## 第四步：修改 src/App.vue 显示路由出口
 
@@ -465,6 +480,8 @@ const mode =import.meta.env.MODE
 
 这一步是关键——让 Vite 在打包时主动拆分代码： 修改vite.config.ts
 保留所有原有配置，只新增 resolve 和 build.rollupOptions
+
+```
 <code>
 
 export default defineConfig({
@@ -482,6 +499,7 @@ build: {
 sourcemap: true,
 rollupOptions: {
 output: {
+```
 
 ### 分包拆分规范：手动分包：把 Vue 核心库单独打成一个 vendor 包 !!!!此处最新版Rollup要求使用函数形式而非对象形式
 
@@ -500,6 +518,7 @@ o@index-abc123.js:1
 
 ### Debug 效率提升 10 倍。 这就是 SourceMap 的价值。
 
+```
 manualChunks(id) {
 // 所有以 'vue' 开头的包（vue、vue-router 等）都打包到 vue-vendor 中
 if (id.includes('vue') || id.includes('vue-router')) {
@@ -507,15 +526,18 @@ return 'vue-vendor'
 }
 },
 // 每个 chunk 的文件名格式，[name] 会自动取 manualChunks 里定义的 key
+```
 
 ### chunk里的[hash]值的作用：每次构建会生成唯一的hash值，重新构建会生成一个新的hash值，浏览器就会认为他变了，会重新强制加载一次缓存；如果hash值不变，则浏览器就只会一直读缓存里的，不会重复下载
 
+```
 chunkFileNames: 'assets/[name]-[hash].js',
 },
 },
 },
 });
 </code>
+```
 
 ## 第六步：在终端一次性验证所有场景
 
@@ -578,12 +600,12 @@ ts-node generate.ts
 
 "gen": "node scripts/generate.js"
 
-<!-- 优势 1：开箱即用，环境要求更低
+优势 1：开箱即用，环境要求更低
 别的同事拉取代码后，不用安装 ts-node、typescript 等开发依赖，只要有 Node 就能跑。
 优势 2：命令极简
 不用记长路径、不用管 ts，统一用 npm run gen 新建业务模块，团队所有人操作一致。
 优势 3：工程化规范
-脚手架脚本统一收在 scripts 目录，项目结构干净，所有自动化脚本集中管理 -->
+脚手架脚本统一收在 scripts 目录，项目结构干净，所有自动化脚本集中管理
 
 ## 第四步：创建必要的目录结构
 
@@ -594,6 +616,8 @@ mkdir -p src/stores/modules
 mkdir -p src/views
 
 同时需要创建 src/utils/request.ts（API 模板里引用了它）：
+
+```
 <code>
 // src/utils/request.ts
 import axios from 'axios';
@@ -611,6 +635,7 @@ request.interceptors.response.use(
 
 export default request;
 </code>
+```
 
 ## 第六步：执行脚本生成模块
 
@@ -625,6 +650,8 @@ pnpm gen
 ## 第八步：将生成的路由注册到 Vue Router
 
 打开 src/router/index.ts，在 routes 数组中新增一个路由：
+
+```
 <code>
 // ========== 新增：自动生成的 product 路由 ==========
 {
@@ -633,6 +660,7 @@ name: 'Product',
 component: () => import('@/views/product/index.vue'),
 },
 </code>
+```
 
 ## 第九步：在首页添加导航链接
 
@@ -662,6 +690,7 @@ jsdom：在 Node 环境里模拟浏览器 DOM API（如 document、window），�
 
 ## 第二步：写一个简单的单元测试（验证用）
 
+```
 <code>
 // src/utils/__tests__/math.test.ts
 import { describe, it, expect } from 'vitest';
@@ -681,6 +710,7 @@ expect(add(-1, 1)).toBe(0);
 });
 });
 </code>
+```
 
 ## 第三步：在 package.json 中添加测试命令(加两行就行)
 
@@ -704,11 +734,13 @@ git remote -v
 ## 第六步：创建 GitHub Actions 流水线配置文件 ！！一定要在总文件的根目录配置 否则检测不出来！！
 
 创建 .github/workflows/ci.yml：
+
+```
 <code>
 
 name: CI 流水线
 
-<!-- # 触发条件：push 到 main 分支，或任何 pull_request -->
+#### 触发条件：push 到 main 分支，或任何 pull_request
 
 on:
 push:
@@ -767,6 +799,8 @@ steps:
   run: pnpm build
 
 </code>
+```
+
 提交并推送:
 git add .github/workflows/ci.yml
 git commit -m "feat: 添加 GitHub Actions CI 流水线"
@@ -805,6 +839,8 @@ npx playwright install：npx playwright install 会下载 Chromium、Firefox 和
 ## 第二步:创建 E2E 测试文件
 
 创建 e2e/homepage.spec.ts：
+
+```
 <code>
 // e2e/homepage.spec.ts
 import { test, expect } from '@playwright/test';
@@ -834,15 +870,18 @@ await page.goto('http://localhost:5173/');
 });
 });
 </code>
+```
 
 ## 第三步：在 package.json 中添加 E2E 测试命令
 
+```
 {
 "scripts": {
 "test:e2e": "playwright test",
 "test:e2e:ui": "playwright test --ui"
 }
 }
+```
 
 ## 第四步：本地验证 E2E 测试(注意： Playwright 需要开发服务器正在运行。开两个终端：)
 
@@ -864,11 +903,13 @@ Running 2 tests using 1 worker
 ## 第五步：把 E2E 测试加入 CI 流水线
 
 修改 .github/workflows/ci.yml，在 build 步骤之后添加 E2E 测试步骤：
+
+```
 <code>
 
-<!-- # ... 前面的步骤保持不变 ... -->
+#### ... 前面的步骤保持不变 ...
 
-<!-- # 7. 打包构建 -->
+#### 7. 打包构建
 
 - name: 构建项目
   run: pnpm build
@@ -886,6 +927,7 @@ Running 2 tests using 1 worker
   env:
   CI: true
   </code>
+```
 
 ## 第六步：提交并推送，观察流水线
 
@@ -909,6 +951,7 @@ CLS → 页面视觉稳定性
 
 创建 src/utils/performanceReporter.ts：
 
+```
 <code>
 // src/utils/performanceReporter.ts
 // 定义性能指标上报的数据TS类型约束
@@ -1019,10 +1062,12 @@ console.log('[性能监控] TTFB:', report.ttfb);
 }).observe({ entryTypes: ['navigation'] });
 }
 </code>
+```
 
 ## 第二步：在 main.ts 中启用性能监控
 
-<!-- // src/main.ts
+```
+// src/main.ts
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
@@ -1035,7 +1080,8 @@ app.mount('#app');
 // ✅ 只在生产环境启用性能监控（减少开发环境的噪音）
 if (import.meta.env.PROD) {
   reportWebVitals();
-} -->
+}
+```
 
 ## 第三步：验证（用 Lighthouse 跑分对比）
 
@@ -1050,11 +1096,11 @@ if (import.meta.env.PROD) {
 就像这样：
 ![alt text](<screenshots/Screenshot 2026-08-05 153938.png>)
 
-<!-- 预期输出（控制台）： -->
-<!-- [性能监控] FCP: 456.2
+预期输出（控制台）：
+[性能监控] FCP: 456.2
 [性能监控] LCP: 1234.5
 [性能监控] CLS: 0.02
-[性能监控] TTFB: 42.8 -->
+[性能监控] TTFB: 42.8
 
 ---
 
@@ -1065,6 +1111,8 @@ if (import.meta.env.PROD) {
 ## 第一步：创建部署脚本
 
 创建 scripts/deploy.ts：
+
+```
 <code>
 #!/usr/bin/env ts-node
 // scripts/deploy.ts
@@ -1129,9 +1177,11 @@ console.log(`\n🎉 部署完成！版本号: ${version}`);
 console.log(`📌 备份位置: ${backupPath}`);
 console.log(`📌 回滚命令: cp -r ${backupPath}/* ${DIST_DIR}/`);
 </code>
+```
 
 ## 第二步：在 package.json 中添加部署命令
 
+```
 <code>
 {
   "scripts": {
@@ -1139,6 +1189,7 @@ console.log(`📌 回滚命令: cp -r ${backupPath}/* ${DIST_DIR}/`);
   }
 }
 </code>
+```
 
 ### deploy文件夹
 
@@ -1177,6 +1228,7 @@ pnpm deploy
 
 ## 第一步：创建回滚脚本 scripts/rollback.ts
 
+```
 <code>
 #!/usr/bin/env ts-node
 // scripts/rollback.ts
@@ -1279,14 +1331,17 @@ return; // 终止后续逻辑
 });
 
 </code>
+```
 
 ## 第二步：在 package.json 中添加回滚命令
 
+```
 {
 "scripts": {
 "rollback": "node scripts/rollback.js"
 }
 }
+```
 
 ## 第三步：验证(先创建几个备份版本（多次执行 pnpm deploy），然后执行回滚：)
 
@@ -1303,9 +1358,11 @@ pnpm rollback
 
 ## 第一步：修改 vite.config.ts 配置 CDN 地址
 
+```
 base: mode === 'production'
 ? 'https://cdn.example.com/demo2-env/' // 生产环境走 CDN
 : '/', // 开发环境走相对路径
+```
 
 ## 第二步：构建并观察产物路径变化
 
@@ -1337,6 +1394,7 @@ pnpm build
 
 创建 src/utils/requestPool.ts：
 
+```
 <code>
 // src/utils/requestPool.ts
 
@@ -1401,10 +1459,12 @@ this.queue = []; // 等待队列
 // 导出单例（整个应用共享一个请求池）
 export const requestPool = new RequestPool(6);
 </code>
+```
 
 ## 第二步：在 Vue 组件中模拟并发请求
 
 ```
+
 <code>
 <template>
   <!-- 外层容器，设置内边距、等宽字体，控制台风格 -->
@@ -1660,6 +1720,8 @@ catch (error) { // 这里 error 是 unknown（未知包裹）
 表明：这是一个 Error，同时还有一个 response 属性”
 创建 src/api/testApi.ts：
 // src/api/testApi.ts
+
+```
 import { retryWithBackoff } from '@/utils/retry';
 
 // 模拟一个会失败的请求
@@ -1699,11 +1761,13 @@ baseDelay: 500,
 }
 );
 }
+```
 
 ## 第三步：在 App.vue 中添加测试按钮
 
-```
 保持原有内容不变 新增一点内容 其实就是加了个按钮 ！！！但要注意@click要在style之后 不然会被warning
+
+```
 <code>
 
 <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
@@ -1898,6 +1962,8 @@ return cachedResponse;
 ## 第二步：配置 Vite 构建，把 sw.js 复制到 dist/
 
 修改 vite.config.ts，添加 rollupOptions.input 和 publicDir 配置：
+
+```
 <code>
 // vite.config.ts
 
@@ -1924,6 +1990,7 @@ return cachedResponse;
 };
 });
 </code>
+```
 
 但更简单的方式： 把 sw.js 放到 public/ 目录下，Vite 构建时会自动复制到 dist/，不需要改 rollupOptions。
 
@@ -1952,6 +2019,8 @@ mv sw.js public/
 // 条件2：import.meta.env.PROD
 // Vite 内置环境变量：true = 生产打包环境；false = npm run dev 开发环境
 // 👉 含义：开发环境不注册sw，避免缓存导致调试时资源不刷新
+
+```
 <code>
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
 window.addEventListener('load', () => {
@@ -1972,6 +2041,7 @@ console.log('[SW] 注册失败:', error);
 });
 }
 </code>
+```
 
 ## 第四步：验证离线缓存
 
@@ -2200,6 +2270,7 @@ api.xxx.com/api resDelay://500
 
 ### 第一步：在项目中添加一个“发请求”的按钮（如果没有的话）
 
+````
 <template>
 
   <div style="padding: 40px; font-family: 'Courier New', monospace;">
@@ -2220,8 +2291,10 @@ api.xxx.com/api resDelay://500
     </div>
 
   </div>
-</template>
+</t```emplate>
+````
 
+```
 <script setup lang="ts">
 import { ref } from 'vue';
 
@@ -2239,6 +2312,7 @@ const fetchUserInfo = async () => {
   }
 };
 </script>
+```
 
 ### 第二步：在 Whistle 里创建 Mock 数据 1.打开 Whistle 管理界面 http://127.0.0.1:8899。
 
@@ -2249,6 +2323,8 @@ const fetchUserInfo = async () => {
 4.点击 “Create” 按钮（或按回车）。
 
 5.在右侧编辑区输入以下 JSON 数据：
+
+```
 <code>
 {
 "code": 0,
@@ -2263,6 +2339,7 @@ const fetchUserInfo = async () => {
 }
 }
 </code>
+```
 
 ### 第三步：在 Whistle 里配置拦截规则
 
@@ -2292,9 +2369,11 @@ https://api.example.com/user/info resBody://{userInfo} resHeaders://{corsHeaders
 
 然后在 Values 里新建一个 corsHeaders，内容写：
 
+```
 Access-Control-Allow-Origin: \*
 Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
 Access-Control-Allow-Headers: Content-Type, Authorization
+```
 
 就可以使用whistle了
 ![alt text](<screenshots/Screenshot 2026-08-06 152939.png>)
@@ -2318,6 +2397,8 @@ pnpm add -D vconsole
 你导图里已经画了逻辑：“只有开发环境或 URL 带 ?debug=1 时才加载”。 -->
 
 修改 src/main.js：
+
+```
 <code>
 // ========== vConsole 调试钩子 ==========
 // 条件：开发模式 或 URL 中有 ?debug=1
@@ -2335,14 +2416,18 @@ console.log('[vConsole] 调试面板已开启');
 });
 }
 </code>
+```
 
 ## 第三步：配置 Vite 生成 SourceMap
 
 修改 vite.config.js
+
+```
 // ========== 新增：开启 SourceMap ==========
 build: {
 sourcemap: true, // 构建时生成 .map 文件
 },
+```
 
 ## 第四步：验证 vConsole
 
@@ -2408,6 +2493,8 @@ sourcemap: true, // 构建时生成 .map 文件
 ## 第一步：创建 WebSocket 测试组件
 
 在 src/components/WebSocketDemo.vue 中创建：
+
+```
 <code>
 <template>
 
@@ -2545,6 +2632,7 @@ onUnmounted(() => {
 import WebSocketDemo from './components/WebSocketDemo.vue';
 </script>
 </code>
+```
 
 ## 第三步：验证 WebSocket
 
