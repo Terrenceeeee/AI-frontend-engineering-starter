@@ -2581,8 +2581,460 @@ import WebSocketDemo from './components/WebSocketDemo.vue';
 
 ---
 
-# Demo18:
+# Demo18:远程日志回捞系统
+
+## 意义：在关键业务节点（如支付、登录）捕获错误，把报错信息、用户操作路径、设备信息等存储到 localStorage，用户遇到问题时可以一键导出，帮助开发者定位问题。
+
+#### src/types/logger.d.ts 日志相关类型定义
+
+#### src/utils/logger.ts 日志工具核心实现
+
+#### src/App.vue 演示页面（模拟支付、导出日志）
+
+## 第一步：类型定义 （文件：src/types/logger.d.ts） .d.ts后缀类型的文件 都是类型声明文件 不可以写实际功能
 
 ```
+// src/types/logger.d.ts
+
+/**
+ * 单条日志记录的结构
+ */
+export interface LogEntry {
+  /** ISO 8601 格式的时间戳 */
+  time: string;
+  /** 发生错误时的页面 URL */
+  url: string;
+  /** 浏览器 User-Agent */
+  userAgent: string;
+  /** 错误描述信息 */
+  msg: string;
+  /** 附加数据（错误对象、业务上下文等） */
+  data?: Record<string, unknown> | string | number | boolean | null;
+}
+
+/**
+ * 日志工具配置选项
+ */
+export interface LoggerOptions {
+  /** 最大存储条数，默认 50 */
+  maxLogs?: number;
+  /** localStorage 存储 key，默认 'error_logs' */
+  storageKey?: string;
+}
+
+/**
+ * 支付错误的结构（业务错误示例）
+ */
+export interface PaymentError {
+  code: string;
+  message: string;
+  stack?: string;
+  orderId?: string;
+  userId?: string;
+  timestamp?: string;
+}
+```
+
+## 第二步：日志工具实现（文件：src/utils/logger.ts）
+
+````
+// src/utils/logger.ts
+
+import type { LogEntry, LoggerOptions, PaymentError } from '@/types/logger.d';
+
+// ==================== 配置 ====================
+
+const DEFAULT_OPTIONS: Required<LoggerOptions> = {
+  maxLogs: 50,
+  storageKey: 'error_logs',
+};
+
+// ==================== 状态 ====================
+
+/** 内存缓存（避免频繁读取 localStorage） */
+let logCache: LogEntry[] = [];
+
+// ==================== 私有工具函数 ====================
+
+/**
+ * 从 localStorage 加载日志
+ */
+function loadFromStorage(storageKey: string): LogEntry[] {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      // 简单校验：确保每条记录都有必要的字段
+      const isValid = parsed.every(
+        (item) =>
+          item &&
+          typeof item === 'object' &&
+          typeof item.time === 'string' &&
+          typeof item.url === 'string' &&
+          typeof item.msg === 'string'
+      );
+      if (isValid) {
+        return parsed as LogEntry[];
+      }
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * 保存到 localStorage
+ */
+function saveToStorage(storageKey: string, logs: LogEntry[]): void {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(logs));
+  } catch {
+    // localStorage 已满或不可用，静默失败
+    console.warn('[logger] 写入 localStorage 失败，请检查存储空间');
+  }
+}
+
+/**
+ * 将任意错误对象转换为可序列化的格式
+ */
+function normalizeError(error: unknown): Record<string, unknown> | string {
+  if (error === null || error === undefined) {
+    return 'null or undefined';
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    };
+  }
+
+  if (typeof error === 'object') {
+    try {
+      // 尝试序列化，如果失败则返回字符串表示
+      return JSON.parse(JSON.stringify(error));
+    } catch {
+      return String(error);
+    }
+  }
+
+  return String(error);
+}
+
+// ==================== 公开 API ====================
+
+/**
+ * 记录错误日志
+ *
+ * @param msg 错误描述
+ * @param data 附加数据
+ * @param options 配置选项
+ *
+ * @example
+ * ```ts
+ * try {
+ *   await payOrder();
+ * } catch (e) {
+ *   logError('支付失败', e);
+ * }
+ * ```
+ */
+export function logError(
+  msg: string,
+  data?: unknown,
+  options?: LoggerOptions
+): void {
+  const { maxLogs, storageKey } = { ...DEFAULT_OPTIONS, ...options };
+
+  // 初始化缓存（如果为空）
+  if (logCache.length === 0) {
+    logCache = loadFromStorage(storageKey);
+  }
+
+  // 构建日志条目
+  const entry: LogEntry = {
+    time: new Date().toISOString(),
+    url: window.location.href,
+    userAgent: navigator.userAgent,
+    msg,
+    data: normalizeError(data),
+  };
+
+  // 追加并限制数量
+  logCache.push(entry);
+  if (logCache.length > maxLogs) {
+    logCache = logCache.slice(-maxLogs);
+  }
+
+  // 持久化
+  saveToStorage(storageKey, logCache);
+
+  // 控制台输出（方便开发调试）
+  console.error(`[logger] ${msg}`, data);
+}
+
+/**
+ * 导出所有日志为格式化 JSON 字符串
+ *
+ * @param storageKey 自定义存储 key
+ * @returns 格式化的 JSON 字符串
+ *
+ * @example
+ * ```ts
+ * const logs = exportLogs();
+ * console.log(logs);
+ * ```
+ */
+export function exportLogs(storageKey?: string): string {
+  const key = storageKey || DEFAULT_OPTIONS.storageKey;
+  const raw = localStorage.getItem(key);
+
+  if (!raw) {
+    return '暂无日志';
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    return JSON.stringify(parsed, null, 2);
+  } catch {
+    // 不是合法 JSON，直接返回原始字符串
+    return raw;
+  }
+}
+
+/**
+ * 清除所有日志
+ *
+ * @param storageKey 自定义存储 key
+ */
+export function clearLogs(storageKey?: string): void {
+  const key = storageKey || DEFAULT_OPTIONS.storageKey;
+  logCache = [];
+  localStorage.removeItem(key);
+  console.log('[logger] 日志已清除');
+}
+
+/**
+ * 获取当前日志条数
+ *
+ * @param storageKey 自定义存储 key
+ * @returns 日志条数
+ */
+export function getLogCount(storageKey?: string): number {
+  const key = storageKey || DEFAULT_OPTIONS.storageKey;
+  const raw = localStorage.getItem(key);
+
+  if (!raw) return 0;
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.length : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * 判断是否为支付错误（类型守卫）
+ *
+ * @param error 待判断的错误对象
+ * @returns 是否为 PaymentError
+ */
+export function isPaymentError(error: unknown): error is PaymentError {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  const maybe = error as Record<string, unknown>;
+  return (
+    typeof maybe.code === 'string' &&
+    typeof maybe.message === 'string'
+  );
+}
+````
+
+## 第三步：演示页面（文件：src/App.vue）(都是增加的内容 原内容不变)
 
 ```
+<template>
+  <div style="padding: 40px; font-family: 'Courier New', monospace;">
+    <h1 style="color: #42b883;">📋 Demo 18：远程日志回捞系统</h1>
+
+    <!-- 操作按钮组 -->
+    <div style="margin: 20px 0; display: flex; gap: 12px; flex-wrap: wrap;">
+      <button
+        @click="handleSimulatePayment"
+        style="padding: 12px 24px; background: #42b883; color: white; border: none; border-radius: 4px; cursor: pointer;"
+      >
+        💳 模拟支付（会随机失败）
+      </button>
+
+      <button
+        @click="handleExportLogs"
+        style="padding: 12px 24px; background: #f0ad4e; color: white; border: none; border-radius: 4px; cursor: pointer;"
+      >
+        📤 导出日志
+      </button>
+
+      <button
+        @click="handleClearLogs"
+        style="padding: 12px 24px; background: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer;"
+      >
+        🗑️ 清除日志
+      </button>
+    </div>
+
+    <!-- 日志条数 -->
+    <div style="font-size: 14px; color: #666; margin-bottom: 12px;">
+      📌 当前日志条数：<strong>{{ logCount }}</strong>
+    </div>
+
+    <!-- 日志显示区域 -->
+    <div
+      style="padding: 16px; background: #1e1e1e; color: #d4d4d4; border-radius: 6px; font-size: 13px; max-height: 400px; overflow-y: auto;"
+    >
+      <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">{{ displayContent }}</pre>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import {
+  logError,
+  exportLogs,
+  clearLogs,
+  getLogCount,
+  isPaymentError,
+} from '@/utils/logger';
+import type { PaymentError } from '@/types/logger.d';
+
+// ==================== 状态 ====================
+
+const displayContent = ref<string>('等待操作...');
+const logCount = ref<number>(0);
+
+// ==================== 工具函数 ====================
+
+/** 更新日志条数 */
+function updateLogCount(): void {
+  logCount.value = getLogCount();
+}
+
+/** 生成随机订单号 */
+function generateOrderId(): string {
+  return 'ORD-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+}
+
+/** 随机延迟 */
+function randomDelay(min: number, max: number): Promise<void> {
+  const delay = Math.random() * (max - min) + min;
+  return new Promise((resolve) => setTimeout(resolve, delay));
+}
+
+// ==================== 事件处理 ====================
+
+/**
+ * 模拟支付——随机失败，用于演示日志记录
+ */
+async function handleSimulatePayment(): Promise<void> {
+  displayContent.value = '⏳ 支付处理中...';
+
+  try {
+    // 模拟网络延迟
+    await randomDelay(500, 1200);
+
+    // 70% 概率失败
+    const isSuccess = Math.random() > 0.7;
+
+    if (!isSuccess) {
+      // 模拟不同类型的支付错误
+      const errorTypes: PaymentError[] = [
+        { code: 'INSUFFICIENT_BALANCE', message: '余额不足，请充值后再试' },
+        { code: 'TIMEOUT', message: '支付超时，请稍后重试' },
+        { code: 'NETWORK_ERROR', message: '网络异常，请检查网络连接' },
+        { code: 'RISK_CONTROL', message: '交易被风控拦截，请联系客服' },
+      ];
+
+      const randomError = errorTypes[Math.floor(Math.random() * errorTypes.length)];
+      const orderId = generateOrderId();
+
+      // 构造错误对象
+      const error = new Error(randomError.message);
+      Object.assign(error, {
+        code: randomError.code,
+        orderId,
+        userId: 'USER-1001',
+        timestamp: new Date().toISOString(),
+      });
+
+      throw error;
+    }
+
+    displayContent.value = '✅ 支付成功！订单号：' + generateOrderId();
+  } catch (error) {
+    // ========== 核心：记录日志 ==========
+    const errorData: Record<string, unknown> = {
+      orderId: 'ORD-UNKNOWN',
+      userId: 'USER-1001',
+      timestamp: new Date().toISOString(),
+    };
+
+    if (isPaymentError(error)) {
+      errorData.code = error.code;
+      errorData.message = error.message;
+      errorData.orderId = error.orderId || 'ORD-UNKNOWN';
+    } else if (error instanceof Error) {
+      errorData.message = error.message;
+      errorData.stack = error.stack;
+    } else {
+      errorData.raw = String(error);
+    }
+
+    logError('支付失败', errorData);
+
+    // 显示错误信息
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    displayContent.value = `❌ 支付失败：${errorMsg}\n\n📋 日志已记录到 localStorage，点击"导出日志"查看详情`;
+  } finally {
+    updateLogCount();
+  }
+}
+
+/**
+ * 导出日志
+ */
+function handleExportLogs(): void {
+  const logs = exportLogs();
+  displayContent.value = `📤 导出的日志：\n\n${logs}`;
+}
+
+/**
+ * 清除日志
+ */
+function handleClearLogs(): void {
+  clearLogs();
+  displayContent.value = '✅ 日志已清除';
+  updateLogCount();
+}
+
+// ==================== 生命周期 ====================
+
+onMounted(() => {
+  updateLogCount();
+  console.log('[Demo 18] 已加载，当前日志条数：', logCount.value);
+});
+</script>
+```
+
+如图：
+![alt text](<screenshots/Screenshot 2026-08-10 145709.png>)
+![alt text](<screenshots/Screenshot 2026-08-10 145717.png>)
+![alt text](<screenshots/Screenshot 2026-08-10 145721.png>)

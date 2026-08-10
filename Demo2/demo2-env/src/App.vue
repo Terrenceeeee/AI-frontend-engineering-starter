@@ -46,6 +46,38 @@
     <h1 style="color: #42b883;">🌍 WebSocket 双向通信 Demo</h1>
     <WebSocketDemo />
   </div>
+  <div style="padding: 40px; font-family: 'Courier New', monospace;">
+    <h1 style="color: #42b883;">📋 Demo 18：远程日志回捞系统</h1>
+
+    <!-- 操作按钮组 -->
+    <div style="margin: 20px 0; display: flex; gap: 12px; flex-wrap: wrap;">
+      <button @click="handleSimulatePayment"
+        style="padding: 12px 24px; background: #42b883; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        💳 模拟支付（会随机失败）
+      </button>
+
+      <button @click="handleExportLogs"
+        style="padding: 12px 24px; background: #f0ad4e; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        📤 导出日志
+      </button>
+
+      <button @click="handleClearLogs"
+        style="padding: 12px 24px; background: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        🗑️ 清除日志
+      </button>
+    </div>
+
+    <!-- 日志条数 -->
+    <div style="font-size: 14px; color: #666; margin-bottom: 12px;">
+      📌 当前日志条数：<strong>{{ logCount }}</strong>
+    </div>
+
+    <!-- 日志显示区域 -->
+    <div
+      style="padding: 16px; background: #1e1e1e; color: #d4d4d4; border-radius: 6px; font-size: 13px; max-height: 400px; overflow-y: auto;">
+      <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">{{ displayContent }}</pre>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -120,4 +152,129 @@ const fetchUserInfo = async () => {
     responseData.value = `❌ 请求失败：${error}`;
   }
 };
+import { onMounted } from 'vue';
+import {
+  logError,
+  exportLogs,
+
+  getLogCount,
+  isPaymentError,
+} from '@/utils/logger';
+import type { PaymentError } from '@/types/logger.d';
+
+// ==================== 状态 ====================
+
+const displayContent = ref<string>('等待操作...');
+const logCount = ref<number>(0);
+
+// ==================== 工具函数 ====================
+
+/** 更新日志条数 */
+function updateLogCount(): void {
+  logCount.value = getLogCount();
+}
+
+/** 生成随机订单号 */
+function generateOrderId(): string {
+  return 'ORD-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+}
+
+/** 随机延迟 */
+function randomDelay(min: number, max: number): Promise<void> {
+  const delay = Math.random() * (max - min) + min;
+  return new Promise((resolve) => setTimeout(resolve, delay));
+}
+
+// ==================== 事件处理 ====================
+
+/**
+ * 模拟支付——随机失败，用于演示日志记录
+ */
+async function handleSimulatePayment(): Promise<void> {
+  displayContent.value = '⏳ 支付处理中...';
+
+  try {
+    // 模拟网络延迟
+    await randomDelay(500, 1200);
+
+    // 70% 概率失败
+    const isSuccess = Math.random() > 0.7;
+
+    if (!isSuccess) {
+      // 模拟不同类型的支付错误
+      const errorTypes: PaymentError[] = [
+        { code: 'INSUFFICIENT_BALANCE', message: '余额不足，请充值后再试' },
+        { code: 'TIMEOUT', message: '支付超时，请稍后重试' },
+        { code: 'NETWORK_ERROR', message: '网络异常，请检查网络连接' },
+        { code: 'RISK_CONTROL', message: '交易被风控拦截，请联系客服' },
+      ];
+
+      const randomError = errorTypes[Math.floor(Math.random() * errorTypes.length)];
+      const orderId = generateOrderId();
+
+      // 构造错误对象
+      const error = new Error(randomError.message);
+      Object.assign(error, {
+        code: randomError.code,
+        orderId,
+        userId: 'USER-1001',
+        timestamp: new Date().toISOString(),
+      });
+
+      throw error;
+    }
+
+    displayContent.value = '✅ 支付成功！订单号：' + generateOrderId();
+  } catch (error) {
+    // ========== 核心：记录日志 ==========
+    const errorData: Record<string, unknown> = {
+      orderId: 'ORD-UNKNOWN',
+      userId: 'USER-1001',
+      timestamp: new Date().toISOString(),
+    };
+
+    if (isPaymentError(error)) {
+      errorData.code = error.code;
+      errorData.message = error.message;
+      errorData.orderId = error.orderId || 'ORD-UNKNOWN';
+    } else if (error instanceof Error) {
+      errorData.message = error.message;
+      errorData.stack = error.stack;
+    } else {
+      errorData.raw = String(error);
+    }
+
+    logError('支付失败', errorData);
+
+    // 显示错误信息
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    displayContent.value = `❌ 支付失败：${errorMsg}\n\n📋 日志已记录到 localStorage，点击"导出日志"查看详情`;
+  } finally {
+    updateLogCount();
+  }
+}
+
+/**
+ * 导出日志
+ */
+function handleExportLogs(): void {
+  const logs = exportLogs();
+  displayContent.value = `📤 导出的日志：\n\n${logs}`;
+}
+
+/**
+ * 清除日志
+ */
+function handleClearLogs(): void {
+  clearLogs();
+  displayContent.value = '✅ 日志已清除';
+  updateLogCount();
+}
+
+// ==================== 生命周期 ====================
+
+onMounted(() => {
+  updateLogCount();
+  console.log('[Demo 18] 已加载，当前日志条数：', logCount.value);
+});
 </script>
