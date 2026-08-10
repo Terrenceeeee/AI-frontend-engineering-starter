@@ -1,4 +1,4 @@
-# DEMO一. pnpm 和npm的不同点
+# DEMO1. pnpm 和npm的不同点
 
 ## 图为在Git bash中 分别创建两个不同的依赖（npm pnpm）创建的相同的vue文件
 
@@ -14,16 +14,22 @@
 
 ---
 
-# DEMO二.Vite 多环境配置与 mode 运行时验证
+# DEMO2.Vite 多环境配置与 mode 运行时验证
 
 ## ls：列出目录内容（默认简洁模式）
 
 ## ls -la = ls -l -a，两个参数合并写法
 
+### -a（all）：显示所有文件，包含：隐藏文件（文件名以 . 开头，例如 .bashrc、.git） 当前目录 .、上级目录 ..
+
+### -l（long） 使用长格式详细列表，展示完整信息：
+
 ![未加载成功](<screenshots/Screenshot 2026-07-27 112654.png>)
 ![未加载成功](<screenshots/Screenshot 2026-07-27 113110.png>)
 
-## 这两张图说明确实证明是硬链接，不是复制 这极大地省下了巨大的内存空间
+## 这两张图中的inode号相同说明确实证明是硬链接，不是复制 这极大地省下了巨大的内存空间
+
+### 但是最后两个以lr...开头的全部都是软连接 而以-开头的一定是硬链接 比如说：-rw...开头的
 
 ## 证明pnpm强制的严格隔离性 lodash未申明未依赖 绝不安装
 
@@ -166,7 +172,7 @@ build.sourcemap: true 生成 .map 文件，方便调试时看到源码位置（�
 
 ![alt text](<screenshots/Screenshot 2026-07-27 164455.png>)
 
-## 检测生产环境 pnpm build -- --mode test pnpm preview
+## 检测生产环境 pnpm build -- --mode test // pnpm preview
 
 ![alt text](<screenshots/Screenshot 2026-07-27 164602.png>)
 
@@ -423,6 +429,9 @@ app.use(router);
 
 ## 第四步：修改 src/App.vue 显示路由出口
 
+#### Markdown 防止代码被浏览器解析渲染 使用 三个反引号 ``` 包裹代码，渲染器会自动识别为代码区块，内部标签不会执行。 但要记得首尾都要有
+
+```
 <code>
 <template>
   <div style="padding: 20px; font-family: 'Courier New', monospace;">
@@ -438,6 +447,7 @@ app.use(router);
     <hr />
 
     <!-- 路由出口：当前页面的内容会渲染在这里 -->
+
     <router-view />
 
   </div>
@@ -447,7 +457,9 @@ app.use(router);
 console.log('App.vue 加载了（主入口）');
 const mode =import.meta.env.MODE
 </script>
+
 </code>
+```
 
 ## 第五步：修改 vite.config.ts 配置分包
 
@@ -509,7 +521,7 @@ chunkFileNames: 'assets/[name]-[hash].js',
 
 ### 在开发环境下： pnpm dev ： 不做完整打包，按需加载文件，启动，热更新极快
 
-![alt text](<Screenshot 2026-07-29 101232.png>)
+![alt text](<screenshots\Screenshot 2026-07-29 101232.png>)
 可以看出：所有 .vue 组件是通过 ?import 请求分别加载的（因为 Vite 在开发模式下不做打包合并）
 ![alt text](<screenshots/Screenshot 2026-07-29 101246.png>)
 再次观察：打开其他界面时（切换路由），浏览器network面板可以看见该界面的动态加载
@@ -1392,12 +1404,13 @@ export const requestPool = new RequestPool(6);
 
 ## 第二步：在 Vue 组件中模拟并发请求
 
+```
 <code>
 <template>
   <!-- 外层容器，设置内边距、等宽字体，控制台风格 -->
   <div style="padding: 40px; font-family: 'Courier New', monospace;">
     <h1 style="color: #42b883;">🌍 请求池并发控制 Demo</h1>
-    
+
     <!-- 按钮：点击触发批量发起20个请求 -->
     <button @click="sendRequests" style="padding: 12px 24px; font-size: 16px; cursor: pointer;">
       🚀 发送 20 个并发请求
@@ -1478,6 +1491,7 @@ const clearLogs = () => {
 };
 </script>
 </code>
+```
 
 ## 第三步：验证
 
@@ -1513,6 +1527,8 @@ const clearLogs = () => {
 ## 第一步：创建重试工具
 
 创建 src/utils/retry.ts：
+
+```
 <code>
 // src/utils/retry.ts
 
@@ -1604,6 +1620,8 @@ lastError = error;
 throw lastError;
 }
 </code>
+```
+
 any在eslintd的recommand模式里是默认被判断为error的 可以把any换成unknown 他比他的类型更强
 注意使用unknown的时候要加一个类型守卫 不然无法使用
 // 1.声明
@@ -1641,9 +1659,50 @@ catch (error) { // 这里 error 是 unknown（未知包裹）
 (error as Error & { response: { status: number } }).response = { status: 500 };
 表明：这是一个 Error，同时还有一个 response 属性”
 创建 src/api/testApi.ts：
+// src/api/testApi.ts
+import { retryWithBackoff } from '@/utils/retry';
+
+// 模拟一个会失败的请求
+// 前 2 次失败，第 3 次成功
+let attemptCount = 0;
+
+export function mockUnstableApi(): Promise<{ success: boolean; data: string }> {
+return new Promise((resolve, reject) => {
+attemptCount++;
+console.log(`[API] 第 ${attemptCount} 次调用`);
+
+    // 前 2 次返回 500 错误
+    if (attemptCount < 3) {
+      const error = new Error('服务器内部错误 (500)');
+      (error as Error & { response: { status: number } }).response = { status: 500 };
+      reject(error);
+    } else {
+      // 第 3 次成功
+      resolve({ success: true, data: '请求成功！' });
+    }
+
+});
+}
+
+// 重置计数器
+export function resetAttemptCount() {
+attemptCount = 0;
+}
+
+// 包装请求，应用重试策略
+export function fetchWithRetry() {
+return retryWithBackoff(
+() => mockUnstableApi(),
+{
+maxRetries: 3,
+baseDelay: 500,
+}
+);
+}
 
 ## 第三步：在 App.vue 中添加测试按钮
 
+```
 保持原有内容不变 新增一点内容 其实就是加了个按钮 ！！！但要注意@click要在style之后 不然会被warning
 <code>
 
@@ -1674,6 +1733,7 @@ resetAttemptCount();
 addLog('🔄 已重置计数器');
 };
 </code>
+```
 
 ## 第四步：验证
 
@@ -1701,6 +1761,7 @@ addLog('🔄 已重置计数器');
 
 ### 在项目根目录（demo2-env/ 下，不是 src/）创建 sw.js： 注意是项目根目录！！！
 
+```
 <code>
 // 定义缓存版本标识，修改后缀v1→v2 代表缓存版本更新，触发清理旧缓存
 const CACHE_NAME = 'demo-cache-v1';
@@ -1832,6 +1893,7 @@ return cachedResponse;
 );
 });
 </code>
+```
 
 ## 第二步：配置 Vite 构建，把 sw.js 复制到 dist/
 
@@ -2520,3 +2582,7 @@ import WebSocketDemo from './components/WebSocketDemo.vue';
 ---
 
 # Demo18:
+
+```
+
+```
