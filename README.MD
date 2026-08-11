@@ -3755,18 +3755,18 @@ const firstEntry =
 
 当前项目已经新增 `.github/workflows/deploy.yml`，用于把 `Demo2/demo2-env` 构建出的 `dist` 自动发布到 GitHub Pages。
 
-触发方式：
+## 触发方式：
 
 - 推送到 `master` 分支，并且修改了 `Demo2/demo2-env` 或 `deploy.yml`
 - 在 GitHub Actions 页面手动执行 `workflow_dispatch`
 
-部署流程：
+## 部署流程：
 
 ```text
 安装依赖 → pnpm build → 生成 404.html → 上传 Pages artifact → 发布到 GitHub Pages
 ```
 
-首次启用时，需要在 GitHub 仓库中打开：
+## 首次启用时，需要在 GitHub 仓库中打开：
 
 ```text
 Settings → Pages → Build and deployment → Source → GitHub Actions
