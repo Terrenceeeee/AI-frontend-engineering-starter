@@ -3545,3 +3545,5 @@ npx ts-node scripts/build-graph.ts 执行生成图谱
 2.把json文件喂给chatGPT 要求生产他的visualize.html文件 使用d3.js生成美观直接的知识图谱
 3.然后在vscode中用live server打开html文件 即可看到
 ```
+
+![alt text](<screenshots/Screenshot 2026-08-11 094532.png>)
