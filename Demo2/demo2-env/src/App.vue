@@ -96,6 +96,7 @@
       <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">{{ displayContent }}</pre>
     </div>
   </div>
+
 </template>
 
 <script setup lang="ts">

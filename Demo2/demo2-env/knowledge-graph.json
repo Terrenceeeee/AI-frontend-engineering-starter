@@ -31,10 +31,28 @@
       "filePath": "src\\views\\product\\index.vue"
     },
     {
+      "id": "component:WebSocketDemo",
+      "type": "component",
+      "name": "WebSocketDemo",
+      "filePath": "src\\components\\WebSocketDemo.vue"
+    },
+    {
+      "id": "component:LogoDebugTrigger",
+      "type": "component",
+      "name": "LogoDebugTrigger",
+      "filePath": "src\\components\\LogoDebugTrigger.vue"
+    },
+    {
       "id": "component:HelloWorld",
       "type": "component",
       "name": "HelloWorld",
       "filePath": "src\\components\\HelloWorld.vue"
+    },
+    {
+      "id": "composable:useVConsole",
+      "type": "composable",
+      "name": "useVConsole",
+      "filePath": "src\\composables\\useVConsole.ts"
     },
     {
       "id": "api:product",
@@ -55,5 +73,11 @@
       }
     }
   ],
-  "edges": []
+  "edges": [
+    {
+      "from": "component:LogoDebugTrigger",
+      "to": "composable:useVConsole",
+      "type": "calls"
+    }
+  ]
 }

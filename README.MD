@@ -3127,6 +3127,8 @@ onMounted(() => {
 ![alt text](<screenshots/Screenshot 2026-08-10 145717.png>)
 ![alt text](<screenshots/Screenshot 2026-08-10 145721.png>)
 
+---
+
 # Demo 19：线上隐藏调试入口
 
 ## 核心功能
@@ -3502,8 +3504,44 @@ function onDebugLoadError(error: string): void {
 
 #### 因为在生产环境（MODE === 'production'）下，Demo 16 的自动加载条件不满足（通常是 if (isDev || hasDebugParam)，isDev 为 false），vConsole 不会自动出现。此时 Demo 19 的隐藏入口就能正常工作了。
 
-####　也可以把demo16声明的按钮先注释掉（最快）（采用）
+#### 也可以把demo16声明的按钮先注释掉（最快）（采用）
+
 ![alt text](<screenshots/Screenshot 2026-08-10 171743.png>)注释掉之后
 ![alt text](<screenshots/Screenshot 2026-08-10 171732.png>)效果成功展示
 
 #### 需要常显示的话记得把注释的Demo16代码在main.js中解除注释即可
+
+---
+
+# DEMO20:使用ChatGPT和d3.js美观的绘制项目关联知识图谱
+
+## 第一步：准备环境
+
+1.node.js版本需要大于>=16 2.安装Typescript pnpm list typescript 3.检查根目录是否含有tsconfig.json
+
+## 第二步：安装依赖
+
+```
+pnpm add -D @vue/compiler-sfc ts-morph glob fast-glob typescript ts-node @types/node
+```
+
+## 第三步：创建脚本文件
+
+```
+1.mkdir scripts
+2.touch scripts/build-graph.ts 自动生成生成可以生成图谱的ts文件
+```
+
+## 第四步：运行脚本
+
+```
+npx ts-node scripts/build-graph.ts 执行生成图谱
+```
+
+## 第五步：拿到输出
+
+```
+1.会自动生成一个knowledge-graph.json文件
+2.把json文件喂给chatGPT 要求生产他的visualize.html文件 使用d3.js生成美观直接的知识图谱
+3.然后在vscode中用live server打开html文件 即可看到
+```

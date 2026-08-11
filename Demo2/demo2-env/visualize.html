@@ -1,360 +1,823 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <title>Vue3 项目知识图谱</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js">
-    </script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            background: #1a1a2e;
-        }
-        #cy {
-            width: 100vw;
-            height: 100vh;
-            display: block;
-        }
-        #info {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            padding: 15px 20px;
-            border-radius: 10px;
-            font-size: 14px;
-            z-index: 100;
-            pointer-events: none;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        #info span {
-            color: #4ECDC4;
-            font-weight: bold;
-        }
-        #legend {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.85);
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-size: 13px;
-            z-index: 100;
-            display: flex;
-            gap: 25px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            pointer-events: none;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .legend-dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        #stats {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            padding: 15px 20px;
-            border-radius: 10px;
-            font-size: 13px;
-            z-index: 100;
-            pointer-events: none;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: right;
-            line-height: 1.8;
-        }
-        #stats .num {
-            color: #FFE66D;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>项目依赖可视化</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Microsoft YaHei",
+        Arial,
+        sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    .app {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .sidebar {
+      width: 310px;
+      flex-shrink: 0;
+      padding: 20px;
+      background: #ffffff;
+      border-right: 1px solid #e5e7eb;
+      overflow-y: auto;
+      z-index: 2;
+    }
+
+    .sidebar h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      color: #111827;
+    }
+
+    .subtitle {
+      margin-bottom: 20px;
+      color: #6b7280;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .search-box {
+      width: 100%;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .search-box:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    }
+
+    .section {
+      margin-top: 24px;
+    }
+
+    .section-title {
+      margin-bottom: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat-card {
+      padding: 12px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .stat-label {
+      margin-top: 3px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 10px 0;
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .legend-color {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 0 0 1px #d1d5db;
+    }
+
+    .detail {
+      display: none;
+      padding: 12px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.7;
+      word-break: break-all;
+    }
+
+    .detail.show {
+      display: block;
+    }
+
+    .detail-name {
+      margin-bottom: 4px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .detail-row {
+      color: #4b5563;
+    }
+
+    .detail-row strong {
+      color: #374151;
+    }
+
+    .graph-container {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      background:
+        linear-gradient(rgba(229, 231, 235, 0.55) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(229, 231, 235, 0.55) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .toolbar {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      gap: 8px;
+      z-index: 1;
+    }
+
+    .toolbar button {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 7px;
+      background: #ffffff;
+      color: #374151;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .toolbar button:hover {
+      background: #f3f4f6;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+
+    svg:active {
+      cursor: grabbing;
+    }
+
+    .link {
+      stroke: #9ca3af;
+      stroke-width: 1.8;
+      stroke-opacity: 0.8;
+    }
+
+    .link-label {
+      fill: #6b7280;
+      font-size: 11px;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .node {
+      cursor: pointer;
+    }
+
+    .node circle {
+      stroke: #ffffff;
+      stroke-width: 2.5px;
+      transition: opacity 0.2s;
+    }
+
+    .node text {
+      font-size: 12px;
+      fill: #374151;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .node.dimmed,
+    .link.dimmed,
+    .link-label.dimmed {
+      opacity: 0.12;
+    }
+
+    .node.highlighted circle {
+      stroke: #111827;
+      stroke-width: 3px;
+    }
+
+    .tooltip {
+      position: fixed;
+      display: none;
+      max-width: 360px;
+      padding: 10px 12px;
+      background: rgba(17, 24, 39, 0.95);
+      border-radius: 7px;
+      color: #ffffff;
+      font-size: 12px;
+      line-height: 1.6;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .empty-tip {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #9ca3af;
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 700px) {
+      .sidebar {
+        width: 240px;
+        padding: 14px;
+      }
+
+      .sidebar h1 {
+        font-size: 18px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <div id="info">🔍 点击节点高亮上下游 · 滚轮缩放 · 拖拽移动</div>
-    <div id="stats">加载中...</div>
-    <div id="legend">
-        <span class="legend-item"><span class="legend-dot" style="background:#FF6B6B;"></span> 页面</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#4ECDC4;"></span> Store</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#FFE66D;"></span> API</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#A29BFE;"></span> Composable</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#55EFC4;"></span> 组件</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#FD79A8;"></span> 路由</span>
-    </div>
-    <div id="cy"></div>
+  <div class="app">
+    <aside class="sidebar">
+      <h1>项目依赖可视化</h1>
+      <div class="subtitle">
+        展示 Vue 组件、Composable 和 API 之间的依赖关系。
+        <br />
+        可拖拽节点，滚轮缩放，点击节点查看详情。
+      </div>
 
-    <script>
-        // ========== 加载 JSON ==========
-        fetch('knowledge-graph.json')
-            .then(res => {
-                if (!res.ok) throw new Error('找不到 knowledge-graph.json，请先运行扫描脚本');
-                return res.json();
-            })
-            .then(data => {
-                // 更新统计
-                const stats = {
-                    nodes: data.nodes.length,
-                    edges: data.edges.length,
-                    pages: data.nodes.filter(n => n.type === 'page').length,
-                    stores: data.nodes.filter(n => n.type === 'store').length,
-                    apis: data.nodes.filter(n => n.type === 'api').length,
-                    composables: data.nodes.filter(n => n.type === 'composable').length,
-                    components: data.nodes.filter(n => n.type === 'component').length,
-                };
-                document.getElementById('stats').innerHTML = `
-                    🎯 节点 <span class="num">${stats.nodes}</span> · 关系 <span class="num">${stats.edges}</span><br>
-                    📄 ${stats.pages} 页 · 🗄️ ${stats.stores} Store · 🔌 ${stats.apis} API<br>
-                    🧩 ${stats.composables} Composable · 🧱 ${stats.components} 组件
-                `;
+      <input
+        id="search"
+        class="search-box"
+        type="search"
+        placeholder="搜索节点名称或文件路径..."
+      />
 
-                // ========== 转换数据 ==========
-                const elements = [];
+      <div class="section">
+        <div class="section-title">项目统计</div>
+        <div class="stats">
+          <div class="stat-card">
+            <div id="node-count" class="stat-value">0</div>
+            <div class="stat-label">节点数量</div>
+          </div>
+          <div class="stat-card">
+            <div id="edge-count" class="stat-value">0</div>
+            <div class="stat-label">关系数量</div>
+          </div>
+        </div>
+      </div>
 
-                // 节点
-                const colorMap = {
-                    page: '#FF6B6B',
-                    store: '#4ECDC4',
-                    api: '#FFE66D',
-                    composable: '#A29BFE',
-                    component: '#55EFC4',
-                    route: '#FD79A8',
-                };
-                const sizeMap = {
-                    page: 55,
-                    store: 45,
-                    api: 40,
-                    composable: 40,
-                    component: 35,
-                    route: 30,
-                };
+      <div class="section">
+        <div class="section-title">节点类型</div>
 
-                data.nodes.forEach(n => {
-                    const type = n.type || 'component';
-                    elements.push({
-                        data: {
-                            id: n.id,
-                            label: n.name,
-                            type: type,
-                            file: n.filePath || '',
-                        },
-                        style: {
-                            'background-color': colorMap[type] || '#888',
-                            'width': sizeMap[type] || 35,
-                            'height': sizeMap[type] || 35,
-                        }
-                    });
-                });
+        <div class="legend-item">
+          <span
+            class="legend-color"
+            style="background: #6366f1"
+          ></span>
+          Component
+        </div>
 
-                // 关系
-                const edgeColorMap = {
-                    'subscribes': '#4ECDC4',
-                    'calls': '#FFE66D',
-                    'navigates-to': '#FD79A8',
-                    'renders': '#55EFC4',
-                };
-                data.edges.forEach(e => {
-                    elements.push({
-                        data: {
-                            source: e.from,
-                            target: e.to,
-                            label: e.type,
-                            color: edgeColorMap[e.type] || '#888',
-                        }
-                    });
-                });
+        <div class="legend-item">
+          <span
+            class="legend-color"
+            style="background: #10b981"
+          ></span>
+          Composable
+        </div>
 
-                // ========== 渲染图谱 ==========
-                const cy = cytoscape({
-                    container: document.getElementById('cy'),
-                    elements: elements,
-                    style: [
-                        {
-                            selector: 'node',
-                            style: {
-                                'width': 'data(width)',
-                                'height': 'data(height)',
-                                'background-color': 'data(background-color)',
-                                'label': 'data(label)',
-                                'color': '#fff',
-                                'font-size': '12px',
-                                'text-valign': 'center',
-                                'text-halign': 'center',
-                                'font-weight': 'bold',
-                                'text-outline-width': 2,
-                                'text-outline-color': 'rgba(0,0,0,0.8)',
-                                'border-width': 2,
-                                'border-color': 'rgba(255,255,255,0.3)',
-                                'cursor': 'pointer',
-                            }
-                        },
-                        {
-                            selector: 'node[type="page"]',
-                            style: {
-                                'font-size': '14px',
-                                'border-color': '#FF6B6B',
-                                'border-width': 3,
-                            }
-                        },
-                        {
-                            selector: 'node[type="store"]',
-                            style: {
-                                'shape': 'ellipse',
-                            }
-                        },
-                        {
-                            selector: 'node[type="api"]',
-                            style: {
-                                'shape': 'diamond',
-                            }
-                        },
-                        {
-                            selector: 'edge',
-                            style: {
-                                'width': 2,
-                                'line-color': 'data(color)',
-                                'target-arrow-color': 'data(color)',
-                                'target-arrow-shape': 'triangle',
-                                'curve-style': 'bezier',
-                                'opacity': 0.7,
-                                'label': 'data(label)',
-                                'font-size': '9px',
-                                'color': '#aaa',
-                                'text-rotation': 'autorotate',
-                                'text-outline-width': 2,
-                                'text-outline-color': 'rgba(0,0,0,0.9)',
-                            }
-                        },
-                        {
-                            selector: 'edge[label="subscribes"]',
-                            style: {
-                                'line-style': 'dashed',
-                            }
-                        },
-                        {
-                            selector: 'node:selected',
-                            style: {
-                                'border-width': 4,
-                                'border-color': '#fff',
-                                'width': 'data(width) + 10',
-                                'height': 'data(height) + 10',
-                            }
-                        },
-                        {
-                            selector: 'node.highlight',
-                            style: {
-                                'opacity': 1,
-                                'border-width': 3,
-                                'border-color': '#fff',
-                            }
-                        },
-                        {
-                            selector: 'edge.highlight',
-                            style: {
-                                'opacity': 1,
-                                'width': 4,
-                            }
-                        },
-                        {
-                            selector: 'node.faded',
-                            style: {
-                                'opacity': 0.15,
-                            }
-                        },
-                        {
-                            selector: 'edge.faded',
-                            style: {
-                                'opacity': 0.08,
-                            }
-                        },
-                    ],
-                    layout: {
-                        name: 'cose',
-                        idealEdgeLength: 180,
-                        nodeRepulsion: 10000,
-                        edgeElasticity: 100,
-                        nestingFactor: 5,
-                        gravity: 80,
-                        numIter: 2000,
-                        animate: true,
-                        animationDuration: 800,
-                    }
-                });
+        <div class="legend-item">
+          <span
+            class="legend-color"
+            style="background: #f59e0b"
+          ></span>
+          API
+        </div>
+      </div>
 
-                // ========== 交互：点击高亮 ==========
-                let selectedNodeId = null;
+      <div class="section">
+        <div class="section-title">节点详情</div>
+        <div id="detail" class="detail">
+          <div class="detail-name" id="detail-name">未选择节点</div>
+          <div class="detail-row">
+            <strong>类型：</strong>
+            <span id="detail-type">-</span>
+          </div>
+          <div class="detail-row">
+            <strong>ID：</strong>
+            <span id="detail-id">-</span>
+          </div>
+          <div class="detail-row">
+            <strong>文件：</strong>
+            <span id="detail-file">-</span>
+          </div>
+          <div id="detail-url-row" class="detail-row" style="display: none">
+            <strong>URL：</strong>
+            <span id="detail-url">-</span>
+          </div>
+        </div>
+      </div>
+    </aside>
 
-                cy.on('tap', 'node', function(evt) {
-                    const node = evt.target;
-                    const nodeId = node.id();
+    <main class="graph-container">
+      <div class="toolbar">
+        <button id="reset-btn">重置视图</button>
+        <button id="zoom-in-btn">放大</button>
+        <button id="zoom-out-btn">缩小</button>
+      </div>
 
-                    if (selectedNodeId === nodeId) {
-                        // 取消选中
-                        cy.elements().removeClass('highlight faded');
-                        selectedNodeId = null;
-                        return;
-                    }
+      <div class="empty-tip" id="empty-tip" style="display: none">
+        没有匹配的节点
+      </div>
 
-                    selectedNodeId = nodeId;
+      <svg id="graph"></svg>
+    </main>
+  </div>
 
-                    // 获取上下游节点
-                    const neighbors = node.neighborhood().add(node);
-                    const neighborIds = new Set(neighbors.map(n => n.id()));
+  <div id="tooltip" class="tooltip"></div>
 
-                    cy.elements().removeClass('highlight faded');
-                    cy.elements().addClass('faded');
+  <script>
+    const graphData = {
+      nodes: [
+        {
+          id: "component:App",
+          type: "component",
+          name: "App",
+          filePath: "src\\App.vue"
+        },
+        {
+          id: "component:User",
+          type: "component",
+          name: "User",
+          filePath: "src\\views\\User.vue"
+        },
+        {
+          id: "component:Home",
+          type: "component",
+          name: "Home",
+          filePath: "src\\views\\Home.vue"
+        },
+        {
+          id: "component:Admin",
+          type: "component",
+          name: "Admin",
+          filePath: "src\\views\\Admin.vue"
+        },
+        {
+          id: "component:index",
+          type: "component",
+          name: "index",
+          filePath: "src\\views\\product\\index.vue"
+        },
+        {
+          id: "component:WebSocketDemo",
+          type: "component",
+          name: "WebSocketDemo",
+          filePath: "src\\components\\WebSocketDemo.vue"
+        },
+        {
+          id: "component:LogoDebugTrigger",
+          type: "component",
+          name: "LogoDebugTrigger",
+          filePath: "src\\components\\LogoDebugTrigger.vue"
+        },
+        {
+          id: "component:HelloWorld",
+          type: "component",
+          name: "HelloWorld",
+          filePath: "src\\components\\HelloWorld.vue"
+        },
+        {
+          id: "composable:useVConsole",
+          type: "composable",
+          name: "useVConsole",
+          filePath: "src\\composables\\useVConsole.ts"
+        },
+        {
+          id: "api:product",
+          type: "api",
+          name: "product",
+          filePath: "src\\api\\product.ts",
+          props: {
+            url: "/api/product"
+          }
+        },
+        {
+          id: "api:update",
+          type: "api",
+          name: "update",
+          filePath: "src\\api\\product.ts",
+          props: {
+            url: "/api/product/update"
+          }
+        }
+      ],
+      edges: [
+        {
+          from: "component:LogoDebugTrigger",
+          to: "composable:useVConsole",
+          type: "calls"
+        }
+      ]
+    };
 
-                    neighbors.addClass('highlight').removeClass('faded');
+    const colors = {
+      component: "#6366f1",
+      composable: "#10b981",
+      api: "#f59e0b"
+    };
 
-                    // 同时高亮关系上的标签
-                    node.connectedEdges().forEach(e => {
-                        e.addClass('highlight').removeClass('faded');
-                    });
-                });
+    const typeNames = {
+      component: "Component",
+      composable: "Composable",
+      api: "API"
+    };
 
-                // 点击空白取消选中
-                cy.on('tap', function(evt) {
-                    if (evt.target === cy) {
-                        cy.elements().removeClass('highlight faded');
-                        selectedNodeId = null;
-                    }
-                });
+    const svg = d3.select("#graph");
+    const container = document.querySelector(".graph-container");
+    const tooltip = document.querySelector("#tooltip");
 
-                // 双击节点跳转文件（如果有文件路径）
-                cy.on('dblclick', 'node', function(evt) {
-                    const node = evt.target;
-                    const file = node.data('file');
-                    if (file) {
-                        console.log(`📂 文件路径: ${file}`);
-                        alert(`组件文件: ${file}\n(可在 VS Code 中搜索打开)`);
-                    }
-                });
+    const width = container.clientWidth;
+    const height = container.clientHeight;
 
-                console.log('✅ 图谱渲染完成！点击节点查看上下游依赖。');
+    svg.attr("viewBox", `0 0 ${width} ${height}`);
 
-            })
-            .catch(err => {
-                console.error('❌ 加载失败:', err);
-                document.getElementById('stats').innerHTML = `
-                    ❌ 错误: ${err.message}<br>
-                    <span style="font-size:12px;color:#aaa;">请确保 knowledge-graph.json 在项目根目录</span>
-                `;
-                document.getElementById('info').textContent = '⚠️ 未找到 knowledge-graph.json';
-            });
-    </script>
+    const root = svg.append("g");
+
+    const zoom = d3
+      .zoom()
+      .scaleExtent([0.25, 4])
+      .on("zoom", (event) => {
+        root.attr("transform", event.transform);
+      });
+
+    svg.call(zoom);
+
+    const marker = root
+      .append("defs")
+      .append("marker")
+      .attr("id", "arrow")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 24)
+      .attr("refY", 0)
+      .attr("markerWidth", 7)
+      .attr("markerHeight", 7)
+      .attr("orient", "auto");
+
+    marker
+      .append("path")
+      .attr("d", "M0,-5L10,0L0,5")
+      .attr("fill", "#9ca3af");
+
+    const nodeMap = new Map(
+      graphData.nodes.map((node) => [node.id, node])
+    );
+
+    const links = graphData.edges.map((edge) => ({
+      ...edge,
+      source: nodeMap.get(edge.from),
+      target: nodeMap.get(edge.to)
+    }));
+
+    document.querySelector("#node-count").textContent =
+      graphData.nodes.length;
+
+    document.querySelector("#edge-count").textContent =
+      graphData.edges.length;
+
+    const linkGroup = root.append("g").attr("class", "links");
+
+    const link = linkGroup
+      .selectAll("line")
+      .data(links)
+      .join("line")
+      .attr("class", "link")
+      .attr("marker-end", "url(#arrow)");
+
+    const linkLabel = root
+      .append("g")
+      .attr("class", "link-labels")
+      .selectAll("text")
+      .data(links)
+      .join("text")
+      .attr("class", "link-label")
+      .text((d) => d.type);
+
+    const nodeGroup = root.append("g").attr("class", "nodes");
+
+    const node = nodeGroup
+      .selectAll("g")
+      .data(graphData.nodes)
+      .join("g")
+      .attr("class", "node")
+      .call(
+        d3
+          .drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended)
+      );
+
+    node
+      .append("circle")
+      .attr("r", (d) => {
+        if (d.type === "component") return 18;
+        if (d.type === "composable") return 20;
+        return 18;
+      })
+      .attr("fill", (d) => colors[d.type]);
+
+    node
+      .append("text")
+      .attr("x", 25)
+      .attr("y", 5)
+      .text((d) => d.name);
+
+    node
+      .on("click", (event, d) => {
+        event.stopPropagation();
+        showDetail(d);
+        highlightNode(d);
+      })
+      .on("mouseenter", (event, d) => {
+        tooltip.style.display = "block";
+        tooltip.innerHTML = `
+          <strong>${escapeHtml(d.name)}</strong><br>
+          类型：${escapeHtml(typeNames[d.type])}<br>
+          文件：${escapeHtml(d.filePath)}
+          ${
+            d.props?.url
+              ? `<br>URL：${escapeHtml(d.props.url)}`
+              : ""
+          }
+        `;
+        moveTooltip(event);
+      })
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", () => {
+        tooltip.style.display = "none";
+      });
+
+    svg.on("click", () => {
+      clearHighlight();
+    });
+
+    const simulation = d3
+      .forceSimulation(graphData.nodes)
+      .force(
+        "link",
+        d3
+          .forceLink(links)
+          .id((d) => d.id)
+          .distance(150)
+          .strength(1)
+      )
+      .force("charge", d3.forceManyBody().strength(-500))
+      .force(
+        "center",
+        d3.forceCenter(width / 2, height / 2)
+      )
+      .force(
+        "collision",
+        d3.forceCollide().radius(55)
+      )
+      .on("tick", ticked);
+
+    function ticked() {
+      link
+        .attr("x1", (d) => d.source.x)
+        .attr("y1", (d) => d.source.y)
+        .attr("x2", (d) => d.target.x)
+        .attr("y2", (d) => d.target.y);
+
+      linkLabel
+        .attr("x", (d) => (d.source.x + d.target.x) / 2)
+        .attr("y", (d) => (d.source.y + d.target.y) / 2 - 5);
+
+      node.attr(
+        "transform",
+        (d) => `translate(${d.x},${d.y})`
+      );
+    }
+
+    function dragstarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+
+    function dragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+
+      d.fx = null;
+      d.fy = null;
+    }
+
+    function showDetail(d) {
+      const detail = document.querySelector("#detail");
+
+      detail.classList.add("show");
+
+      document.querySelector("#detail-name").textContent = d.name;
+      document.querySelector("#detail-type").textContent =
+        typeNames[d.type];
+      document.querySelector("#detail-id").textContent = d.id;
+      document.querySelector("#detail-file").textContent = d.filePath;
+
+      const urlRow = document.querySelector("#detail-url-row");
+
+      if (d.props?.url) {
+        urlRow.style.display = "block";
+        document.querySelector("#detail-url").textContent =
+          d.props.url;
+      } else {
+        urlRow.style.display = "none";
+      }
+    }
+
+    function highlightNode(selectedNode) {
+      const relatedIds = new Set([selectedNode.id]);
+
+      links.forEach((edge) => {
+        if (edge.source.id === selectedNode.id) {
+          relatedIds.add(edge.target.id);
+        }
+
+        if (edge.target.id === selectedNode.id) {
+          relatedIds.add(edge.source.id);
+        }
+      });
+
+      node
+        .classed("dimmed", (d) => !relatedIds.has(d.id))
+        .classed("highlighted", (d) => d.id === selectedNode.id);
+
+      link.classed(
+        "dimmed",
+        (d) =>
+          d.source.id !== selectedNode.id &&
+          d.target.id !== selectedNode.id
+      );
+
+      linkLabel.classed(
+        "dimmed",
+        (d) =>
+          d.source.id !== selectedNode.id &&
+          d.target.id !== selectedNode.id
+      );
+    }
+
+    function clearHighlight() {
+      node
+        .classed("dimmed", false)
+        .classed("highlighted", false);
+
+      link.classed("dimmed", false);
+      linkLabel.classed("dimmed", false);
+    }
+
+    const searchInput = document.querySelector("#search");
+
+    searchInput.addEventListener("input", () => {
+      const keyword = searchInput.value.trim().toLowerCase();
+
+      if (!keyword) {
+        clearHighlight();
+        document.querySelector("#empty-tip").style.display = "none";
+        return;
+      }
+
+      const matchedNodes = graphData.nodes.filter((d) => {
+        return (
+          d.name.toLowerCase().includes(keyword) ||
+          d.id.toLowerCase().includes(keyword) ||
+          d.filePath.toLowerCase().includes(keyword)
+        );
+      });
+
+      const matchedIds = new Set(
+        matchedNodes.map((d) => d.id)
+      );
+
+      node
+        .classed("dimmed", (d) => !matchedIds.has(d.id))
+        .classed("highlighted", (d) => matchedIds.has(d.id));
+
+      link.classed(
+        "dimmed",
+        (d) =>
+          !matchedIds.has(d.source.id) &&
+          !matchedIds.has(d.target.id)
+      );
+
+      linkLabel.classed(
+        "dimmed",
+        (d) =>
+          !matchedIds.has(d.source.id) &&
+          !matchedIds.has(d.target.id)
+      );
+
+      document.querySelector("#empty-tip").style.display =
+        matchedNodes.length === 0 ? "block" : "none";
+    });
+
+    document.querySelector("#reset-btn").addEventListener("click", () => {
+      searchInput.value = "";
+      clearHighlight();
+
+      svg
+        .transition()
+        .duration(500)
+        .call(
+          zoom.transform,
+          d3.zoomIdentity
+        );
+
+      simulation.alpha(0.8).restart();
+    });
+
+    document.querySelector("#zoom-in-btn").addEventListener("click", () => {
+      svg.transition().duration(300).call(zoom.scaleBy, 1.25);
+    });
+
+    document.querySelector("#zoom-out-btn").addEventListener("click", () => {
+      svg.transition().duration(300).call(zoom.scaleBy, 0.8);
+    });
+
+    function moveTooltip(event) {
+      tooltip.style.left = `${event.clientX + 14}px`;
+      tooltip.style.top = `${event.clientY + 14}px`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    window.addEventListener("resize", () => {
+      const newWidth = container.clientWidth;
+      const newHeight = container.clientHeight;
+
+      svg.attr("viewBox", `0 0 ${newWidth} ${newHeight}`);
+
+      simulation
+        .force("center", d3.forceCenter(newWidth / 2, newHeight / 2))
+        .alpha(0.3)
+        .restart();
+    });
+  </script>
 </body>
 </html>
