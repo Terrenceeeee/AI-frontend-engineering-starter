@@ -30,7 +30,7 @@ export function reportWebVitals() {
   // 2. 监听 CLS（累积布局偏移）
   let clsValue = 0;
   new PerformanceObserver((list) => {
-    for (const entry of list.getEntries() as any[]) {
+    for (const entry of list.getEntries() as Array<PerformanceEntry & { hadRecentInput?: boolean; value?: number }>) {
       // 只统计用户无操作时的偏移（有操作的不算）
       if (!entry.hadRecentInput) {
         clsValue += entry.value;
@@ -43,7 +43,7 @@ export function reportWebVitals() {
   // 3. 监听 FID（首次输入延迟）
   new PerformanceObserver((list) => {
     const entries = list.getEntries();
-    const firstEntry = entries[0] as any;
+    const firstEntry = entries[0] as PerformanceEntry & { processingStart: number };
     if (firstEntry) {
       report.fid = firstEntry.processingStart - firstEntry.startTime;
       console.log('[性能监控] FID:', report.fid);

@@ -1,59 +1,48 @@
-# name: CI 流水线
+name: CI 流水线
 
-# on:
-#   push:
-#     branches: [master]
-#     paths:
-#       - "Demo2/demo2-env/**"
-#       - ".github/workflows/ci.yml"
-#   pull_request:
-#     branches: [master]
-#     paths:
-#       - "Demo2/demo2-env/**"
-#       - ".github/workflows/ci.yml"
+on:
+  push:
+    branches: [master]
+    paths:
+      - "Demo2/demo2-env/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "Demo2/demo2-env/**"
+      - ".github/workflows/ci.yml"
 
-# jobs:
-#   build-and-test:
-#     runs-on: ubuntu-latest
-#     defaults:
-#       run:
-#         working-directory: ./Demo2/demo2-env
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Demo2/demo2-env
 
-#     steps:
-#       - name: 检出代码
-#         uses: actions/checkout@v4
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
 
-#       - name: 安装 pnpm
-#         uses: pnpm/action-setup@v3
-#         with:
-#           version: 8
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
-#       - name: 安装 Node.js
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version: "18"
-#           cache: "pnpm"
-#           cache-dependency-path: Demo2/demo2-env/pnpm-lock.yaml
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: Demo2/demo2-env/pnpm-lock.yaml
 
-#       - name: 安装依赖
-#         run: pnpm install
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
 
-#       - name: 代码规范检查
-#         run: pnpm lint
+      - name: 代码规范检查
+        run: pnpm exec eslint src --ext .vue,.js,.ts
 
-#       - name: 单元测试
-#         run: pnpm test
+      - name: 单元测试
+        run: pnpm test
 
-#       - name: 构建项目
-#         run: pnpm build
-
-# - name: 安装 Playwright 浏览器
-#   run: npx playwright install --with-deps msedge
-
-# - name: 运行 E2E 测试
-#   run: |
-#   pnpm preview &
-#   npx wait-on http://localhost:4173
-#   pnpm test:e2e
-#   env:
-#   CI: true
+      - name: 构建项目
+        run: pnpm build

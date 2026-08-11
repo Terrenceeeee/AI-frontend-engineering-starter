@@ -1,14 +1,14 @@
 import {createRouter,createWebHistory} from 'vue-router';
-const routes=[
+const routes = [
   {
-    path:'/',
-    name:'Home',
-    component:()=>import('../src/views/Home.vue'),
+    path: '/',
+    name: 'Home',
+    component: () => import('../src/views/Home.vue'),
   },
   {
-    path:'/user',
-    name:'User',
-    component:()=>import('../src/views/User.vue'),
+    path: '/user',
+    name: 'User',
+    component: () => import('../src/views/User.vue'),
   },
   {
     path: '/admin',
@@ -20,8 +20,6 @@ const routes=[
     name: 'Product',
     component: () => import('../src/views/product/index.vue'),
   },
-  
-  
 ];
 
 const router=createRouter({

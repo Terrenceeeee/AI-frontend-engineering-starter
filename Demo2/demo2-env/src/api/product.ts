@@ -1,12 +1,8 @@
 import request from '../utils/request';
 
-export interface IProductParams {
-  // TODO: 定义接口参数
-}
+export type IProductParams = Record<string, unknown>;
 
-export interface IProductResponse {
-  // TODO: 定义接口返回数据
-}
+export type IProductResponse = Record<string, unknown>;
 
 /**
  * 获取 Product 数据

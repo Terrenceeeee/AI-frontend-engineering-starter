@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { getProductData, IProductParams, IProductResponse } from '../../api/product';
+import type { IProductResponse } from '../../api/product';
 
 interface IProductState {
   data: IProductResponse[];

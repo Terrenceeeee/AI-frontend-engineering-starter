@@ -13,24 +13,13 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useVConsole } from '@/composables/useVConsole';
 
-const props = withDefaults(
-  defineProps<{
-    clickCount?: number;
-    timeout?: number;
-    autoLoad?: boolean;
-  }>(),
-  {
-    clickCount: 5,
-    timeout: 2000,
-    autoLoad: true,
-  }
-);
+const props = defineProps({
+  clickCount: { type: Number, default: 5 },
+  timeout: { type: Number, default: 2000 },
+  autoLoad: { type: Boolean, default: true },
+});
 
-const emit = defineEmits<{
-  (e: 'trigger'): void;
-  (e: 'load-success'): void;
-  (e: 'load-error', error: string): void;
-}>();
+const emit = defineEmits(['trigger', 'load-success', 'load-error']);
 
 const clickCount = ref(0);
 const remainingClicks = ref(props.clickCount);
