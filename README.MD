@@ -3753,7 +3753,88 @@ const firstEntry =
 
 # DEMO22: GitHub Pages 持续部署（CD）
 
+## 首先要在github/workflows里新增deploy.yml文件
+
+```
+name: CD 部署到 GitHub Pages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "Demo2/demo2-env/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+//关键部分
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Demo2/demo2-env
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: Demo2/demo2-env/pnpm-lock.yaml
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建网站
+        env:
+          VITE_BASE_PATH: /Front-end-engineering/
+        run: pnpm build
+
+      - name: 支持 Vue Router 历史模式
+        run: cp dist/index.html dist/404.html
+
+      - name: 配置 GitHub Pages
+        uses: actions/configure-pages@v5 //关键部分
+
+
+      //关键部分
+      - name: 上传 Pages 构建产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: Demo2/demo2-env/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4  //关键部分
+```
+
 当前项目已经新增 `.github/workflows/deploy.yml`，用于把 `Demo2/demo2-env` 构建出的 `dist` 自动发布到 GitHub Pages。
+但是提交后出现了这个：
+![alt text](<screenshots/Screenshot 2026-08-11 152045.png>)
+原因及操作如下：
 
 ## 触发方式：
 
@@ -3772,6 +3853,7 @@ const firstEntry =
 Settings → Pages → Build and deployment → Source → GitHub Actions
 ```
 
+![alt text](<screenshots/Screenshot 2026-08-11 152924.png>)
 本仓库的 Pages 地址为：
 
 ```text
@@ -3781,3 +3863,46 @@ https://terrenceeeee.github.io/Front-end-engineering/
 由于仓库不是用户主页仓库，Vite 的资源前缀设置为 `/Front-end-engineering/`，Vue Router 也使用同一个 `BASE_URL`。不要把这里改回单独的 `/`，否则部署后 JavaScript 和 CSS 会请求错误路径。
 
 如果只修改了 README，CD 不会触发；可以进入 Actions，选择 `CD 部署到 GitHub Pages`，点击 `Run workflow` 手动发布。
+
+## Vite 和 Vue Router 中必须保留的配置
+
+### 1. Vite 的 Pages 子路径
+
+你的仓库地址是：https://github.com/Terrenceeeee/Front-end-engineering
+
+它不是用户主页仓库，所以部署地址会带仓库名：https://terrenceeeee.github.io/Front-end-engineering/
+
+因此构建时必须使用：
+
+```
+env:
+  VITE_BASE_PATH: /Front-end-engineering/
+```
+
+并且 Vite 中保留：
+
+```
+base: process.env.VITE_BASE_PATH || '/',
+```
+
+如果改回：base:'/'
+
+部署后 HTML 会请求：https://terrenceeeee.github.io/assets/index.js
+
+但正确路径应该是：https://terrenceeeee.github.io/Front-end-engineering/assets/index.js
+
+页面就会出现白屏或资源 404。
+
+### 2. Vue Router 必须使用 BASE_URL
+
+当前配置：history: createWebHistory(import.meta.env.BASE_URL)
+
+这是正确的。
+
+不要改回：history: createWebHistory()
+
+否则 /Front-end-engineering/user 等子路由可能无法正确工作。
+
+## 最终达成：
+
+![alt text](<screenshots/Screenshot 2026-08-11 153250.png>)
