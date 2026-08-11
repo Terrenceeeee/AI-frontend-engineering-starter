@@ -3750,3 +3750,34 @@ const firstEntry =
 
 全部修改完毕后，再全部提交之后，发现Github Actions CI/CD跑通了
 ![alt text](<screenshots/Screenshot 2026-08-11 134542.png>)
+
+# DEMO22: GitHub Pages 持续部署（CD）
+
+当前项目已经新增 `.github/workflows/deploy.yml`，用于把 `Demo2/demo2-env` 构建出的 `dist` 自动发布到 GitHub Pages。
+
+触发方式：
+
+- 推送到 `master` 分支，并且修改了 `Demo2/demo2-env` 或 `deploy.yml`
+- 在 GitHub Actions 页面手动执行 `workflow_dispatch`
+
+部署流程：
+
+```text
+安装依赖 → pnpm build → 生成 404.html → 上传 Pages artifact → 发布到 GitHub Pages
+```
+
+首次启用时，需要在 GitHub 仓库中打开：
+
+```text
+Settings → Pages → Build and deployment → Source → GitHub Actions
+```
+
+本仓库的 Pages 地址为：
+
+```text
+https://terrenceeeee.github.io/Front-end-engineering/
+```
+
+由于仓库不是用户主页仓库，Vite 的资源前缀设置为 `/Front-end-engineering/`，Vue Router 也使用同一个 `BASE_URL`。不要把这里改回单独的 `/`，否则部署后 JavaScript 和 CSS 会请求错误路径。
+
+如果只修改了 README，CD 不会触发；可以进入 Actions，选择 `CD 部署到 GitHub Pages`，点击 `Run workflow` 手动发布。

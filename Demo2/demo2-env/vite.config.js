@@ -47,7 +47,7 @@ export default defineConfig(({ command, mode }) => {
       port: 5173,
       open: true,
     },
-    base: '/',
+    base: process.env.VITE_BASE_PATH || '/',
     // base: mode === 'production' 
     //   ? 'https://cdn.example.com/demo2-env/'  // 生产环境走 CDN
     //   : '/',                                   // 开发环境走相对路径    需要cdn的时候把它打开 不用的话就用相对路径 '/'
