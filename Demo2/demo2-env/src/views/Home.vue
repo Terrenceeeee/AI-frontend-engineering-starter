@@ -160,10 +160,6 @@ const resetTest = () => {
   addLog('🔄 已重置计数器');
 };
 
-const clearLogs = () => {
-  logs.value = [];
-};
-
 const fetchUserInfo = async () => {
   responseData.value = '⏳ 加载中...';
   try {
