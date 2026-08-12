@@ -3937,3 +3937,5 @@ base: process.env.VITE_BASE_PATH || '/',
 ## 最终达成：
 
 ![alt text](<screenshots/Screenshot 2026-08-11 153250.png>)
+
+# DEMO23 PlayWright E2E端到端测试可实现化大修改CI报错后再次修改致使CI在github actions也运行E2E
