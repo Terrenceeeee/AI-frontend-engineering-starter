@@ -16,7 +16,7 @@
     "gen": "node scripts/generate.ts",
     "test": "vitest run src",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --config=playwright.config.js",
     "test:e2e:ui": "playwright test --ui",
     "deploy": "pnpm build && node scripts/deploy.ts",
     "rollback": "node scripts/rollback.ts",

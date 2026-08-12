@@ -189,7 +189,7 @@ async function main() {
       default: true,
     },
   ]) as PromptAnswers;
-
+ 
   if (!answers.confirm) {
     console.log('👋 已取消生成');
     return;

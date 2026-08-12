@@ -19,7 +19,7 @@ if (fs.existsSync(pnpmDir)) {
 } else {
   console.log('❌ 未检测到 .pnpm 目录，当前可能不是 pnpm 项目');
 }
-
+// 验证 node_modules 顶层只有声明过的依赖
 const nodeModulesDir = path.join(process.cwd(), 'node_modules');
 const topLevelDeps = fs.readdirSync(nodeModulesDir).filter(name => !name.startsWith('.'));
 console.log('   node_modules 顶层依赖:', topLevelDeps.join(', '));
@@ -44,8 +44,10 @@ export default defineConfig(({ command, mode }) => {
     },
 
     server: {
+      host: '127.0.0.1',
       port: 5173,
-      open: true,
+      strictPort: true,
+      open: false,
     },
     base: process.env.VITE_BASE_PATH || '/',
     // base: mode === 'production' 

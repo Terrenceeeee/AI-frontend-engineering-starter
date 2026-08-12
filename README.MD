@@ -265,10 +265,6 @@ _.html
    json
    ```
    {
-   "name": "demo2-env",
-   "private": true,
-   "version": "0.0.0",
-   "scripts": { /_ ... _/ },
    "lint-staged": { // ← 整个字段都是新增的
    "_.{js,ts,vue}": [
    "eslint --fix",
@@ -282,7 +278,7 @@ _.html
    ]
    },
    "dependencies": { /_ ... _/ },
-   "devDependencies": { /_ ... \*/ } // ← 新增的 devDependencies 也在这里
+   "devDependencies": { ...  } // ← 新增的 devDependencies 在这里
    }
    ```
 3. 在 "devDependencies" 中添加新包的列表（原有的 @vitejs/plugin-vue、vite、vue 等都要保留）
@@ -321,18 +317,29 @@ pnpm lint-staged
 
 ## 第七步：验证安装是否成功
 
-验证 1：ESLint 能正常运行 pnpm lint
-验证 2：Prettier 能正常运行 pnpm format
+验证 1：ESLint 能正常运行
+
+### pnpm lint
+
+验证 2：Prettier 能正常运行
+
+### pnpm format
+
 验证 3：lint-staged 能正常运行
-git add src/App.vue //先 add 一个文件到暂存区
-pnpm lint-staged
+
+### git add src/App.vue //先 add 一个文件到暂存区
+
+### pnpm lint-staged
+
 ![alt text](<screenshots/Screenshot 2026-07-28 111857.png>)
 发现代码报错 原因是 eslint版本过新 不支持原本的.eslintrc.cjs文件 需要改用eslint.config.js
 
 ## 解决方案：
 
-方案一：（最简单推荐：降级 ESLint 到 8.x，适配你现有的.eslintrc.cjs）
-新版本 ESLint 改动极大，大量规则写法全部重写，新手最稳妥是降级回稳定的 v8 版本，兼容你现在所有配置：
+### 方案一：（最简单推荐：降级 ESLint 到 8.x，适配你现有的.eslintrc.cjs）
+
+```
+新版本 ESLint 改动极大，大量规则写法全部重写，新手最稳妥是降级回稳定的 v8 版本，兼容现在所有配置：
 卸载现有高版本 eslint 全套
 powershell
 pnpm remove eslint eslint-plugin-vue @vue/eslint-config-typescript @typescript-eslint/eslint-plugin @typescript-eslint/parser
@@ -343,21 +350,32 @@ pnpm add -D eslint@8 eslint-plugin-vue @vue/eslint-config-typescript @typescript
 powershell
 pnpm lint
 .eslintrc.cjs 可以正常被识别，不用改配置代码。
-方案二：（保留 ESLint 10，全面迁移新版配置）
+```
+
+### 方案二：（保留 ESLint 10，全面迁移新版配置）
+
+```
 需要做 3 件事：
 把根目录的 .eslintrc.cjs 重命名为 eslint.config.js
 把配置语法从 CommonJS module.exports 改成 ESM export default，重写整套规则格式（语法变动非常多）
 适配插件导入写法，大部分旧规则名失效需要替换
 pnpm add -D @eslint/js typescript-eslint eslint-config-prettier //10代需要添加的扁平包
 缺点：改动量大，你整套 Vue+TS 规则都要重写，不适合现阶段。
+```
 
-### ESLint 9/10 是大版本破坏性更新，抛弃传统 .eslintrc 所有格式，强制全新扁平化配置
+#### ESLint 9/10 是大版本破坏性更新，抛弃传统 .eslintrc 所有格式，强制全新扁平化配置
 
 ![alt text](<screenshots/Screenshot 2026-07-28 114743.png>)
 运行正常 但是一堆报错 是因为他扫描了一堆本不该扫描的文档/文件
-可以改为<code>"lint": "eslint src --ext .vue,.js,.ts --fix",</code>
+可以改为
+
+```
+<code>"lint": "eslint src --ext .vue,.js,.ts --fix",
+</code>
+```
+
 ![alt text](<screenshots/Screenshot 2026-07-28 115605.png>)
-可以发现 改完不扫描无关文档/文件 就不会报错了
+可以发现 改完不扫描无关文档/文件 只扫描src文件夹下的 就不会报错了
 
 ![alt text](<screenshots/Screenshot 2026-07-28 135458.png>)
 Prettier正常运行
@@ -371,6 +389,7 @@ Lint-staged正常运行
 
 ## 第九步：提交坏代码（观察被拦截）
 
+```
 <code>
 #将坏代码添加到暂存区
 git add src/App.vue
@@ -378,6 +397,8 @@ git add src/App.vue
 #尝试提交
 git commit -m "test: 故意提交坏代码验证 ESLint 拦截"
 </code>
+```
+
 而后就会看到Husky的日志 报错 阻止提交
 
 #### ESLint 和 Prettier 谁先执行？
@@ -396,7 +417,10 @@ lint-staged 配置里从左到右依次执行：["eslint --fix", "prettier --wri
 
 ## 第二步：安装并配置路由
 
+```
 <code>pnpm add vue-router</code>
+```
+
 在router/index.ts里加上
 
 ```
@@ -430,16 +454,19 @@ routes,
 
 export default router;
 </code>
+```
 
 ### 在这段代码中 用component:()=>import('文件地址')实现路由的懒加载
 
 ## 第三步：修改(添加几行代码) src/main.ts 注册路由
 
+```
 <code>
 import router from './router';
 
 app.use(router);
 </code>
+
 ```
 
 ## 第四步：修改 src/App.vue 显示路由出口
@@ -447,6 +474,7 @@ app.use(router);
 #### Markdown 防止代码被浏览器解析渲染 使用 三个反引号 ``` 包裹代码，渲染器会自动识别为代码区块，内部标签不会执行。 但要记得首尾都要有
 
 ```
+
 <code>
 <template>
   <div style="padding: 20px; font-family: 'Courier New', monospace;">
@@ -543,7 +571,7 @@ chunkFileNames: 'assets/[name]-[hash].js',
 
 ### 在开发环境下： pnpm dev ： 不做完整打包，按需加载文件，启动，热更新极快
 
-![alt text](<screenshots\Screenshot 2026-07-29 101232.png>)
+![alt text](<screenshots/Screenshot 2026-07-29 101232.png>)
 可以看出：所有 .vue 组件是通过 ?import 请求分别加载的（因为 Vite 在开发模式下不做打包合并）
 ![alt text](<screenshots/Screenshot 2026-07-29 101246.png>)
 再次观察：打开其他界面时（切换路由），浏览器network面板可以看见该界面的动态加载
@@ -598,7 +626,7 @@ ts-node generate.ts
 
 ## 第三步：在 package.json 中添加脚本命令
 
-"gen": "node scripts/generate.js"
+"gen": "node scripts/generate.ss"
 
 优势 1：开箱即用，环境要求更低
 别的同事拉取代码后，不用安装 ts-node、typescript 等开发依赖，只要有 Node 就能跑。
@@ -823,9 +851,11 @@ git push
 
 # Demo 7：Playwright 端到端（E2E）测试（对应导图中的 E2E 部分）
 
-验证： 用 Playwright 自动打开浏览器，模拟用户访问首页 → 点击“用户页” → 检查页面是否正常。
+## E2E（End-to-End，端到端）测试，就是写一个“机器人”，让它像真人一样打开网站，点这里、填那里，然后告诉你“页面到底能不能用”
 
-对应你导图中的：
+## 验证： 用 Playwright 自动打开浏览器，模拟用户访问首页 → 点击“用户页” → 检查页面是否正常。
+
+对应导图中的：
 Vitest, Playwright E2E 测试
 自动执行冒烟测试，验证页面可以正常访问，接口 500 无报错
 
@@ -2271,6 +2301,7 @@ api.xxx.com/api resDelay://500
 ### 第一步：在项目中添加一个“发请求”的按钮（如果没有的话）
 
 ````
+
 <template>
 
   <div style="padding: 40px; font-family: 'Courier New', monospace;">
