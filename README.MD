@@ -4073,3 +4073,18 @@ baseURL: 'http://127.0.0.1:5173'
 ## 此时代码上线需要检测的顺序应该是：
 
 ![alt text](<screenshots/Screenshot 2026-08-12 164540.png>)
+
+### Action中的CI/CD变化不仅关联于：
+
+```
+代码变动 ：src/ app/ cpmponents/
+CI/CD配置文件 变化：.github/workflows/.yml 变动
+
+还包括：
+
+依赖文件变动 :package.json/pnpm-lock.yaml,package-lock.json
+GitHub 仓库设置变化 :Github网页修改
+secrets / environment 变化 :Github网页修改
+运行环境变化：.nvmrc, .node-version, Dockerfile, docker-compose.yml
+部署目标变化:.github/workflows/deploy.yml, vercel.json, netlify.toml, firebase.json, k8s/*.yaml
+```
