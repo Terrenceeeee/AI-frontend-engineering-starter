@@ -3938,4 +3938,138 @@ base: process.env.VITE_BASE_PATH || '/',
 
 ![alt text](<screenshots/Screenshot 2026-08-11 153250.png>)
 
-# DEMO23 PlayWright E2E端到端测试可实现化大修改CI报错后再次修改致使CI在github actions也运行E2E
+# DEMO23 PlayWright E2E端到端测试可实现化大修改
+
+之前在终端运行e2e测试 得到的是不断报错
+![alt text](<screenshots/Screenshot 2026-08-12 154200.png>)
+
+## 真正的原因是Playwright会全局扫描所有的.test.ts文件，以至于他一直在扫描utils/_test_/math.test.ts 但是这是一个Vitest文件 是不应该由playwrigth扫描的 所以需要加一个playwright配置 把测试范围锁定到 e2e，并让它自动启动 Vite 服务器
+
+### playwright.config.js:
+
+```
+import { defineConfig } from '@playwright/test';
+@playwright/test
+Playwright 官方测试库，用来做：
+1.端到端 E2E 测试（模拟浏览器真实操作网页）
+2.组件测试、接口测试
+项目里安装依赖：pnpm add -D @playwright/test
+defineConfig:Playwright 提供的配置函数
+
+// 导出 Playwright 的测试配置
+export default defineConfig({
+  testDir: './e2e',  // 指定测试文件的目录
+  testMatch: '**/*.spec.ts',  // 指定测试文件的匹配模式
+  testIgnore: ['**/node_modules/**', '**/src/**'],  // 指定忽略的测试文件
+  timeout: 30_000,  // 设置超时时间:30s内必须完成
+
+  // expect 断言的默认等待超时时间，15 秒内条件必须满足
+
+  expect: {
+    timeout: 15_000,
+  },
+  // 不启用完全并行执行，测试会更保守地运行
+
+  fullyParallel: false,
+
+  // 使用 list 报告器，输出简单清晰的测试执行列表
+  reporter: 'list',
+
+  // 所有测试共享的一些运行配置
+  use: {
+    // 使用无头模式运行浏览器，不弹出可见窗口
+    headless: true,
+    // 设置基础地址，测试里写 page.goto('/') 时会自动补全为这个地址
+    baseURL: 'http://127.0.0.1:5173',
+    // 只有第一次重试失败时才生成 trace，方便排查问题
+    trace: 'on-first-retry'，
+    // 只有测试失败时才截图，成功时不保存截图
+    screenshot: 'only-on-failure',
+  },
+
+  // 测试启动前自动拉起一个本地开发服务器 自动启动前端服务
+  webServer: {
+
+    // 启动服务器的命令
+    command: 'pnpm dev --host 127.0.0.1',
+
+    // 用于检测服务器是否启动成功的地址
+    url: 'http://127.0.0.1:5173',
+
+    // 非 CI 环境下复用已有服务器，避免重复启动
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,  // 启动服务器的等待超时时间，最多 120 秒
+  },
+});
+```
+
+### 将package.json配置修改：
+
+```
+"test:e2e": "playwright test --config=playwright.config.js"
+```
+
+#### 执行 E2E 测试时，明确使用 playwright.config.js 不再使用 Playwright 默认配置 让下面新增的 E2E 配置生效
+
+### 修改vite.config.js文件
+
+```
+host: '127.0.0.1', //新增
+open:false  //从true修改为false E2E 测试本身会启动浏览器，所以不需要 Vite 额外打开一个浏览器窗口。
+strictPort: true  //新增 表示如果 5173 端口被占用，Vite 直接报错，而不是自动换成其他端口。这样可以避免 Playwright 访问错误端口。
+```
+
+### 将homepage.spec.ts配置修改
+
+#### 地址从完整地址改成相对地址
+
+原来：
+
+await page.goto('http://localhost:5173/');
+改成：
+
+await page.goto('/');
+
+因为 playwright.config.js 中已经设置了：
+
+baseURL: 'http://127.0.0.1:5173'
+这样写更简洁，也方便以后修改端口或域名。
+
+### 但是现在在终端中运行pnpm dev 在第二终端中运行pnpm test:e2e还是会报错
+
+#### 这是因为：App.vue有一大堆静态的demo内容 导致首页上直接会出现多个h1 而Playwright的page.locator ('h1')会匹配到所有的h1 但是Playwright的page.locator ('h1')会默认匹配到的h1为唯一元素 严格模式直接失败 所以会报错
+
+##### 注：Playwright中的page.getByRole('heading')就等价于page.locator('h1')
+
+解决方案为：将App.vue中所有的demo涉及到的测试功能代码全部移到Home.vue 作为路由再次引入，这样就不会出现多个h1了
+
+在终端中再次检测e2e测试
+![alt text](<screenshots/Screenshot 2026-08-13 100614.png>)
+测试成功
+
+## 但是呢 并没有在github actions中看到e2e测试的结果，为什么呢？
+
+![alt text](<screenshots/Screenshot 2026-08-12 164109.png>)
+![alt text](<screenshots/Screenshot 2026-08-12 164302.png>)
+
+### 是因为.github/workflows/ci.yml中并未配置e2e测试相关代码
+
+在ci.yml中
+
+```
+- name: 安装 Playwright 浏览器
+  run: pnpm exec playwright install --with-deps chromium
+
+- name: E2E 测试
+  run: |
+    pnpm exec playwright install --with-deps
+    pnpm test:e2e
+```
+
+### 此时github actions 中CI就可以看见e2e测试的迹象了
+
+![alt text](<screenshots/Screenshot 2026-08-13 101437.png>)
+
+## 此时代码上线需要检测的顺序应该是：
+
+![alt text](<screenshots/Screenshot 2026-08-12 164540.png>)
