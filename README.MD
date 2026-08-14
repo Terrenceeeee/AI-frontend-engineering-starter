@@ -54,7 +54,6 @@
 ![alt text](<screenshots/Screenshot 2026-07-27 151241.png>)
 
 ```
-<code>
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import fs from 'fs';
@@ -109,7 +108,6 @@ plugins: [vue()],
 
 };
 });
-</code>
 ```
 
 ### 添加的代码部分作用
@@ -306,12 +304,13 @@ pnpm run prepare
 ### 一键生成钩子pre-commit :npx husky hook add pre-commit "npx lint-staged"
 
 查看 .husky/pre-commit 文件内容，确保它是这样的：
-<code>
+
+```
 #!/bin/sh
 . "$(dirname "$0")/\_/husky.sh" //里面没有\
 
 pnpm lint-staged
-</code>
+```
 
 ### 这个文件的作用： 当你执行 git commit 时，Git 会先执行这个脚本。脚本调用 pnpm lint-staged，而 lint-staged 只会检查你本次 git add 的那些文件。
 
@@ -370,8 +369,7 @@ pnpm add -D @eslint/js typescript-eslint eslint-config-prettier //10代需要添
 可以改为
 
 ```
-<code>"lint": "eslint src --ext .vue,.js,.ts --fix",
-</code>
+"lint": "eslint src --ext .vue,.js,.ts --fix",
 ```
 
 ![alt text](<screenshots/Screenshot 2026-07-28 115605.png>)
@@ -390,13 +388,11 @@ Lint-staged正常运行
 ## 第九步：提交坏代码（观察被拦截）
 
 ```
-<code>
 #将坏代码添加到暂存区
 git add src/App.vue
 
 #尝试提交
 git commit -m "test: 故意提交坏代码验证 ESLint 拦截"
-</code>
 ```
 
 而后就会看到Husky的日志 报错 阻止提交
@@ -418,13 +414,12 @@ lint-staged 配置里从左到右依次执行：["eslint --fix", "prettier --wri
 ## 第二步：安装并配置路由
 
 ```
-<code>pnpm add vue-router</code>
+pnpm add vue-router
 ```
 
 在router/index.ts里加上
 
 ```
-<code>
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router';
 
@@ -453,7 +448,6 @@ routes,
 });
 
 export default router;
-</code>
 ```
 
 ### 在这段代码中 用component:()=>import('文件地址')实现路由的懒加载
@@ -461,11 +455,9 @@ export default router;
 ## 第三步：修改(添加几行代码) src/main.ts 注册路由
 
 ```
-<code>
 import router from './router';
 
 app.use(router);
-</code>
 
 ```
 
@@ -474,8 +466,6 @@ app.use(router);
 #### Markdown 防止代码被浏览器解析渲染 使用 三个反引号 ``` 包裹代码，渲染器会自动识别为代码区块，内部标签不会执行。 但要记得首尾都要有
 
 ```
-
-<code>
 <template>
   <div style="padding: 20px; font-family: 'Courier New', monospace;">
     <h1 style="color: #42b883;">🌍 Vite 分包验证 Demo</h1>
@@ -501,7 +491,6 @@ console.log('App.vue 加载了（主入口）');
 const mode =import.meta.env.MODE
 </script>
 
-</code>
 ```
 
 ## 第五步：修改 vite.config.ts 配置分包
@@ -510,8 +499,6 @@ const mode =import.meta.env.MODE
 保留所有原有配置，只新增 resolve 和 build.rollupOptions
 
 ```
-<code>
-
 export default defineConfig({
 plugins: [vue()],
 
@@ -564,7 +551,6 @@ chunkFileNames: 'assets/[name]-[hash].js',
 },
 },
 });
-</code>
 ```
 
 ## 第六步：在终端一次性验证所有场景
@@ -607,9 +593,12 @@ chunkFileNames: 'assets/[name]-[hash].js',
 用 Node.js 脚本，通过命令行交互询问用户，然后自动创建 view、api、store 三个目录下的文件骨架
 inquirer 从 v9 开始是纯 ESM 包，如果项目是 ESM（"type": "module"），直接 import 即可。但我们这里用 CommonJS 方式写脚本（方便在终端直接运行），所以使用 inquirer@8.2.6（最后一个支持 CommonJS 的版本）
 最新版本：
+
+```
 pnpm add -D inquirer @types/inquirer
 支持cjs写法的8.2.6版本：
 pnpm add -D inquirer@8.2.6
+```
 
 ## 第二步：创建脚本文件
 
@@ -626,7 +615,9 @@ ts-node generate.ts
 
 ## 第三步：在 package.json 中添加脚本命令
 
+```
 "gen": "node scripts/generate.ss"
+```
 
 优势 1：开箱即用，环境要求更低
 别的同事拉取代码后，不用安装 ts-node、typescript 等开发依赖，只要有 Node 就能跑。
@@ -639,14 +630,15 @@ ts-node generate.ts
 
 在 src/ 下创建 api/、stores/modules/、views/ 目录（如果还没有的话）： //mkdir = make directory -p 父目录不存在时自动逐级创建；文件夹已经存在也不会报错，静默跳过
 
+```
 mkdir -p src/api
 mkdir -p src/stores/modules
 mkdir -p src/views
+```
 
 同时需要创建 src/utils/request.ts（API 模板里引用了它）：
 
 ```
-<code>
 // src/utils/request.ts
 import axios from 'axios';
 
@@ -662,12 +654,14 @@ request.interceptors.response.use(
 );
 
 export default request;
-</code>
 ```
 
 ## 第六步：执行脚本生成模块
 
+```
 pnpm gen
+```
+
 ![alt text](<screenshots/Screenshot 2026-07-29 145016.png>)
 
 ## 第七步：验证生成的文件
@@ -680,24 +674,27 @@ pnpm gen
 打开 src/router/index.ts，在 routes 数组中新增一个路由：
 
 ```
-<code>
 // ========== 新增：自动生成的 product 路由 ==========
 {
 path: '/product',
 name: 'Product',
 component: () => import('@/views/product/index.vue'),
 },
-</code>
 ```
 
 ## 第九步：在首页添加导航链接
 
 打开views/Home.vue 在导航区添加 /product 的链接
+
+```
 <router-link to="/product">去产品页</router-link>
+```
 
 ## 第十步：验证完整流程
 
+```
 pnpm dev
+```
 
 ### 真正作用：大量的模块只需要在终端输入pnpm gen输入多次 输入多次模块名，就可以省去大量时间。并且这个脚本“目录分层规范”变成了一条自动化生产线。 新人入职第一天跑一遍 pnpm gen product，生成的文件结构跟团队老员工的一模一样，不需要有人口头告诉他“你要在 api 下建文件、还要按这个格式写”————让机器帮你执行规范，而不是靠人脑记
 
@@ -709,7 +706,10 @@ git push 代码到 GitHub 时，GitHub 自动拉取代码 → 安装依赖 → �
 
 ## 第一步：在项目中安装 Vitest（测试框架）
 
+```
 pnpm add -D vitest @vue/test-utils jsdom @vitest/coverage-v8
+```
+
 :
 vitest：测试运行器（Vite 原生集成，启动极快）
 @vue/test-utils：Vue 组件测试工具库，用于挂载和交互 Vue 组件
@@ -719,7 +719,6 @@ jsdom：在 Node 环境里模拟浏览器 DOM API（如 document、window），�
 ## 第二步：写一个简单的单元测试（验证用）
 
 ```
-<code>
 // src/utils/__tests__/math.test.ts
 import { describe, it, expect } from 'vitest';
 
@@ -737,17 +736,20 @@ it('-1 + 1 应该等于 0', () => {
 expect(add(-1, 1)).toBe(0);
 });
 });
-</code>
 ```
 
 ## 第三步：在 package.json 中添加测试命令(加两行就行)
 
+```
 "test": "vitest run",
 "test:coverage": "vitest run --coverage"
+```
 
 ## 第四步：本地验证测试能跑通
 
+```
 pnpm test
+```
 
 预期结果：
 ![alt text](<screenshots/Screenshot 2026-07-30 101217.png>)
@@ -755,17 +757,15 @@ pnpm test
 
 ## 第五步：在 GitHub 上创建仓库并推送代码
 
-这一步先确认你已经把代码推到 GitHub 了：
+这一步先确认已经把代码推到 GitHub 了：
 git remote -v
-然后把代码推送上去，确保 GitHub 仓库里有你的代码。
+然后把代码推送上去，确保 GitHub 仓库里有代码。
 
 ## 第六步：创建 GitHub Actions 流水线配置文件 ！！一定要在总文件的根目录配置 否则检测不出来！！
 
 创建 .github/workflows/ci.yml：
 
 ```
-<code>
-
 name: CI 流水线
 
 #### 触发条件：push 到 main 分支，或任何 pull_request
@@ -825,14 +825,15 @@ steps:
 
 - name: 构建项目
   run: pnpm build
-
-</code>
 ```
 
 提交并推送:
+
+```
 git add .github/workflows/ci.yml
 git commit -m "feat: 添加 GitHub Actions CI 流水线"
 git push
+```
 
 ## 第七步：观察流水线执行结果
 
@@ -861,7 +862,11 @@ Vitest, Playwright E2E 测试
 
 ## 第一步：安装 Playwright
 
+```
 pnpm add -D @playwright/test
+
+```
+
 npx playwright install：npx playwright install 会下载 Chromium、Firefox 和 WebKit 三个浏览器内核，用于在不同浏览器中运行测试，下载时间可能较长
 可以只安装 Chromium 节省时间：npx playwright install Chromium
 也可以安装edge：Playwright 里 Edge 命名为 msedge ：npx playwright install msedge
@@ -871,7 +876,7 @@ npx playwright install：npx playwright install 会下载 Chromium、Firefox 和
 创建 e2e/homepage.spec.ts：
 
 ```
-<code>
+
 // e2e/homepage.spec.ts
 import { test, expect } from '@playwright/test';
 
@@ -899,18 +904,20 @@ await page.goto('http://localhost:5173/');
 
 });
 });
-</code>
+
 ```
 
 ## 第三步：在 package.json 中添加 E2E 测试命令
 
 ```
+
 {
 "scripts": {
 "test:e2e": "playwright test",
 "test:e2e:ui": "playwright test --ui"
 }
 }
+
 ```
 
 ## 第四步：本地验证 E2E 测试(注意： Playwright 需要开发服务器正在运行。开两个终端：)
@@ -935,8 +942,6 @@ Running 2 tests using 1 worker
 修改 .github/workflows/ci.yml，在 build 步骤之后添加 E2E 测试步骤：
 
 ```
-<code>
-
 #### ... 前面的步骤保持不变 ...
 
 #### 7. 打包构建
@@ -956,16 +961,17 @@ Running 2 tests using 1 worker
   pnpm test:e2e
   env:
   CI: true
-  </code>
 ```
 
 ## 第六步：提交并推送，观察流水线
 
+```
 git add .
 git commit -m "feat: 添加 Playwright E2E 测试并集成到 CI"
 git push
 
 打开 GitHub Actions，会看到流水线中新增了 “安装 Playwright 浏览器” 和 “运行 E2E 测试” 两个步骤，全部通过后流水线变绿。
+```
 
 ---
 
@@ -982,7 +988,6 @@ CLS → 页面视觉稳定性
 创建 src/utils/performanceReporter.ts：
 
 ```
-<code>
 // src/utils/performanceReporter.ts
 // 定义性能指标上报的数据TS类型约束
 interface ReportData {
@@ -1091,12 +1096,12 @@ console.log('[性能监控] TTFB:', report.ttfb);
 // 监听页面导航（页面刷新、跳转）全链路耗时
 }).observe({ entryTypes: ['navigation'] });
 }
-</code>
 ```
 
 ## 第二步：在 main.ts 中启用性能监控
 
 ```
+
 // src/main.ts
 import { createApp } from 'vue';
 import App from './App.vue';
@@ -1109,8 +1114,9 @@ app.mount('#app');
 
 // ✅ 只在生产环境启用性能监控（减少开发环境的噪音）
 if (import.meta.env.PROD) {
-  reportWebVitals();
+reportWebVitals();
 }
+
 ```
 
 ## 第三步：验证（用 Lighthouse 跑分对比）
@@ -1143,7 +1149,6 @@ if (import.meta.env.PROD) {
 创建 scripts/deploy.ts：
 
 ```
-<code>
 #!/usr/bin/env ts-node
 // scripts/deploy.ts
 import _ as fs from 'fs';
@@ -1206,19 +1211,16 @@ console.log('⚠️ 冒烟测试失败（开发服务器未启动，请先 pnpm 
 console.log(`\n🎉 部署完成！版本号: ${version}`);
 console.log(`📌 备份位置: ${backupPath}`);
 console.log(`📌 回滚命令: cp -r ${backupPath}/* ${DIST_DIR}/`);
-</code>
 ```
 
 ## 第二步：在 package.json 中添加部署命令
 
 ```
-<code>
 {
   "scripts": {
     "deploy": "pnpm build && node scripts/deploy.ts"
   }
 }
-</code>
 ```
 
 ### deploy文件夹
@@ -1246,7 +1248,9 @@ index-yMkJyNDY.js 里的 yMkJyNDY 是根据 index.js 的文件内容算出来的
 
 ## 第三步：验证
 
+```
 pnpm deploy
+```
 
 ### 预计输出结果：
 
@@ -1259,7 +1263,6 @@ pnpm deploy
 ## 第一步：创建回滚脚本 scripts/rollback.ts
 
 ```
-<code>
 #!/usr/bin/env ts-node
 // scripts/rollback.ts
 
@@ -1359,8 +1362,6 @@ return; // 终止后续逻辑
 
 });
 });
-
-</code>
 ```
 
 ## 第二步：在 package.json 中添加回滚命令
@@ -1375,7 +1376,9 @@ return; // 终止后续逻辑
 
 ## 第三步：验证(先创建几个备份版本（多次执行 pnpm deploy），然后执行回滚：)
 
+```
 pnpm rollback
+```
 
 效果如图所示：
 ![未成功加载](<screenshots/Screenshot 2026-08-03 160551.png>)
@@ -1425,16 +1428,13 @@ pnpm build
 创建 src/utils/requestPool.ts：
 
 ```
-<code>
 // src/utils/requestPool.ts
-
-/\*\*
 
 ### - 请求池：控制并发请求数量，防止浏览器因并发过多崩溃
 
 ### - 浏览器对同一域名的并发连接数有限制（HTTP/1.1 约 6 个 HTTP/2大得多）
 
-\*/
+
 export class RequestPool {
 private limit: number;
 private running: number;
@@ -1446,7 +1446,7 @@ this.running = 0; // 当前正在运行的请求数
 this.queue = []; // 等待队列
 }
 
-/\*\*
+
 
 - 执行请求
 - @param fn 返回 Promise 的请求函数（如 () => axios.get('/api')）
@@ -1488,14 +1488,11 @@ this.queue = []; // 等待队列
 
 // 导出单例（整个应用共享一个请求池）
 export const requestPool = new RequestPool(6);
-</code>
 ```
 
 ## 第二步：在 Vue 组件中模拟并发请求
 
 ```
-
-<code>
 <template>
   <!-- 外层容器，设置内边距、等宽字体，控制台风格 -->
   <div style="padding: 40px; font-family: 'Courier New', monospace;">
@@ -1580,7 +1577,6 @@ const clearLogs = () => {
   logs.value = [];
 };
 </script>
-</code>
 ```
 
 ## 第三步：验证
@@ -1619,7 +1615,6 @@ const clearLogs = () => {
 创建 src/utils/retry.ts：
 
 ```
-<code>
 // src/utils/retry.ts
 
 // 1. 定义一个类型守卫，检查错误是否具有类似 Axios 错误的特征
@@ -1639,7 +1634,7 @@ maxDelay?: number; // 最大延迟上限（毫秒），默认 10000
 shouldRetry?: (error: unknown) => boolean;
 }
 
-/\*\*
+
 
 - 指数退避重试
   \*/
@@ -1709,11 +1704,12 @@ lastError = error;
 
 throw lastError;
 }
-</code>
 ```
 
 any在eslintd的recommand模式里是默认被判断为error的 可以把any换成unknown 他比他的类型更强
 注意使用unknown的时候要加一个类型守卫 不然无法使用
+
+```
 // 1.声明
 function isAxiosError(error: unknown): error is {
 response?: { status: number };
@@ -1742,6 +1738,7 @@ catch (error) { // 这里 error 是 unknown（未知包裹）
     }
 
 其他逻辑.....
+```
 
 ## 第二步：创建测试 API（模拟失败）
 
@@ -1798,8 +1795,6 @@ baseDelay: 500,
 保持原有内容不变 新增一点内容 其实就是加了个按钮 ！！！但要注意@click要在style之后 不然会被warning
 
 ```
-<code>
-
 <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
   <button @click="testRetry" style="padding: 12px 24px; font-size: 16px; cursor: pointer; background: #f0ad4e; border: none; border-radius: 4px; color: white;">
     🔄 测试重试 (前2次失败，第3次成功)
@@ -1826,7 +1821,6 @@ const resetTest = () => {
 resetAttemptCount();
 addLog('🔄 已重置计数器');
 };
-</code>
 ```
 
 ## 第四步：验证
@@ -1856,7 +1850,6 @@ addLog('🔄 已重置计数器');
 ### 在项目根目录（demo2-env/ 下，不是 src/）创建 sw.js： 注意是项目根目录！！！
 
 ```
-<code>
 // 定义缓存版本标识，修改后缀v1→v2 代表缓存版本更新，触发清理旧缓存
 const CACHE_NAME = 'demo-cache-v1';
 
@@ -1986,7 +1979,6 @@ return cachedResponse;
 
 );
 });
-</code>
 ```
 
 ## 第二步：配置 Vite 构建，把 sw.js 复制到 dist/
@@ -1994,7 +1986,6 @@ return cachedResponse;
 修改 vite.config.ts，添加 rollupOptions.input 和 publicDir 配置：
 
 ```
-<code>
 // vite.config.ts
 
     // ========== 新增：让 sw.js 也被构建 ==========
@@ -2019,7 +2010,6 @@ return cachedResponse;
 
 };
 });
-</code>
 ```
 
 但更简单的方式： 把 sw.js 放到 public/ 目录下，Vite 构建时会自动复制到 dist/，不需要改 rollupOptions。
@@ -2051,7 +2041,6 @@ mv sw.js public/
 // 👉 含义：开发环境不注册sw，避免缓存导致调试时资源不刷新
 
 ```
-<code>
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
 window.addEventListener('load', () => {
 // 核心API：注册 Service Worker
@@ -2070,7 +2059,6 @@ console.log('[SW] 注册失败:', error);
 });
 });
 }
-</code>
 ```
 
 ## 第四步：验证离线缓存
@@ -2099,12 +2087,14 @@ Service Worker 的 fetch 事件监听到这些失败请求，尝试缓存它们�
 
 方案 B：把 CDN 地址改回相对路径（永久修复）
 如果你只是想跑通 Demo 14，不想用假 CDN，把 vite.config.ts 里的 base 改回默认值：
-<code>
+
+```
 // vite.config.ts
 export default defineConfig({
 base: '/', // 改回相对路径
 })
-</code>
+```
+
 然后重新构建（pnpm build）、重新预览（pnpm preview）。这样所有资源请求都会走本地 localhost，不会去请求 cdn.example.com。
 
 方案 C：在真实项目中使用（正确的 CDN 用法）
@@ -2169,7 +2159,10 @@ C 端项目（电商、资讯、H5），线上出了 Bug 但本地无法复现�
 
  <!-- 全局安装 whistle -->
 
+```
 pnpm install -g whistle
+```
+
 可能会出现：
 ![alt text](<screenshots/Screenshot 2026-08-06 091746.png>)
 这是因为pnpm 全局命令的存放目录 C:\Users\29453\AppData\Local\pnpm\bin 没有加入系统环境变量 PATH。
@@ -2179,13 +2172,16 @@ pnpm install -g whistle
 npx whistle
 首次运行会自动下载 whistle，之后直接启动代理，不需要任何全局安装、不需要修改 PATH。
 
-<!-- #启动 whistle 服务 -->
+### 启动 whistle 服务
 
+```
 w2 start
+```
+
 但如果是npx非全局安装 就需要输入npx whistle start 否则会出现：
 ![alt text](<screenshots/Screenshot 2026-08-06 093530.png>)
 
-<!-- # 启动后会在终端输出访问地址，通常是 http://127.0.0.1:8899 -->
+### 启动后会在终端输出访问地址，通常是 http://127.0.0.1:8899
 
 ### 补充说明： Whistle 启动后会在后台运行一个代理服务器，默认监听 8899 端口。可以在终端执行 w2 stop 停止服务，w2 restart 重启服务。
 
@@ -2292,15 +2288,13 @@ api.xxx.com/api resDelay://500
 在本 Vue 项目里，发起一个请求到 api.xxx.com/api/test，然后打开 Whistle 的 Network 面板，你会看到这个请求被捕获。如果配置了 resBody:// 规则，会看到接口返回了你指定的 Mock 数据，而不是真实后端的数据。
 这意味着不需要等后端接口开发完成，就可以提前模拟数据调试页面逻辑了。
 
----
-
-## PS：具体实现步骤
+### PS：具体实现步骤
 
 那么第六步如何实施呢？：
 
 ### 第一步：在项目中添加一个“发请求”的按钮（如果没有的话）
 
-````
+```
 
 <template>
 
@@ -2322,8 +2316,8 @@ api.xxx.com/api resDelay://500
     </div>
 
   </div>
-</t```emplate>
-````
+</template>
+```
 
 ```
 <script setup lang="ts">
@@ -2356,7 +2350,6 @@ const fetchUserInfo = async () => {
 5.在右侧编辑区输入以下 JSON 数据：
 
 ```
-<code>
 {
 "code": 0,
 "message": "success",
@@ -2369,7 +2362,6 @@ const fetchUserInfo = async () => {
 "permissions": ["read", "write", "delete"]
 }
 }
-</code>
 ```
 
 ### 第三步：在 Whistle 里配置拦截规则
@@ -2409,8 +2401,6 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 就可以使用whistle了
 ![alt text](<screenshots/Screenshot 2026-08-06 152939.png>)
 
----
-
 ## ！！！！！用完记得要将代理关掉 不然会影响其他项目以及其他网页的正常请求：
 
 ```
@@ -2438,7 +2428,9 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 ## 第一步：安装 vConsole
 
+```
 pnpm add -D vconsole
+```
 
 ## 第二步：在 main.ts 中实现动态调试钩子
 
@@ -2448,7 +2440,6 @@ pnpm add -D vconsole
 修改 src/main.js：
 
 ```
-<code>
 // ========== vConsole 调试钩子 ==========
 // 条件：开发模式 或 URL 中有 ?debug=1
 const isDev = import.meta.env.MODE === 'development';
@@ -2464,7 +2455,6 @@ console.log('[vConsole] 调试面板已开启');
 }
 });
 }
-</code>
 ```
 
 ## 第三步：配置 Vite 生成 SourceMap
@@ -2544,7 +2534,6 @@ sourcemap: true, // 构建时生成 .map 文件
 在 src/components/WebSocketDemo.vue 中创建：
 
 ```
-<code>
 <template>
 
   <div style="padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin: 20px 0;">
@@ -2680,7 +2669,6 @@ onUnmounted(() => {
 <script setup lang="ts">
 import WebSocketDemo from './components/WebSocketDemo.vue';
 </script>
-</code>
 ```
 
 ## 第三步：验证 WebSocket
