@@ -836,13 +836,13 @@ ts-node generate.ts
 ## 第三步：在 package.json 中添加脚本命令
 
 ```
-"gen": "node scripts/generate.ss"
+"gen": "node scripts/generate.ts"
 ```
 
 优势 1：开箱即用，环境要求更低
 别的同事拉取代码后，不用安装 ts-node、typescript 等开发依赖，只要有 Node 就能跑。
 优势 2：命令极简
-不用记长路径、不用管 ts，统一用 npm run gen 新建业务模块，团队所有人操作一致。
+不用记长路径、不用管 ts，统一用 pnpm run gen 新建业务模块，团队所有人操作一致。
 优势 3：工程化规范
 脚手架脚本统一收在 scripts 目录，项目结构干净，所有自动化脚本集中管理
 
@@ -863,14 +863,14 @@ mkdir -p src/views
 import axios from 'axios';
 
 const request = axios.create({
-baseURL: import.meta.env.VITE_API_BASE_URL,
-timeout: 10000,
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  timeout: 10000,
 });
 
 // 响应拦截器：直接返回 data
 request.interceptors.response.use(
-(response) => response.data,
-(error) => Promise.reject(error)
+  (response) => response.data,
+  (error) => Promise.reject(error)
 );
 
 export default request;
@@ -896,9 +896,9 @@ pnpm gen
 ```
 // ========== 新增：自动生成的 product 路由 ==========
 {
-path: '/product',
-name: 'Product',
-component: () => import('@/views/product/index.vue'),
+  path: '/product',
+  name: 'Product',
+  component: () => import('@/views/product/index.vue'),
 },
 ```
 
@@ -944,17 +944,17 @@ import { describe, it, expect } from 'vitest';
 
 // 一个简单的加法函数（直接写在测试里，不用单独建文件）
 function add(a: number, b: number): number {
-return a + b;
+  return a + b;
 }
 
 describe('add 函数', () => {
-it('1 + 2 应该等于 3', () => {
-expect(add(1, 2)).toBe(3);
+  it('1 + 2 应该等于 3', () => {
+  expect(add(1, 2)).toBe(3);
 });
 
 it('-1 + 1 应该等于 0', () => {
-expect(add(-1, 1)).toBe(0);
-});
+  expect(add(-1, 1)).toBe(0);
+  });
 });
 ```
 
@@ -1101,17 +1101,17 @@ npx playwright install：npx playwright install 会下载 Chromium、Firefox 和
 import { test, expect } from '@playwright/test';
 
 test.describe('首页冒烟测试', () => {
-test('首页应该正常加载', async ({ page }) => {
-// 访问首页
-await page.goto('http://localhost:5173/');
+  test('首页应该正常加载', async ({ page }) => {
+    // 访问首页
+    await page.goto('http://localhost:5173/');
 
     // 检查页面标题是否包含 "Vite 分包验证 Demo"
     await expect(page.locator('h1')).toContainText('Vite 分包验证');
 
-});
+  });
 
-test('点击用户页链接应该跳转到 /user', async ({ page }) => {
-await page.goto('http://localhost:5173/');
+  test('点击用户页链接应该跳转到 /user', async ({ page }) => {
+    await page.goto('http://localhost:5173/');
 
     // 点击 "用户中心" 链接
     await page.click('text=用户中心');
@@ -1122,7 +1122,7 @@ await page.goto('http://localhost:5173/');
     // 验证页面出现了 "用户中心" 标题
     await expect(page.locator('h1')).toContainText('用户中心');
 
-});
+  });
 });
 
 ```
@@ -1132,10 +1132,10 @@ await page.goto('http://localhost:5173/');
 ```
 
 {
-"scripts": {
-"test:e2e": "playwright test",
-"test:e2e:ui": "playwright test --ui"
-}
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
+  }
 }
 
 ```
@@ -1227,7 +1227,7 @@ interface ReportData {
   timestamp: number;
 }
 
-/\*\*
+
 
 - 页面核心Web Vitals性能采集函数
 - 采集LCP/CLS/FID/FCP/TTFB五大前端性能指标，打印日志，可对接接口上报后端
@@ -1242,79 +1242,79 @@ interface ReportData {
 // ====================== 1. 监听 LCP 最大内容绘制 ======================
 // PerformanceObserver：浏览器原生性能监听API，异步捕获性能条目
 new PerformanceObserver((list) => {
-// 获取本次回调所有性能条目数组
-const entries = list.getEntries();
-// LCP会多次触发，取最后一次（最终最大元素）
-const lastEntry = entries[entries.length - 1];
-if (lastEntry) {
-// 赋值LCP耗时：页面开始加载到最大可视元素渲染完成的毫秒数
-report.lcp = lastEntry.startTime;
-console.log('[性能监控] LCP:', report.lcp);
-// 可放开注释，把完整指标上报后端接口
-// sendToServer(report);
-}
-// 监听的性能类型：largest-contentful-paint 专门对应LCP指标
-}).observe({ entryTypes: ['largest-contentful-paint'] });
+  // 获取本次回调所有性能条目数组
+  const entries = list.getEntries();
+  // LCP会多次触发，取最后一次（最终最大元素）
+  const lastEntry = entries[entries.length - 1];
+  if (lastEntry) {
+    // 赋值LCP耗时：页面开始加载到最大可视元素渲染完成的毫秒数
+    report.lcp = lastEntry.startTime;
+    console.log('[性能监控] LCP:', report.lcp);
+    // 可放开注释，把完整指标上报后端接口
+    // sendToServer(report);
+  }
+  // 监听的性能类型：largest-contentful-paint 专门对应LCP指标
+  }).observe({ entryTypes: ['largest-contentful-paint'] });
 
-// ====================== 2. 监听 CLS 累积布局偏移 ======================
-// 用来累加所有布局偏移值
-let clsValue = 0;
-new PerformanceObserver((list) => {
-// 遍历本次所有布局偏移记录
-for (const entry of list.getEntries() as any[]) {
-// hadRecentInput：用户近期是否有点击/输入操作
-// 规范要求：用户主动交互引发的布局偏移不计入CLS，只算意外抖动
-if (!entry.hadRecentInput) {
-clsValue += entry.value;
-}
-}
-// 把累加后的总偏移存入上报对象
-report.cls = clsValue;
-console.log('[性能监控] CLS:', report.cls);
-// 监听页面布局变动事件
-}).observe({ entryTypes: ['layout-shift'] });
+  // ====================== 2. 监听 CLS 累积布局偏移 ======================
+  // 用来累加所有布局偏移值
+  let clsValue = 0;
+  new PerformanceObserver((list) => {
+    // 遍历本次所有布局偏移记录
+    for (const entry of list.getEntries() as any[]) {
+    // hadRecentInput：用户近期是否有点击/输入操作
+    // 规范要求：用户主动交互引发的布局偏移不计入CLS，只算意外抖动
+    if (!entry.hadRecentInput) {
+      clsValue += entry.value;
+    }
+  }
+    // 把累加后的总偏移存入上报对象
+    report.cls = clsValue;
+    console.log('[性能监控] CLS:', report.cls);
+  // 监听页面布局变动事件
+  }).observe({ entryTypes: ['layout-shift'] });
 
-// ====================== 3. 监听 FID 首次输入延迟 ======================
-new PerformanceObserver((list) => {
-const entries = list.getEntries();
-// FID只取页面第一次用户交互的记录
-const firstEntry = entries[0] as any;
-if (firstEntry) {
-// 计算延迟：浏览器收到用户输入时间 → 浏览器真正开始处理输入的时间差
-report.fid = firstEntry.processingStart - firstEntry.startTime;
-console.log('[性能监控] FID:', report.fid);
-}
-// first-input：浏览器首次用户输入行为（点击、按键等）
-}).observe({ entryTypes: ['first-input'] });
+  // ====================== 3. 监听 FID 首次输入延迟 ======================
+  new PerformanceObserver((list) => {
+    const entries = list.getEntries();
+    // FID只取页面第一次用户交互的记录
+    const firstEntry = entries[0] as any;
+    if (firstEntry) {
+    // 计算延迟：浏览器收到用户输入时间 → 浏览器真正开始处理输入的时间差
+    report.fid = firstEntry.processingStart - firstEntry.startTime;
+    console.log('[性能监控] FID:', report.fid);
+  }
+  // first-input：浏览器首次用户输入行为（点击、按键等）
+  }).observe({ entryTypes: ['first-input'] });
 
-// ====================== 4. 监听 FCP 首次内容绘制 ======================
-new PerformanceObserver((list) => {
-const entries = list.getEntries();
-const firstEntry = entries[0];
-if (firstEntry) {
-// startTime：从页面初始化到页面第一次渲染出文字/图片等内容的耗时
-report.fcp = firstEntry.startTime;
-console.log('[性能监控] FCP:', report.fcp);
-}
-// paint 绘制类指标，包含 FCP / LCP 等绘制事件
-}).observe({ entryTypes: ['paint'] });
+  // ====================== 4. 监听 FCP 首次内容绘制 ======================
+  new PerformanceObserver((list) => {
+    const entries = list.getEntries();
+    const firstEntry = entries[0];
+    if (firstEntry) {
+    // startTime：从页面初始化到页面第一次渲染出文字/图片等内容的耗时
+    report.fcp = firstEntry.startTime;
+    console.log('[性能监控] FCP:', report.fcp);
+  }
+  // paint 绘制类指标，包含 FCP / LCP 等绘制事件
+  }).observe({ entryTypes: ['paint'] });
 
-// ====================== 5. 监听 TTFB 首字节时间 ======================
-new PerformanceObserver((list) => {
-const entries = list.getEntries();
-// 遍历导航性能条目
-for (const entry of entries) {
-// 筛选页面导航类型的性能数据
-if (entry.entryType === 'navigation') {
-// 类型断言成导航详细性能对象
-const navEntry = entry as PerformanceNavigationTiming;
-// TTFB = 浏览器发起请求开始 到 接收到服务器第一个字节的间隔
-report.ttfb = navEntry.responseStart - navEntry.requestStart;
-console.log('[性能监控] TTFB:', report.ttfb);
-}
-}
-// 监听页面导航（页面刷新、跳转）全链路耗时
-}).observe({ entryTypes: ['navigation'] });
+  // ====================== 5. 监听 TTFB 首字节时间 ======================
+  new PerformanceObserver((list) => {
+    const entries = list.getEntries();
+    // 遍历导航性能条目
+    for (const entry of entries) {
+    // 筛选页面导航类型的性能数据
+    if (entry.entryType === 'navigation') {
+      // 类型断言成导航详细性能对象
+      const navEntry = entry as PerformanceNavigationTiming;
+      // TTFB = 浏览器发起请求开始 到 接收到服务器第一个字节的间隔
+      report.ttfb = navEntry.responseStart - navEntry.requestStart;
+      console.log('[性能监控] TTFB:', report.ttfb);
+    }
+  }
+  // 监听页面导航（页面刷新、跳转）全链路耗时
+  }).observe({ entryTypes: ['navigation'] });
 }
 ```
 
@@ -1334,7 +1334,7 @@ app.mount('#app');
 
 // ✅ 只在生产环境启用性能监控（减少开发环境的噪音）
 if (import.meta.env.PROD) {
-reportWebVitals();
+  reportWebVitals();
 }
 
 ```
@@ -1369,28 +1369,28 @@ reportWebVitals();
 创建 scripts/deploy.ts：
 
 ```
-#!/usr/bin/env ts-node
+#!/usr/bin/env ts-node  //这一行叫做 Shebang（释伴行），必须写在文件第一行。 #!：Shebang 标志，告诉操作系统：要用指定解释器执行本文件  /usr/bin/env：去系统环境变量 PATH 里查找程序  ts-node：找到 ts-node 命令，用它运行当前 .ts 文件
 // scripts/deploy.ts
-import _ as fs from 'fs';
-import _ as path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
-const **filename = fileURLToPath(import.meta.url);
-const **dirname = path.dirname(\_\_filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const DIST_DIR = path.join(**dirname, '../dist');
-const BACKUP_DIR = path.join(**dirname, '../backups');
+const DIST_DIR = path.join(__dirname, '../dist');
+const BACKUP_DIR = path.join(__dirname, '../backups');
 
 // 1. 校验dist文件夹存在
 if (!fs.existsSync(DIST_DIR)) {
-console.error('❌ dist 目录不存在，请先执行 pnpm build');
-process.exit(1);
+  console.error('❌ dist 目录不存在，请先执行 pnpm build');
+  process.exit(1);
 }
 
 // 2. 创建备份目录（递归创建）
 if (!fs.existsSync(BACKUP_DIR)) {
-fs.mkdirSync(BACKUP_DIR, { recursive: true });
+  fs.mkdirSync(BACKUP_DIR, { recursive: true });
 }
 
 // 3. 生成时间戳版本号，替换冒号小数点避免路径非法字符
@@ -1401,9 +1401,9 @@ console.log(`📦 备份当前版本到: ${backupPath}`);
 fs.cpSync(DIST_DIR, backupPath, { recursive: true });
 
 // 4. 复制产物到部署目录
-const DEPLOY_DIR = path.join(\_\_dirname, '../deploy');
+const DEPLOY_DIR = path.join(__dirname, '../deploy');
 if (!fs.existsSync(DEPLOY_DIR)) {
-fs.mkdirSync(DEPLOY_DIR, { recursive: true });
+  fs.mkdirSync(DEPLOY_DIR, { recursive: true });
 }
 
 console.log('📤 上传新版本到部署目录...');
@@ -1415,17 +1415,17 @@ console.log('🔄 模拟重载 Nginx...');
 // 6. 冒烟测试
 console.log('🧪 执行冒烟测试...');
 try {
-const result = execSync('curl -s -o /dev/null -w "%{http_code}" http://localhost:5173', {
-timeout: 5000,
-}).toString().trim();
+  const result = execSync('curl -s -o /dev/null -w "%{http_code}" http://localhost:5173', {
+    timeout: 5000,
+  }).toString().trim();
 
-if (result === '200') {
-console.log('✅ 冒烟测试通过！首页可访问');
-} else {
-console.log(`⚠️ 冒烟测试异常：HTTP ${result}`);
-}
+  if (result === '200') {
+    console.log('✅ 冒烟测试通过！首页可访问');
+  } else {
+    console.log(`⚠️ 冒烟测试异常：HTTP ${result}`);
+  }
 } catch (error) {
-console.log('⚠️ 冒烟测试失败（开发服务器未启动，请先 pnpm dev）');
+  console.log('⚠️ 冒烟测试失败（开发服务器未启动，请先 pnpm dev）');
 }
 
 console.log(`\n🎉 部署完成！版本号: ${version}`);
@@ -1454,13 +1454,13 @@ console.log(`📌 回滚命令: cp -r ${backupPath}/* ${DIST_DIR}/`);
 ### backup文件夹
 
 2.（操作2） Backups 文件夹（历史版本快照）
-相当于：生产环境上的“版本历史仓库”。每次你执行 pnpm deploy，脚本都会先把当前的 deploy 文件夹压缩打包（以时间戳命名），放进 Backups 里。
+相当于：生产环境上的“版本历史仓库”。每次执行 pnpm deploy，脚本都会先把当前的 deploy 文件夹压缩打包（以时间戳命名），放进 Backups 里。
 
 为什么要有它：为了 Demo 10（版本回滚）。如果新的 deploy 版本出了严重 Bug，你可以执行 pnpm rollback，脚本会从 Backups 里挑一个旧版本，直接覆盖回 deploy，实现“秒级回滚”。
 
-#### 这两个文件夹作用：deploy 是正在运行的现场，Backups 是时间机器。你不需要真的买一台云服务器，就在本机把“持续交付（CD）”的核心流程亲手跑了一遍
+#### 这两个文件夹作用：deploy 是正在运行的现场，Backups 是时间机器。不需要真的买一台云服务器，就在本机把“持续交付（CD）”的核心流程亲手跑了一遍
 
-#### 为什么文件名全是乱码？（DEMO4
+#### 为什么文件名全是乱码？（DEMO4）
 
 这是 Vite 构建时加的 Hash（哈希值）。
 index-yMkJyNDY.js 里的 yMkJyNDY 是根据 index.js 的文件内容算出来的。内容变了，Hash 就变。
@@ -1486,25 +1486,25 @@ pnpm deploy
 #!/usr/bin/env ts-node
 // scripts/rollback.ts
 
-import _ as fs from 'fs';
-import _ as path from 'path';
-import \* as readline from 'readline';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as readline from 'readline';
 import { fileURLToPath } from 'url';
 
-const **filename = fileURLToPath(import.meta.url);
-const **dirname = path.dirname(\_\_filename);
-
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 <!-- ../：路径向上跳一级目录（从 scripts 文件夹回到项目根目录）
 拼接结果：项目根目录/dist
 含义：拿到打包产物 dist 文件夹的完整绝对路径，也就是你执行pnpm build生成静态资源的目录。 -->
 
-const DIST_DIR = path.join(**dirname, '../dist');
-const BACKUP_DIR = path.join(**dirname, '../backups');
+const DIST_DIR = path.join(__dirname, '../dist');
+const BACKUP_DIR = path.join(__dirname, '../backups');
+
 
 // 1. 检查备份目录
 if (!fs.existsSync(BACKUP_DIR)) {
-console.error('❌ 没有找到备份目录');
-process.exit(1);
+  console.error('❌ 没有找到备份目录');
+  process.exit(1);
 }
 
 // 2. 列出所有备份版本
@@ -1517,8 +1517,8 @@ const backups = fs.readdirSync(BACKUP_DIR)
 .reverse();
 
 if (backups.length === 0) {
-console.error('❌ 没有找到任何备份版本');
-process.exit(1); // 终止node进程，返回异常退出码
+  console.error('❌ 没有找到任何备份版本');
+  process.exit(1);// 终止node进程，返回异常退出码
 }
 
 // 打印提示文案
@@ -1530,57 +1530,47 @@ console.log(`  ${index + 1}. ${name}`);
 
 // ========== 开始交互式命令行输入 ==========
 // 引入readline模块，创建命令行交互实例，读取键盘输入、控制台输出
+// 3. 让用户选择回滚到哪个版本
 const rl = readline.createInterface({
-input: process.stdin, // 输入来源：终端键盘
-output: process.stdout, // 输出位置：终端控制台
+  input: process.stdin,// 输入来源：终端键盘
+  output: process.stdout,// 输出位置：终端控制台
 });
-
 // 弹出问题，等待用户输入版本数字，回车后执行回调函数
 rl.question('\n请选择要回滚到的版本编号（输入数字）：', (answer) => {
-// 用户输入是字符串，转数字；用户看到的序号从1开始，数组下标从0开始，所以-1
-const index = parseInt(answer.trim()) - 1;
+  // 用户输入是字符串，转数字；用户看到的序号从1开始，数组下标从0开始，所以-1
+  const index = parseInt(answer.trim()) - 1;
 
-// 合法性校验：不是数字 / 下标小于0 / 下标超过备份总数 → 输入非法
-if (isNaN(index) || index < 0 || index >= backups.length) {
-console.error('❌ 无效的选择');
-rl.close(); // 关闭命令行交互
-process.exit(1); // 异常退出
-}
+  if (isNaN(index) || index < 0 || index >= backups.length) {
+    console.error('❌ 无效的选择');
+    rl.close();
+    process.exit(1);
+  }
 
-// 根据合法下标拿到选中的备份文件夹名称
-const selectedVersion = backups[index];
-// 拼接得到该备份文件夹的完整绝对路径
-const backupPath = path.join(BACKUP_DIR, selectedVersion);
+  const selectedVersion = backups[index];
+  const backupPath = path.join(BACKUP_DIR, selectedVersion);
 
-// 二次风险提醒：告知用户要回滚的版本，提示dist会被全覆盖
-console.log(`\n⚠️ 即将回滚到: ${selectedVersion}`);
-console.log(`   当前 dist 将被完全替换`);
+  // 4. 确认回滚
+  console.log(`\n⚠️ 即将回滚到: ${selectedVersion}`);
+  console.log(' 当前 dist 将被完全替换');
 
-// 再次弹窗确认，询问是否真的执行回滚
-rl.question('确认继续？(y/N)：', (confirm) => {
-// 用户输入不是y/Y，判定取消回滚
-if (confirm.toLowerCase() !== 'y') {
-console.log('👋 已取消回滚');
-rl.close();
-return; // 终止后续逻辑
-}
+  rl.question('确认继续？(y/N)：', (confirm) => {
+    if (confirm.toLowerCase() !== 'y') {
+      console.log('👋 已取消回滚');
+      rl.close();
+      return;
+    }
 
-    // 开始执行回滚操作
+    // 5. 执行回滚：删除当前 dist，复制备份到 dist
     console.log(`🔄 正在回滚到 ${selectedVersion}...`);
 
-    // 如果当前dist文件夹存在
     if (fs.existsSync(DIST_DIR)) {
-      // 强制递归删除整个dist目录，recursive删文件夹、force无视权限/只读强制删除
       fs.rmSync(DIST_DIR, { recursive: true, force: true });
     }
-    // 将选中的备份文件夹完整复制覆盖到dist
     fs.cpSync(backupPath, DIST_DIR, { recursive: true });
 
-    // 回滚成功提示
     console.log(`✅ 回滚完成！当前版本: ${selectedVersion}`);
-    rl.close(); // 关闭命令行交互，脚本正常结束
-
-});
+    rl.close();
+  });
 });
 ```
 
@@ -1588,9 +1578,9 @@ return; // 终止后续逻辑
 
 ```
 {
-"scripts": {
-"rollback": "node scripts/rollback.js"
-}
+  "scripts": {
+    "rollback": "node scripts/rollback.js"
+  }
 }
 ```
 
@@ -1650,63 +1640,69 @@ pnpm build
 ```
 // src/utils/requestPool.ts
 
-### - 请求池：控制并发请求数量，防止浏览器因并发过多崩溃
-
-### - 浏览器对同一域名的并发连接数有限制（HTTP/1.1 约 6 个 HTTP/2大得多）
-
-
+/**
+ * 请求池：控制并发请求数量，防止浏览器因并发过多崩溃
+ * 浏览器对同一域名的并发连接数有限制（HTTP/1.1 约 6 个）
+ */
 export class RequestPool {
-private limit: number;
-private running: number;
-private queue: Array<() => void>;
+  // 最大允许并发请求数量
+  private limit: number;
+  // 当前正在执行中的请求数量
+  private running: number;
+  // 请求等待队列：存放等待被唤醒的resolve函数
+  private queue: Array<() => void>;
 
-constructor(limit = 6) {
-this.limit = limit; // 最大并发数
-this.running = 0; // 当前正在运行的请求数
-this.queue = []; // 等待队列
-}
-
-
-
-- 执行请求
-- @param fn 返回 Promise 的请求函数（如 () => axios.get('/api')）
-- @returns 请求结果
-  \*/
-  async request<T>(fn: () => Promise<T>): Promise<T> {
-  // 1. 如果当前并发数已达上限，进入排队等待
-  if (this.running >= this.limit) {
-  await new Promise<void>((resolve) => {
-  this.queue.push(resolve);
-  });
+  /**
+   * 构造函数，初始化请求池
+   * @param limit 最大并发上限，默认6，匹配浏览器HTTP1.1域名并发限制
+   */
+  constructor(limit = 6) {
+    this.limit = limit;      // 最大并发数
+    this.running = 0;        // 当前正在运行的请求数，初始0
+    this.queue = [];         // 等待队列，存放等待执行的任务放行函数
   }
 
-  // 2. 拿到执行名额，开始执行
-  this.running++;
-  console.log(`[请求池] 当前并发数: ${this.running}/${this.limit}`);
+  /**
+   * 执行请求
+   * @param fn 返回 Promise 的请求函数（如 () => axios.get('/api')）
+   * @returns 请求结果
+   */
+  async request<T>(fn: () => Promise<T>): Promise<T> {
+    // 1. 判断：当前运行请求 ≥ 最大并发上限，需要排队
+    if (this.running >= this.limit) {
+      // 创建Promise，把resolve函数存入队列，暂停当前请求，等待唤醒
+      await new Promise<void>((resolve) => {
+        this.queue.push(resolve);
+      });
+      // 代码阻塞在这里，直到队列前面某个任务执行完成调用resolve()
+    }
 
-  try {
-  // 3. 执行真实请求
-  const result = await fn();
-  return result;
-  } finally {
-  // 4. 请求结束（无论成功/失败），释放名额
-  this.running--;
-  console.log(`[请求池] 释放并发，剩余: ${this.running}/${this.limit}`);
+    // 2. 获取到并发名额，运行计数+1
+    this.running++;
+    console.log(`[请求池] 当前并发数: ${this.running}/${this.limit}`);
 
-      // 5. 如果队列里还有等待的任务，唤醒下一个
+    try {
+      // 3. 真正发起网络请求，等待接口返回
+      const result = await fn();
+      return result;
+    } finally {
+      // 4. 无论请求成功、报错，都会进入finally，释放并发名额
+      this.running--;
+      console.log(`[请求池] 释放并发，剩余: ${this.running}/${this.limit}`);
+
+      // 5. 如果队列还有排队任务，取出队首任务，唤醒它执行
       if (this.queue.length > 0) {
+        // 取出队列第一个等待的resolve
         const next = this.queue.shift();
         if (next) {
-          next(); // 唤醒等待的 request 调用
+          next(); // 调用resolve，上面await的Promise完成，继续执行下一个请求
         }
       }
-
+    }
   }
-
-}
 }
 
-// 导出单例（整个应用共享一个请求池）
+// 导出全局单例：整个项目共用同一个请求池，统一管控全局接口并发
 export const requestPool = new RequestPool(6);
 ```
 
