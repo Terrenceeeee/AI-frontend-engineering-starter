@@ -1835,24 +1835,25 @@ const clearLogs = () => {
 
 // 1. 定义一个类型守卫，检查错误是否具有类似 Axios 错误的特征
 function isAxiosError(error: unknown): error is {
-response?: { status: number };
-code?: string;
-message?: string;
+  response?: { status: number };
+  code?: string;
+  message?: string;
 } {
-return typeof error === 'object' && error !== null;
+  return typeof error === 'object' && error !== null;
 }
 
 export interface RetryOptions {
-maxRetries?: number; // 最大重试次数，默认 3
-baseDelay?: number; // 基础延迟（毫秒），默认 500
-maxDelay?: number; // 最大延迟上限（毫秒），默认 10000
-// ⭐ 这里把 any 改成了 unknown
-shouldRetry?: (error: unknown) => boolean;
+  maxRetries?: number;      // 最大重试次数，默认 3
+  baseDelay?: number;       // 基础延迟（毫秒），默认 500
+  maxDelay?: number;        // 最大延迟上限（毫秒），默认 10000
+  // ⭐ 这里把 any 改成了 unknown
+  shouldRetry?: (error: unknown) => boolean;
 }
 
-
-
-- 指数退避重试
+/**
+ * 指数退避重试
+ */
+ - 指数退避重试
   \*/
   // fn: () => Promise<T>：参数1，传入一个无参函数，执行后返回Promise<T>
   // options: RetryOptions = {}：参数2，配置对象，不传则默认是空对象{}
@@ -1864,39 +1865,43 @@ shouldRetry?: (error: unknown) => boolean;
   ): Promise<T> { //options：参数名
   RetryOptions：TS 接口，约束配置对象的结构（maxRetries /baseDelay/maxDelay /shouldRetry）
   = {}：默认值，代表调用时不传第二个参数，options默认等于空对象{}
-  // 对象解构，取出配置，同时设置每一项的默认值
+
+
+export async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions = {}
+): Promise<T> {
   const {
-  maxRetries = 3,
-  baseDelay = 500,
-  maxDelay = 10000,
-  // 默认的重试判断逻辑
-  shouldRetry = (error: unknown) => {
-  // 如果不是对象类型，直接不重试
-  if (!isAxiosError(error)) return false;
+    maxRetries = 3,
+    baseDelay = 500,
+    maxDelay = 10000,
+    // 默认的重试判断逻辑
+    shouldRetry = (error: unknown) => {
+      // 如果不是对象类型，直接不重试
+      if (!isAxiosError(error)) return false;
 
-              // 只有 5xx 错误才重试（服务端错误）
-              if (error.response?.status && error.response.status >= 500) return true;
-              // 网络超时错误（Axios 的 ECONNABORTED）
-              if (error.code === 'ECONNABORTED') return true;
-              // 其他包含 timeout 关键字的错误
-              if (error.message?.includes('timeout')) return true;
+      // 只有 5xx 错误才重试（服务端错误）
+      if (error.response?.status && error.response.status >= 500) return true;
+      // 网络超时错误（Axios 的 ECONNABORTED）
+      if (error.code === 'ECONNABORTED') return true;
+      // 其他包含 timeout 关键字的错误
+      if (error.message?.includes('timeout')) return true;
 
-              return false;
-            },
-
+      return false;
+    },
   } = options;
 
-// ⭐ lastError 也改为 unknown
-let lastError: unknown = null;
+  // ⭐ lastError 也改为 unknown
+  let lastError: unknown = null;
 
-for (let attempt = 1; attempt <= maxRetries; attempt++) {
-try {
-if (attempt > 1) {
-console.log(`[重试] 第 ${attempt - 1} 次重试...`);
-}
-return await fn();
-} catch (error) {
-lastError = error;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      if (attempt > 1) {
+        console.log(`[重试] 第 ${attempt - 1} 次重试...`);
+      }
+      return await fn();
+    } catch (error) {
+      lastError = error;
 
       // 判断是否需要重试
       if (!shouldRetry(error)) {
@@ -1915,10 +1920,9 @@ lastError = error;
 
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
+  }
 
-}
-
-throw lastError;
+  throw lastError;
 }
 ```
 
@@ -1928,11 +1932,12 @@ any在eslintd的recommand模式里是默认被判断为error的 可以把any换�
 ```
 // 1.声明
 function isAxiosError(error: unknown): error is {
-response?: { status: number };
-code?: string;
-message?: string;
-} {
-return typeof error === 'object' && error !== null;
+  response?: { status: number };
+  code?: string;
+  message?: string;
+}
+{
+  return typeof error === 'object' && error !== null;
 }
 // 2. 在重试逻辑里使用它
 catch (error) { // 这里 error 是 unknown（未知包裹）
@@ -1972,9 +1977,9 @@ import { retryWithBackoff } from '@/utils/retry';
 let attemptCount = 0;
 
 export function mockUnstableApi(): Promise<{ success: boolean; data: string }> {
-return new Promise((resolve, reject) => {
-attemptCount++;
-console.log(`[API] 第 ${attemptCount} 次调用`);
+  return new Promise((resolve, reject) => {
+  attemptCount++;
+  console.log(`[API] 第 ${attemptCount} 次调用`);
 
     // 前 2 次返回 500 错误
     if (attemptCount < 3) {
@@ -1986,23 +1991,23 @@ console.log(`[API] 第 ${attemptCount} 次调用`);
       resolve({ success: true, data: '请求成功！' });
     }
 
-});
+  });
 }
 
 // 重置计数器
 export function resetAttemptCount() {
-attemptCount = 0;
+  attemptCount = 0;
 }
 
 // 包装请求，应用重试策略
 export function fetchWithRetry() {
-return retryWithBackoff(
-() => mockUnstableApi(),
-{
-maxRetries: 3,
-baseDelay: 500,
-}
-);
+  return retryWithBackoff(
+    () => mockUnstableApi(),
+    {
+      maxRetries: 3,
+      baseDelay: 500,
+    }
+  );
 }
 ```
 
@@ -2019,24 +2024,25 @@ baseDelay: 500,
     🔄 重置状态
   </button>
 </div>
-</code>
+
 
 在script部分里
-<code>
+
 import { fetchWithRetry, resetAttemptCount } from '@/api/testApi';const testRetry = async () => {
-addLog('🔁 开始测试重试...');
-try {
-const result = await fetchWithRetry();
-addLog(`✅ 请求成功: ${result.data}`);
-} catch (error) {
-addLog(`❌ 请求失败: ${(error as Error).message}`);
-}
+  addLog('🔁 开始测试重试...');
+  try {
+    const result = await fetchWithRetry();
+    addLog(`✅ 请求成功: ${result.data}`);
+  } catch (error) {
+    addLog(`❌ 请求失败: ${(error as Error).message}`);
+  }
 };
 
 const resetTest = () => {
-resetAttemptCount();
-addLog('🔄 已重置计数器');
+  resetAttemptCount();
+  addLog('🔄 已重置计数器');
 };
+
 ```
 
 ## 第四步：验证
@@ -2071,8 +2077,8 @@ const CACHE_NAME = 'demo-cache-v1';
 
 // 预缓存资源清单：install阶段主动缓存的静态资源
 const urlsToCache = [
-'/',
-'/index.html',
+  '/',
+  '/index.html',
 // Vite 构建产物JS/CSS带有hash，文件名每次构建变化，手动维护不现实
 // 正式项目推荐使用 Workbox，构建时自动注入资源清单
 // 本示例仅演示基础原理，采用运行时动态缓存策略
@@ -2081,18 +2087,18 @@ const urlsToCache = [
 // ===================== 1. Service Worker 安装事件 =====================
 // sw脚本首次被浏览器下载解析完成后，浏览器自动触发 install 生命周期
 self.addEventListener('install', (event) => {
-console.log('[Service Worker] 安装中...');
+  console.log('[Service Worker] 安装中...');
 
 // event.waitUntil()：告诉浏览器【等待内部异步操作全部完成】，再结束install阶段
 // 如果不包裹，浏览器可能提前终止sw，缓存操作中途失败
-event.waitUntil(
-// 打开指定名称的缓存存储空间，不存在则自动创建
-caches.open(CACHE_NAME)
-.then((cache) => {
-console.log('[Service Worker] 缓存资源...');
-// 批量请求清单内所有资源，并存入缓存；任意一个资源加载失败，整体失败
-return cache.addAll(urlsToCache);
-})
+  event.waitUntil(
+    // 打开指定名称的缓存存储空间，不存在则自动创建
+    caches.open(CACHE_NAME)
+    .then((cache) => {
+      console.log('[Service Worker] 缓存资源...');
+    // 批量请求清单内所有资源，并存入缓存；任意一个资源加载失败，整体失败
+      return cache.addAll(urlsToCache);
+  })
 .then(() => {
 console.log('[Service Worker] 安装完成');
 // self.skipWaiting()：强制跳过等待阶段，新sw立即进入activate激活状态
@@ -2224,7 +2230,7 @@ return cachedResponse;
       },
     },
 
-};
+  };
 });
 ```
 
@@ -2258,22 +2264,21 @@ mv sw.js public/
 
 ```
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-window.addEventListener('load', () => {
-// 核心API：注册 Service Worker
-// 参数：sw脚本路径 /sw.js
-navigator.serviceWorker.register('/sw.js')
-.then((registration) => {
-// registration 对象包含sw状态、等待中的sw、激活的sw等信息
-console.log('[SW] 注册成功:', registration);
-})
-.catch((error) => {
-// 注册失败常见原因：
-// 1. sw.js 404 路径写错
-// 2. 协议不是 HTTPS（localhost本地开发除外）
-// 3. 浏览器禁用service worker
-console.log('[SW] 注册失败:', error);
-});
-});
+  window.addEventListener('load', () => {
+    // 核心API：注册 Service Worker
+    // 参数：sw脚本路径 /sw.js
+    navigator.serviceWorker.register('/sw.js')
+    .then((registration) => {
+      // registration 对象包含sw状态、等待中的sw、激活的sw等信息
+      console.log('[SW] 注册成功:', registration);
+  }).catch((error) => {
+      // 注册失败常见原因：
+      // 1. sw.js 404 路径写错
+      // 2. 协议不是 HTTPS（localhost本地开发除外）
+      // 3. 浏览器禁用service worker
+      console.log('[SW] 注册失败:', error);
+    });
+  });
 }
 ```
 
@@ -2635,6 +2640,8 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 ### 调试结束后：关闭系统/浏览器代理 -> 停止 Whistle 服务 (w2 stop)
 
+---
+
 # Demo 16：vConsole 调试钩子 + SourceMap 配置
 
 用处：
@@ -2662,14 +2669,14 @@ const isDev = import.meta.env.MODE === 'development';
 const hasDebugParam = window.location.search.includes('debug=1');
 
 if (isDev || hasDebugParam) {
-// 动态导入 vConsole（仅在需要时加载，减少首屏体积）
-import('vconsole').then(({ default: VConsole }) => {
-// 如果已经有 vConsole 实例，不重复创建
-if (!window.vConsole) {
-window.vConsole = new VConsole();
-console.log('[vConsole] 调试面板已开启');
-}
-});
+  // 动态导入 vConsole（仅在需要时加载，减少首屏体积）
+  import('vconsole').then(({ default: VConsole }) => {
+    // 如果已经有 vConsole 实例，不重复创建
+    if (!window.vConsole) {
+      window.vConsole = new VConsole();
+      console.log('[vConsole] 调试面板已开启');
+    }
+  });
 }
 ```
 
@@ -2680,7 +2687,7 @@ console.log('[vConsole] 调试面板已开启');
 ```
 // ========== 新增：开启 SourceMap ==========
 build: {
-sourcemap: true, // 构建时生成 .map 文件
+  sourcemap: true, // 构建时生成 .map 文件
 },
 ```
 
