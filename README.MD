@@ -2,6 +2,8 @@
 
 ## 图为在Git bash中 分别创建两个不同的依赖（npm pnpm）创建的相同的vue文件
 
+### pnpm create vite my-vue-project --template vue
+
 ![未加载成功](<./screenshots/Screenshot 2026-07-27 093856.png>)
 其显示出的pnpm与npm所依赖的node_modules大小几乎一致 原因是二者的vue项目目前都是空的 依赖包数量少 体积小
 如果创建了n个npm项目 那么内存就会成为n倍 而同样的情况下 pnpm的所占内存不变
@@ -4317,3 +4319,16 @@ secrets / environment 变化 :Github网页修改
 运行环境变化：.nvmrc, .node-version, Dockerfile, docker-compose.yml
 部署目标变化:.github/workflows/deploy.yml, vercel.json, netlify.toml, firebase.json, k8s/*.yaml
 ```
+
+## 如果将网页最小化后其又再一次的强制最大化 原因可能是：
+
+### 1. **页面监听 `visibilitychange / blur`，反复调用 `window.focus()`**
+
+页面检测到窗口最小化（页面 hidden），不断尝试抢焦点。
+浏览器不会直接 “最大化”，但会**闪烁、强行前置窗口**，视觉上像 “弹回来”。
+常见：在线考试防切屏、直播控制台、问卷系统。
+
+### 2. **页面使用 HTML 全屏 API `requestFullscreen()`**
+
+⚠️ 这是**页面全屏**，不等同于浏览器窗口最大化；
+最小化后页面检测退出全屏，立刻重新申请全屏，看起来窗口强制弹回来
