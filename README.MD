@@ -220,6 +220,38 @@ lint-staged ：只对 Git 暂存区文件执行检查
 
 ### 比如说：.eslintrc.cjs
 
+```
+module.exports = {
+  root: true,
+  env: {
+    browser: true,
+    node: true,
+    es2021: true,
+  },
+  extends: [
+    'eslint:recommended',
+    'plugin:vue/vue3-recommended',
+    // 改用原生TS推荐规则，不用vue封装包
+    'plugin:@typescript-eslint/recommended',
+    'prettier',
+  ],
+  parser: 'vue-eslint-parser',
+  parserOptions: {
+    parser: '@typescript-eslint/parser',
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+  },
+  rules: {
+    quotes: ['error', 'single'],
+    semi: ['error', 'always'],
+    indent: ['error', 2],
+    'no-console': 'off',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    'vue/multi-word-component-names': 'off',
+  },
+};
+```
+
 为什么在ESModule 项目中要使用CommonJS的写法？
 ：如果起名为xxxx.js Node会把它当成ESM ESM不可以直接写module.exports 语法报错
 所以说要用xxx.cjs 强制走CommonJS 写法固定成熟 几乎不会出现解析BUG 稳定性更高
@@ -228,19 +260,50 @@ lint-staged ：只对 Git 暂存区文件执行检查
 
 项目根目录创建 .prettierrc.cjs：
 
+```
+// .prettierrc.cjs
+module.exports = {
+  // 单引号
+  singleQuote: true,
+  // 行尾加分号
+  semi: true,
+  // 2 空格缩进
+  tabWidth: 2,
+  // 不使用 Tab 键（只用空格）
+  useTabs: false,
+  // 行宽 100 字符（超过自动换行）
+  printWidth: 100,
+  // 对象/数组最后一个元素加逗号
+  trailingComma: 'es5',
+  // 对象大括号内加空格：{ foo: bar }
+  bracketSpacing: true,
+  // 箭头函数参数加括号：(x) => x
+  arrowParens: 'always',
+  // 换行符类型（auto 自动适配操作系统）
+  endOfLine: 'auto',
+};
+```
+
 ## 第四步：创建 Prettier 忽略文件
 
 在该文件中声明的文件/目录
 Prettier 会跳过这些目录/文件，不进行格式化。
-一般就是dist/
-node*modules/
+一般就是
+
+```
+dist/
+node_modules/
 *.log
-_.lock
-_.yaml
-_.yml
-_.html
-\_.svg 这些文件
-总而言之 就是Prettier 只管手写的业务源码（ts、js、vue、css 等）；
+*.lock
+*.yaml
+*.yml
+*.html
+*.svg
+```
+
+这些文件
+
+### 总而言之 就是Prettier 只管手写的业务源码（ts、js、vue、css 等）；
 
 ## 第五步：在 package.json 中添加 scripts 和 lint-staged 配置
 
@@ -250,47 +313,58 @@ _.html
 
 1. 在 "scripts" 里添加 5 个新命令（原有的 dev、build、preview 不要动）
    json
-   ```
-   {
-   "scripts": {
-   "lint": "eslint . --ext .vue,.js,.ts --fix", // ← 新增
-   "format": "prettier --write .", // ← 新增
-   "lint:check": "eslint . --ext .vue,.js,.ts", // ← 新增
-   "format:check": "prettier --check .", // ← 新增
-   "prepare": "husky" // ← 新增 //"prepare": "husky" 的作用是让 pnpm install 时自动初始化 Husky，这样团队成员克隆项目后只需 pnpm install，Git Hooks 就会自动配置好
-   }
-   }
-   ```
+
+```
+
+{
+  "scripts": {
+    "lint": "eslint . --ext .vue,.js,.ts --fix", // ← 新增
+    "format": "prettier --write .", // ← 新增
+    "lint:check": "eslint . --ext .vue,.js,.ts", // ← 新增
+    "format:check": "prettier --check .", // ← 新增
+    "prepare": "husky" // ← 新增 //"prepare": "husky" 的作用是让 pnpm install 时自动初始化 Husky，这样团队成员克隆项目后只需 pnpm install，Git Hooks 就会自动配置好
+  }
+}
+
+```
+
 2. 在 package.json 的根节点（和 "scripts" 平级）添加 "lint-staged" 字段
    json
-   ```
-   {
-   "lint-staged": { // ← 整个字段都是新增的
-   "_.{js,ts,vue}": [
-   "eslint --fix",
-   "prettier --write"
-   ],
-   "_.{css,scss}": [
-   "prettier --write"
-   ],
-   "_.{json,md}": [
-   "prettier --write"
-   ]
-   },
-   "dependencies": { /_ ... _/ },
-   "devDependencies": { ...  } // ← 新增的 devDependencies 在这里
-   }
-   ```
+
+```
+
+{
+  "lint-staged": { // ← 整个字段都是新增的
+    "_.{js,ts,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "_.{css,scss}": [
+      "prettier --write"
+    ],
+    "_.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "dependencies": { /_ ... \_/ },
+  "devDependencies": { ... } // ← 新增的 devDependencies 在这里
+}
+
+```
+
 3. 在 "devDependencies" 中添加新包的列表（原有的 @vitejs/plugin-vue、vite、vue 等都要保留）
    json
-   ```
-   {
-   "devDependencies": {
-   "typescript": "^5.5.3",
-   "vue-eslint-parser": "^9.4.3"
-   }
-   }
-   ```
+
+```
+
+{
+  "devDependencies": {
+    "typescript": "^5.5.3",
+    "vue-eslint-parser": "^9.4.3"
+  }
+}
+
+```
 
 ## 第六步：初始化 Husky 在Git bash终端中输入
 
@@ -308,10 +382,12 @@ pnpm run prepare
 查看 .husky/pre-commit 文件内容，确保它是这样的：
 
 ```
+
 #!/bin/sh
 . "$(dirname "$0")/\_/husky.sh" //里面没有\
 
 pnpm lint-staged
+
 ```
 
 ### 这个文件的作用： 当你执行 git commit 时，Git 会先执行这个脚本。脚本调用 pnpm lint-staged，而 lint-staged 只会检查你本次 git add 的那些文件。
@@ -337,9 +413,10 @@ pnpm lint-staged
 
 ## 解决方案：
 
-### 方案一：（最简单推荐：降级 ESLint 到 8.x，适配你现有的.eslintrc.cjs）
+### 方案一：（最简单推荐：降级 ESLint 到 8.x，适配现有的.eslintrc.cjs）
 
 ```
+
 新版本 ESLint 改动极大，大量规则写法全部重写，新手最稳妥是降级回稳定的 v8 版本，兼容现在所有配置：
 卸载现有高版本 eslint 全套
 powershell
@@ -351,17 +428,20 @@ pnpm add -D eslint@8 eslint-plugin-vue @vue/eslint-config-typescript @typescript
 powershell
 pnpm lint
 .eslintrc.cjs 可以正常被识别，不用改配置代码。
+
 ```
 
 ### 方案二：（保留 ESLint 10，全面迁移新版配置）
 
 ```
+
 需要做 3 件事：
 把根目录的 .eslintrc.cjs 重命名为 eslint.config.js
 把配置语法从 CommonJS module.exports 改成 ESM export default，重写整套规则格式（语法变动非常多）
 适配插件导入写法，大部分旧规则名失效需要替换
 pnpm add -D @eslint/js typescript-eslint eslint-config-prettier //10代需要添加的扁平包
-缺点：改动量大，你整套 Vue+TS 规则都要重写，不适合现阶段。
+缺点：改动量大，整套 Vue+TS 规则都要重写，不适合现阶段。
+
 ```
 
 #### ESLint 9/10 是大版本破坏性更新，抛弃传统 .eslintrc 所有格式，强制全新扁平化配置
@@ -371,7 +451,9 @@ pnpm add -D @eslint/js typescript-eslint eslint-config-prettier //10代需要添
 可以改为
 
 ```
+
 "lint": "eslint src --ext .vue,.js,.ts --fix",
+
 ```
 
 ![alt text](<screenshots/Screenshot 2026-07-28 115605.png>)
@@ -390,11 +472,13 @@ Lint-staged正常运行
 ## 第九步：提交坏代码（观察被拦截）
 
 ```
+
 #将坏代码添加到暂存区
 git add src/App.vue
 
 #尝试提交
 git commit -m "test: 故意提交坏代码验证 ESLint 拦截"
+
 ```
 
 而后就会看到Husky的日志 报错 阻止提交
@@ -416,40 +500,44 @@ lint-staged 配置里从左到右依次执行：["eslint --fix", "prettier --wri
 ## 第二步：安装并配置路由
 
 ```
+
 pnpm add vue-router
+
 ```
 
 在router/index.ts里加上
 
 ```
+
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router';
 
 // ⭐ 关键：所有页面都用 () => import() 实现懒加载
 const routes = [
-{
-path: '/',
-name: 'Home',
-component: () => import('@/views/Home.vue'),
-},
-{
-path: '/user',
-name: 'User',
-component: () => import('@/views/User.vue'),
-},
-{
-path: '/admin',
-name: 'Admin',
-component: () => import('@/views/Admin.vue'),
-},
+  {
+    path: '/',
+    name: 'Home',
+    component: () => import('@/views/Home.vue'),
+  },
+  {
+    path: '/user',
+    name: 'User',
+    component: () => import('@/views/User.vue'),
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: () => import('@/views/Admin.vue'),
+  },
 ];
 
 const router = createRouter({
-history: createWebHistory(),
-routes,
+  history: createWebHistory(),
+  routes,
 });
 
 export default router;
+
 ```
 
 ### 在这段代码中 用component:()=>import('文件地址')实现路由的懒加载
@@ -457,6 +545,7 @@ export default router;
 ## 第三步：修改(添加几行代码) src/main.ts 注册路由
 
 ```
+
 import router from './router';
 
 app.use(router);
@@ -468,6 +557,7 @@ app.use(router);
 #### Markdown 防止代码被浏览器解析渲染 使用 三个反引号 ``` 包裹代码，渲染器会自动识别为代码区块，内部标签不会执行。 但要记得首尾都要有
 
 ```
+
 <template>
   <div style="padding: 20px; font-family: 'Courier New', monospace;">
     <h1 style="color: #42b883;">🌍 Vite 分包验证 Demo</h1>
@@ -489,8 +579,8 @@ app.use(router);
 </template>
 
 <script setup>
-console.log('App.vue 加载了（主入口）');
-const mode =import.meta.env.MODE
+  console.log('App.vue 加载了（主入口）');
+  const mode =import.meta.env.MODE
 </script>
 
 ```
@@ -501,21 +591,23 @@ const mode =import.meta.env.MODE
 保留所有原有配置，只新增 resolve 和 build.rollupOptions
 
 ```
+
 export default defineConfig({
 plugins: [vue()],
 
 resolve: {
 // 配置路径别名，让 @ 指向 src/
-alias: {
-'@': path.resolve(\_\_dirname, 'src'),
-},
+  alias: {
+    '@': path.resolve(__dirname, 'src'),
+  },
 },
 
 build: {
 // 生成 sourcemap，便于调试时定位源码位置
-sourcemap: true,
-rollupOptions: {
-output: {
+  sourcemap: true,
+  rollupOptions: {
+  output: {
+
 ```
 
 ### 分包拆分规范：手动分包：把 Vue 核心库单独打成一个 vendor 包 !!!!此处最新版Rollup要求使用函数形式而非对象形式
@@ -536,23 +628,27 @@ o@index-abc123.js:1
 ### Debug 效率提升 10 倍。 这就是 SourceMap 的价值。
 
 ```
+
 manualChunks(id) {
-// 所有以 'vue' 开头的包（vue、vue-router 等）都打包到 vue-vendor 中
-if (id.includes('vue') || id.includes('vue-router')) {
-return 'vue-vendor'
-}
+  // 所有以 'vue' 开头的包（vue、vue-router 等）都打包到 vue-vendor 中
+  if (id.includes('vue') || id.includes('vue-router')) {
+  return 'vue-vendor'
+  }
 },
 // 每个 chunk 的文件名格式，[name] 会自动取 manualChunks 里定义的 key
+
 ```
 
 ### chunk里的[hash]值的作用：每次构建会生成唯一的hash值，重新构建会生成一个新的hash值，浏览器就会认为他变了，会重新强制加载一次缓存；如果hash值不变，则浏览器就只会一直读缓存里的，不会重复下载
 
 ```
-chunkFileNames: 'assets/[name]-[hash].js',
-},
-},
-},
+
+        chunkFileNames: 'assets/[name]-[hash].js',
+      },
+    },
+  },
 });
+
 ```
 
 ## 第六步：在终端一次性验证所有场景
@@ -597,9 +693,11 @@ inquirer 从 v9 开始是纯 ESM 包，如果项目是 ESM（"type": "module"）
 最新版本：
 
 ```
+
 pnpm add -D inquirer @types/inquirer
 支持cjs写法的8.2.6版本：
 pnpm add -D inquirer@8.2.6
+
 ```
 
 ## 第二步：创建脚本文件
@@ -612,6 +710,7 @@ pnpm add -D inquirer@8.2.6
 内置文件覆盖保护，防止误删已有代码，支持--force强制覆盖
 
 ```
+
 #!/usr/bin/env ts-node
 
 // ============================================================
@@ -621,29 +720,30 @@ import fs from 'fs';
 import path from 'path';
 import inquirer from 'inquirer';
 
-/** 待生成文件结构类型 */
+/\*_ 待生成文件结构类型 _/
 interface FileItem {
-  path: string;
-  content: string;
+path: string;
+content: string;
 }
 
-/** 生成配置项 */
+/\*_ 生成配置项 _/
 interface GenerateOpts {
-  force: boolean;
+force: boolean;
 }
 
-/** Inquirer 交互返回类型 */
+/\*_ Inquirer 交互返回类型 _/
 interface PromptAnswers {
-  name: string;
-  confirm: boolean;
+name: string;
+confirm: boolean;
 }
 
 // ============================================================
 // 2. 各类文件模板函数
 // ============================================================
-/** Vue页面模板 */
+/\*_ Vue页面模板 _/
 const viewTemplate = (capitalName: string): string => `
 <template>
+
   <div class="${capitalName.toLowerCase()}">
     <h1>${capitalName} 页面</h1>
     <p>这是自动生成的 ${capitalName} 页面</p>
@@ -660,63 +760,66 @@ console.log('${capitalName} 页面加载了');
   padding: 40px;
 }
 </style>
+
 `;
 
-/** API 请求模板 */
+/\*_ API 请求模板 _/
 const apiTemplate = (capitalName: string): string => `
 import request from '@/utils/request';
 
 export interface I${capitalName}Params {
-  // TODO: 定义接口参数
+// TODO: 定义接口参数
 }
 
 export interface I${capitalName}Response {
-  // TODO: 定义接口返回数据
+// TODO: 定义接口返回数据
 }
 
-/**
- * 获取 ${capitalName} 数据
+/\*\*
+
+- 获取 ${capitalName} 数据
  */
 export const get${capitalName}Data = (params?: I${capitalName}Params) => {
   return request.get<I${capitalName}Response>('/api/${capitalName.toLowerCase()}', { params });
-};
+  };
 
-/**
- * 更新 ${capitalName} 数据
+/\*\*
+
+- 更新 ${capitalName} 数据
  */
 export const update${capitalName}Data = (data: I${capitalName}Params) => {
   return request.post('/api/${capitalName.toLowerCase()}/update', data);
-};
-`;
+  };
+  `;
 
-/** Pinia Store模板 */
+/\*_ Pinia Store模板 _/
 const storeTemplate = (capitalName: string): string => `
 import { defineStore } from 'pinia';
 import { get${capitalName}Data, I${capitalName}Params, I${capitalName}Response } from '@/api/${capitalName.toLowerCase()}';
 
 interface I${capitalName}State {
   data: I${capitalName}Response[];
-  loading: boolean;
+loading: boolean;
 }
 
 export const use${capitalName}Store = defineStore('${capitalName.toLowerCase()}', {
-  state: (): I${capitalName}State => ({
-    data: [],
-    loading: false,
-  }),
+state: (): I${capitalName}State => ({
+data: [],
+loading: false,
+}),
 
-  actions: {
-    async fetchData() {
-      this.loading = true;
-      try {
-        // const res = await get${capitalName}Data();
-        // this.data = res.data;
-        console.log('获取 ${capitalName} 数据');
-      } finally {
-        this.loading = false;
-      }
-    },
-  },
+actions: {
+async fetchData() {
+this.loading = true;
+try {
+// const res = await get${capitalName}Data();
+// this.data = res.data;
+console.log('获取 ${capitalName} 数据');
+} finally {
+this.loading = false;
+}
+},
+},
 });
 `;
 
@@ -724,111 +827,112 @@ export const use${capitalName}Store = defineStore('${capitalName.toLowerCase()}'
 // 3. 组装所有待生成文件路径和内容
 // ============================================================
 function getFilesToGenerate(rawName: string): FileItem[] {
-  const capitalName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-  const lowerName = rawName.toLowerCase();
+const capitalName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+const lowerName = rawName.toLowerCase();
 
-  return [
-    {
-      path: `src/views/${lowerName}/index.vue`,
-      content: viewTemplate(capitalName),
-    },
-    {
-      path: `src/api/${lowerName}.ts`,
-      content: apiTemplate(capitalName),
-    },
-    {
-      path: `src/stores/modules/${lowerName}.ts`,
-      content: storeTemplate(capitalName),
-    },
-  ];
+return [
+{
+path: `src/views/${lowerName}/index.vue`,
+content: viewTemplate(capitalName),
+},
+{
+path: `src/api/${lowerName}.ts`,
+content: apiTemplate(capitalName),
+},
+{
+path: `src/stores/modules/${lowerName}.ts`,
+content: storeTemplate(capitalName),
+},
+];
 }
 
 // ============================================================
 // 4. 文件写入核心逻辑
 // ============================================================
 function generateFiles(rawName: string, opts: GenerateOpts): boolean {
-  const files = getFilesToGenerate(rawName);
-  const { force } = opts;
+const files = getFilesToGenerate(rawName);
+const { force } = opts;
 
-  // 检测已存在文件
-  const existFiles = files.filter((item) => fs.existsSync(item.path));
-  if (existFiles.length > 0 && !force) {
-    console.error('\n❌ 以下文件已存在（请使用 --force 强制覆盖）：');
-    existFiles.forEach((item) => console.log(`   - ${item.path}`));
-    return false;
-  }
+// 检测已存在文件
+const existFiles = files.filter((item) => fs.existsSync(item.path));
+if (existFiles.length > 0 && !force) {
+console.error('\n❌ 以下文件已存在（请使用 --force 强制覆盖）：');
+existFiles.forEach((item) => console.log(`   - ${item.path}`));
+return false;
+}
 
-  // 循环创建目录+文件
-  files.forEach(({ path: filePath, content }) => {
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-      console.log(`📁 创建目录: ${dir}`);
-    }
-    fs.writeFileSync(filePath, content.trim(), 'utf8');
-    console.log(`✅ 生成文件: ${filePath}`);
-  });
+// 循环创建目录+文件
+files.forEach(({ path: filePath, content }) => {
+const dir = path.dirname(filePath);
+if (!fs.existsSync(dir)) {
+fs.mkdirSync(dir, { recursive: true });
+console.log(`📁 创建目录: ${dir}`);
+}
+fs.writeFileSync(filePath, content.trim(), 'utf8');
+console.log(`✅ 生成文件: ${filePath}`);
+});
 
-  return true;
+return true;
 }
 
 // ============================================================
 // 5. 交互式入口主函数
 // ============================================================
 async function main() {
-  // 读取命令行参数
-  const cliArgs = process.argv.slice(2);
-  const force = cliArgs.includes('--force');
+// 读取命令行参数
+const cliArgs = process.argv.slice(2);
+const force = cliArgs.includes('--force');
 
-  // 交互式问答
-  const answers = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'name',
-      message: '📝 请输入模块名称（如：user、product、order）：',
-      validate: (input: string) => {
-        const val = input.trim();
-        if (!val) return '❌ 模块名称不能为空';
-        if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(val)) {
-          return '❌ 模块名称只能包含字母和数字，必须以字母开头';
-        }
-        return true;
-      },
-    },
-    {
-      type: 'confirm',
-      name: 'confirm',
-      message: (ans: Partial<PromptAnswers>) =>
-        `即将生成 ${ans.name} 模块的 view + api + store，确认继续？`,
-      default: true,
-    },
-  ]) as PromptAnswers;
+// 交互式问答
+const answers = await inquirer.prompt([
+{
+type: 'input',
+name: 'name',
+message: '📝 请输入模块名称（如：user、product、order）：',
+validate: (input: string) => {
+const val = input.trim();
+if (!val) return '❌ 模块名称不能为空';
+if (!/^[a-zA-Z][a-zA-Z0-9]\*$/.test(val)) {
+return '❌ 模块名称只能包含字母和数字，必须以字母开头';
+}
+return true;
+},
+},
+{
+type: 'confirm',
+name: 'confirm',
+message: (ans: Partial<PromptAnswers>) =>
+`即将生成 ${ans.name} 模块的 view + api + store，确认继续？`,
+default: true,
+},
+]) as PromptAnswers;
 
-  if (!answers.confirm) {
-    console.log('👋 已取消生成');
-    return;
-  }
+if (!answers.confirm) {
+console.log('👋 已取消生成');
+return;
+}
 
-  const moduleName = answers.name.trim();
-  const success = generateFiles(moduleName, { force });
+const moduleName = answers.name.trim();
+const success = generateFiles(moduleName, { force });
 
-  if (success) {
-    const lower = moduleName.toLowerCase();
-    console.log('\n🎉 模块生成完成！');
-    console.log('📌 接下来请执行：');
-    console.log(`   1. 在 router 中配置路由: /${lower}`);
-    console.log(`   2. 在 api/${lower}.ts 中完善接口参数与返回类型`);
-    console.log(`   3. 在 stores/modules/${lower}.ts 完善接口调用与业务`);
-  }
+if (success) {
+const lower = moduleName.toLowerCase();
+console.log('\n🎉 模块生成完成！');
+console.log('📌 接下来请执行：');
+console.log(`   1. 在 router 中配置路由: /${lower}`);
+console.log(`   2. 在 api/${lower}.ts 中完善接口参数与返回类型`);
+console.log(`   3. 在 stores/modules/${lower}.ts 完善接口调用与业务`);
+}
 }
 
 // ============================================================
 // 6. 捕获全局异常
 // ============================================================
 main().catch((err: Error) => {
-  console.error('❌ 执行失败:', err.message);
-  process.exit(1);
+console.error('❌ 执行失败:', err.message);
+process.exit(1);
 });
+
 ```
 
 运行使用方式：
@@ -838,7 +942,9 @@ ts-node generate.ts
 ## 第三步：在 package.json 中添加脚本命令
 
 ```
+
 "gen": "node scripts/generate.ts"
+
 ```
 
 优势 1：开箱即用，环境要求更低
@@ -853,35 +959,41 @@ ts-node generate.ts
 在 src/ 下创建 api/、stores/modules/、views/ 目录（如果还没有的话）： //mkdir = make directory -p 父目录不存在时自动逐级创建；文件夹已经存在也不会报错，静默跳过
 
 ```
+
 mkdir -p src/api
 mkdir -p src/stores/modules
 mkdir -p src/views
+
 ```
 
 同时需要创建 src/utils/request.ts（API 模板里引用了它）：
 
 ```
+
 // src/utils/request.ts
 import axios from 'axios';
 
 const request = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 10000,
+baseURL: import.meta.env.VITE_API_BASE_URL,
+timeout: 10000,
 });
 
 // 响应拦截器：直接返回 data
 request.interceptors.response.use(
-  (response) => response.data,
-  (error) => Promise.reject(error)
+(response) => response.data,
+(error) => Promise.reject(error)
 );
 
 export default request;
+
 ```
 
 ## 第六步：执行脚本生成模块
 
 ```
+
 pnpm gen
+
 ```
 
 ![alt text](<screenshots/Screenshot 2026-07-29 145016.png>)
@@ -896,12 +1008,14 @@ pnpm gen
 打开 src/router/index.ts，在 routes 数组中新增一个路由：
 
 ```
+
 // ========== 新增：自动生成的 product 路由 ==========
 {
-  path: '/product',
-  name: 'Product',
-  component: () => import('@/views/product/index.vue'),
+path: '/product',
+name: 'Product',
+component: () => import('@/views/product/index.vue'),
 },
+
 ```
 
 ## 第九步：在首页添加导航链接
@@ -909,13 +1023,17 @@ pnpm gen
 打开views/Home.vue 在导航区添加 /product 的链接
 
 ```
+
 <router-link to="/product">去产品页</router-link>
+
 ```
 
 ## 第十步：验证完整流程
 
 ```
+
 pnpm dev
+
 ```
 
 ### 真正作用：大量的模块只需要在终端输入pnpm gen输入多次 输入多次模块名，就可以省去大量时间。并且这个脚本“目录分层规范”变成了一条自动化生产线。 新人入职第一天跑一遍 pnpm gen product，生成的文件结构跟团队老员工的一模一样，不需要有人口头告诉他“你要在 api 下建文件、还要按这个格式写”————让机器帮你执行规范，而不是靠人脑记
@@ -929,7 +1047,9 @@ git push 代码到 GitHub 时，GitHub 自动拉取代码 → 安装依赖 → �
 ## 第一步：在项目中安装 Vitest（测试框架）
 
 ```
+
 pnpm add -D vitest @vue/test-utils jsdom @vitest/coverage-v8
+
 ```
 
 :
@@ -941,36 +1061,42 @@ jsdom：在 Node 环境里模拟浏览器 DOM API（如 document、window），�
 ## 第二步：写一个简单的单元测试（验证用）
 
 ```
-// src/utils/__tests__/math.test.ts
+
+// src/utils/**tests**/math.test.ts
 import { describe, it, expect } from 'vitest';
 
 // 一个简单的加法函数（直接写在测试里，不用单独建文件）
 function add(a: number, b: number): number {
-  return a + b;
+return a + b;
 }
 
 describe('add 函数', () => {
-  it('1 + 2 应该等于 3', () => {
-  expect(add(1, 2)).toBe(3);
+it('1 + 2 应该等于 3', () => {
+expect(add(1, 2)).toBe(3);
 });
 
 it('-1 + 1 应该等于 0', () => {
-  expect(add(-1, 1)).toBe(0);
-  });
+expect(add(-1, 1)).toBe(0);
 });
+});
+
 ```
 
 ## 第三步：在 package.json 中添加测试命令(加两行就行)
 
 ```
+
 "test": "vitest run",
 "test:coverage": "vitest run --coverage"
+
 ```
 
 ## 第四步：本地验证测试能跑通
 
 ```
+
 pnpm test
+
 ```
 
 预期结果：
@@ -988,6 +1114,7 @@ git remote -v
 创建 .github/workflows/ci.yml：
 
 ```
+
 name: CI 流水线
 
 #### 触发条件：push 到 main 分支，或任何 pull_request
@@ -1047,14 +1174,17 @@ steps:
 
 - name: 构建项目
   run: pnpm build
+
 ```
 
 提交并推送:
 
 ```
+
 git add .github/workflows/ci.yml
 git commit -m "feat: 添加 GitHub Actions CI 流水线"
 git push
+
 ```
 
 ## 第七步：观察流水线执行结果
@@ -1085,6 +1215,7 @@ Vitest, Playwright E2E 测试
 ## 第一步：安装 Playwright
 
 ```
+
 pnpm add -D @playwright/test
 
 ```
@@ -1103,17 +1234,17 @@ npx playwright install：npx playwright install 会下载 Chromium、Firefox 和
 import { test, expect } from '@playwright/test';
 
 test.describe('首页冒烟测试', () => {
-  test('首页应该正常加载', async ({ page }) => {
-    // 访问首页
-    await page.goto('http://localhost:5173/');
+test('首页应该正常加载', async ({ page }) => {
+// 访问首页
+await page.goto('http://localhost:5173/');
 
     // 检查页面标题是否包含 "Vite 分包验证 Demo"
     await expect(page.locator('h1')).toContainText('Vite 分包验证');
 
-  });
+});
 
-  test('点击用户页链接应该跳转到 /user', async ({ page }) => {
-    await page.goto('http://localhost:5173/');
+test('点击用户页链接应该跳转到 /user', async ({ page }) => {
+await page.goto('http://localhost:5173/');
 
     // 点击 "用户中心" 链接
     await page.click('text=用户中心');
@@ -1124,7 +1255,7 @@ test.describe('首页冒烟测试', () => {
     // 验证页面出现了 "用户中心" 标题
     await expect(page.locator('h1')).toContainText('用户中心');
 
-  });
+});
 });
 
 ```
@@ -1134,10 +1265,10 @@ test.describe('首页冒烟测试', () => {
 ```
 
 {
-  "scripts": {
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
-  }
+"scripts": {
+"test:e2e": "playwright test",
+"test:e2e:ui": "playwright test --ui"
+}
 }
 
 ```
@@ -1164,6 +1295,7 @@ Running 2 tests using 1 worker
 修改 .github/workflows/ci.yml，在 build 步骤之后添加 E2E 测试步骤：
 
 ```
+
 #### ... 前面的步骤保持不变 ...
 
 #### 7. 打包构建
@@ -1183,16 +1315,19 @@ Running 2 tests using 1 worker
   pnpm test:e2e
   env:
   CI: true
+
 ```
 
 ## 第六步：提交并推送，观察流水线
 
 ```
+
 git add .
 git commit -m "feat: 添加 Playwright E2E 测试并集成到 CI"
 git push
 
 打开 GitHub Actions，会看到流水线中新增了 “安装 Playwright 浏览器” 和 “运行 E2E 测试” 两个步骤，全部通过后流水线变绿。
+
 ```
 
 ---
@@ -1210,26 +1345,29 @@ CLS → 页面视觉稳定性
 创建 src/utils/performanceReporter.ts：
 
 ```
+
 // src/utils/performanceReporter.ts
 // 定义性能指标上报的数据TS类型约束
 interface ReportData {
-  // 当前页面完整URL地址
-  url: string;
-  // 最大内容绘制，可选，单位ms
-  lcp?: number;
-  // 累积布局偏移，可选
-  cls?: number;
-  // 首次输入延迟，可选（FID已废弃，浏览器主推INP）
-  fid?: number;
-  // 首次内容绘制，可选，ms
-  fcp?: number;
-  // 首字节时间，服务器返回首个字节耗时，ms
-  ttfb?: number;
-  // 性能采集时间戳（毫秒时间戳）
-  timestamp: number;
+// 当前页面完整URL地址
+url: string;
+// 最大内容绘制，可选，单位ms
+lcp?: number;
+// 累积布局偏移，可选
+cls?: number;
+// 首次输入延迟，可选（FID已废弃，浏览器主推INP）
+fid?: number;
+// 首次内容绘制，可选，ms
+fcp?: number;
+// 首字节时间，服务器返回首个字节耗时，ms
+ttfb?: number;
+// 性能采集时间戳（毫秒时间戳）
+timestamp: number;
 }
 
+```
 
+```
 
 - 页面核心Web Vitals性能采集函数
 - 采集LCP/CLS/FID/FCP/TTFB五大前端性能指标，打印日志，可对接接口上报后端
@@ -1244,79 +1382,79 @@ interface ReportData {
 // ====================== 1. 监听 LCP 最大内容绘制 ======================
 // PerformanceObserver：浏览器原生性能监听API，异步捕获性能条目
 new PerformanceObserver((list) => {
-  // 获取本次回调所有性能条目数组
-  const entries = list.getEntries();
-  // LCP会多次触发，取最后一次（最终最大元素）
-  const lastEntry = entries[entries.length - 1];
-  if (lastEntry) {
-    // 赋值LCP耗时：页面开始加载到最大可视元素渲染完成的毫秒数
-    report.lcp = lastEntry.startTime;
-    console.log('[性能监控] LCP:', report.lcp);
-    // 可放开注释，把完整指标上报后端接口
-    // sendToServer(report);
-  }
-  // 监听的性能类型：largest-contentful-paint 专门对应LCP指标
-  }).observe({ entryTypes: ['largest-contentful-paint'] });
+// 获取本次回调所有性能条目数组
+const entries = list.getEntries();
+// LCP会多次触发，取最后一次（最终最大元素）
+const lastEntry = entries[entries.length - 1];
+if (lastEntry) {
+// 赋值LCP耗时：页面开始加载到最大可视元素渲染完成的毫秒数
+report.lcp = lastEntry.startTime;
+console.log('[性能监控] LCP:', report.lcp);
+// 可放开注释，把完整指标上报后端接口
+// sendToServer(report);
+}
+// 监听的性能类型：largest-contentful-paint 专门对应LCP指标
+}).observe({ entryTypes: ['largest-contentful-paint'] });
 
-  // ====================== 2. 监听 CLS 累积布局偏移 ======================
-  // 用来累加所有布局偏移值
-  let clsValue = 0;
-  new PerformanceObserver((list) => {
-    // 遍历本次所有布局偏移记录
-    for (const entry of list.getEntries() as any[]) {
-    // hadRecentInput：用户近期是否有点击/输入操作
-    // 规范要求：用户主动交互引发的布局偏移不计入CLS，只算意外抖动
-    if (!entry.hadRecentInput) {
-      clsValue += entry.value;
-    }
-  }
-    // 把累加后的总偏移存入上报对象
-    report.cls = clsValue;
-    console.log('[性能监控] CLS:', report.cls);
-  // 监听页面布局变动事件
-  }).observe({ entryTypes: ['layout-shift'] });
+// ====================== 2. 监听 CLS 累积布局偏移 ======================
+// 用来累加所有布局偏移值
+let clsValue = 0;
+new PerformanceObserver((list) => {
+// 遍历本次所有布局偏移记录
+for (const entry of list.getEntries() as any[]) {
+// hadRecentInput：用户近期是否有点击/输入操作
+// 规范要求：用户主动交互引发的布局偏移不计入CLS，只算意外抖动
+if (!entry.hadRecentInput) {
+clsValue += entry.value;
+}
+}
+// 把累加后的总偏移存入上报对象
+report.cls = clsValue;
+console.log('[性能监控] CLS:', report.cls);
+// 监听页面布局变动事件
+}).observe({ entryTypes: ['layout-shift'] });
 
-  // ====================== 3. 监听 FID 首次输入延迟 ======================
-  new PerformanceObserver((list) => {
-    const entries = list.getEntries();
-    // FID只取页面第一次用户交互的记录
-    const firstEntry = entries[0] as any;
-    if (firstEntry) {
-    // 计算延迟：浏览器收到用户输入时间 → 浏览器真正开始处理输入的时间差
-    report.fid = firstEntry.processingStart - firstEntry.startTime;
-    console.log('[性能监控] FID:', report.fid);
-  }
-  // first-input：浏览器首次用户输入行为（点击、按键等）
-  }).observe({ entryTypes: ['first-input'] });
+// ====================== 3. 监听 FID 首次输入延迟 ======================
+new PerformanceObserver((list) => {
+const entries = list.getEntries();
+// FID只取页面第一次用户交互的记录
+const firstEntry = entries[0] as any;
+if (firstEntry) {
+// 计算延迟：浏览器收到用户输入时间 → 浏览器真正开始处理输入的时间差
+report.fid = firstEntry.processingStart - firstEntry.startTime;
+console.log('[性能监控] FID:', report.fid);
+}
+// first-input：浏览器首次用户输入行为（点击、按键等）
+}).observe({ entryTypes: ['first-input'] });
 
-  // ====================== 4. 监听 FCP 首次内容绘制 ======================
-  new PerformanceObserver((list) => {
-    const entries = list.getEntries();
-    const firstEntry = entries[0];
-    if (firstEntry) {
-    // startTime：从页面初始化到页面第一次渲染出文字/图片等内容的耗时
-    report.fcp = firstEntry.startTime;
-    console.log('[性能监控] FCP:', report.fcp);
-  }
-  // paint 绘制类指标，包含 FCP / LCP 等绘制事件
-  }).observe({ entryTypes: ['paint'] });
+// ====================== 4. 监听 FCP 首次内容绘制 ======================
+new PerformanceObserver((list) => {
+const entries = list.getEntries();
+const firstEntry = entries[0];
+if (firstEntry) {
+// startTime：从页面初始化到页面第一次渲染出文字/图片等内容的耗时
+report.fcp = firstEntry.startTime;
+console.log('[性能监控] FCP:', report.fcp);
+}
+// paint 绘制类指标，包含 FCP / LCP 等绘制事件
+}).observe({ entryTypes: ['paint'] });
 
-  // ====================== 5. 监听 TTFB 首字节时间 ======================
-  new PerformanceObserver((list) => {
-    const entries = list.getEntries();
-    // 遍历导航性能条目
-    for (const entry of entries) {
-    // 筛选页面导航类型的性能数据
-    if (entry.entryType === 'navigation') {
-      // 类型断言成导航详细性能对象
-      const navEntry = entry as PerformanceNavigationTiming;
-      // TTFB = 浏览器发起请求开始 到 接收到服务器第一个字节的间隔
-      report.ttfb = navEntry.responseStart - navEntry.requestStart;
-      console.log('[性能监控] TTFB:', report.ttfb);
-    }
-  }
-  // 监听页面导航（页面刷新、跳转）全链路耗时
-  }).observe({ entryTypes: ['navigation'] });
+// ====================== 5. 监听 TTFB 首字节时间 ======================
+new PerformanceObserver((list) => {
+const entries = list.getEntries();
+// 遍历导航性能条目
+for (const entry of entries) {
+// 筛选页面导航类型的性能数据
+if (entry.entryType === 'navigation') {
+// 类型断言成导航详细性能对象
+const navEntry = entry as PerformanceNavigationTiming;
+// TTFB = 浏览器发起请求开始 到 接收到服务器第一个字节的间隔
+report.ttfb = navEntry.responseStart - navEntry.requestStart;
+console.log('[性能监控] TTFB:', report.ttfb);
+}
+}
+// 监听页面导航（页面刷新、跳转）全链路耗时
+}).observe({ entryTypes: ['navigation'] });
 }
 ```
 
@@ -1336,7 +1474,7 @@ app.mount('#app');
 
 // ✅ 只在生产环境启用性能监控（减少开发环境的噪音）
 if (import.meta.env.PROD) {
-  reportWebVitals();
+reportWebVitals();
 }
 
 ```
@@ -1371,28 +1509,29 @@ if (import.meta.env.PROD) {
 创建 scripts/deploy.ts：
 
 ```
-#!/usr/bin/env ts-node  //这一行叫做 Shebang（释伴行），必须写在文件第一行。 #!：Shebang 标志，告诉操作系统：要用指定解释器执行本文件  /usr/bin/env：去系统环境变量 PATH 里查找程序  ts-node：找到 ts-node 命令，用它运行当前 .ts 文件
+
+#!/usr/bin/env ts-node //这一行叫做 Shebang（释伴行），必须写在文件第一行。 #!：Shebang 标志，告诉操作系统：要用指定解释器执行本文件 /usr/bin/env：去系统环境变量 PATH 里查找程序 ts-node：找到 ts-node 命令，用它运行当前 .ts 文件
 // scripts/deploy.ts
-import * as fs from 'fs';
-import * as path from 'path';
+import _ as fs from 'fs';
+import _ as path from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const **filename = fileURLToPath(import.meta.url);
+const **dirname = path.dirname(\_\_filename);
 
-const DIST_DIR = path.join(__dirname, '../dist');
-const BACKUP_DIR = path.join(__dirname, '../backups');
+const DIST_DIR = path.join(**dirname, '../dist');
+const BACKUP_DIR = path.join(**dirname, '../backups');
 
 // 1. 校验dist文件夹存在
 if (!fs.existsSync(DIST_DIR)) {
-  console.error('❌ dist 目录不存在，请先执行 pnpm build');
-  process.exit(1);
+console.error('❌ dist 目录不存在，请先执行 pnpm build');
+process.exit(1);
 }
 
 // 2. 创建备份目录（递归创建）
 if (!fs.existsSync(BACKUP_DIR)) {
-  fs.mkdirSync(BACKUP_DIR, { recursive: true });
+fs.mkdirSync(BACKUP_DIR, { recursive: true });
 }
 
 // 3. 生成时间戳版本号，替换冒号小数点避免路径非法字符
@@ -1403,9 +1542,9 @@ console.log(`📦 备份当前版本到: ${backupPath}`);
 fs.cpSync(DIST_DIR, backupPath, { recursive: true });
 
 // 4. 复制产物到部署目录
-const DEPLOY_DIR = path.join(__dirname, '../deploy');
+const DEPLOY_DIR = path.join(\_\_dirname, '../deploy');
 if (!fs.existsSync(DEPLOY_DIR)) {
-  fs.mkdirSync(DEPLOY_DIR, { recursive: true });
+fs.mkdirSync(DEPLOY_DIR, { recursive: true });
 }
 
 console.log('📤 上传新版本到部署目录...');
@@ -1417,32 +1556,35 @@ console.log('🔄 模拟重载 Nginx...');
 // 6. 冒烟测试
 console.log('🧪 执行冒烟测试...');
 try {
-  const result = execSync('curl -s -o /dev/null -w "%{http_code}" http://localhost:5173', {
-    timeout: 5000,
-  }).toString().trim();
+const result = execSync('curl -s -o /dev/null -w "%{http_code}" http://localhost:5173', {
+timeout: 5000,
+}).toString().trim();
 
-  if (result === '200') {
-    console.log('✅ 冒烟测试通过！首页可访问');
-  } else {
-    console.log(`⚠️ 冒烟测试异常：HTTP ${result}`);
-  }
+if (result === '200') {
+console.log('✅ 冒烟测试通过！首页可访问');
+} else {
+console.log(`⚠️ 冒烟测试异常：HTTP ${result}`);
+}
 } catch (error) {
-  console.log('⚠️ 冒烟测试失败（开发服务器未启动，请先 pnpm dev）');
+console.log('⚠️ 冒烟测试失败（开发服务器未启动，请先 pnpm dev）');
 }
 
 console.log(`\n🎉 部署完成！版本号: ${version}`);
 console.log(`📌 备份位置: ${backupPath}`);
 console.log(`📌 回滚命令: cp -r ${backupPath}/* ${DIST_DIR}/`);
+
 ```
 
 ## 第二步：在 package.json 中添加部署命令
 
 ```
+
 {
-  "scripts": {
-    "deploy": "pnpm build && node scripts/deploy.ts"
-  }
+"scripts": {
+"deploy": "pnpm build && node scripts/deploy.ts"
 }
+}
+
 ```
 
 ### deploy文件夹
@@ -1471,7 +1613,9 @@ index-yMkJyNDY.js 里的 yMkJyNDY 是根据 index.js 的文件内容算出来的
 ## 第三步：验证
 
 ```
+
 pnpm deploy
+
 ```
 
 ### 预计输出结果：
@@ -1485,28 +1629,29 @@ pnpm deploy
 ## 第一步：创建回滚脚本 scripts/rollback.ts
 
 ```
+
 #!/usr/bin/env ts-node
 // scripts/rollback.ts
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as readline from 'readline';
+import _ as fs from 'fs';
+import _ as path from 'path';
+import \* as readline from 'readline';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const **filename = fileURLToPath(import.meta.url);
+const **dirname = path.dirname(\_\_filename);
+
 <!-- ../：路径向上跳一级目录（从 scripts 文件夹回到项目根目录）
 拼接结果：项目根目录/dist
 含义：拿到打包产物 dist 文件夹的完整绝对路径，也就是你执行pnpm build生成静态资源的目录。 -->
 
-const DIST_DIR = path.join(__dirname, '../dist');
-const BACKUP_DIR = path.join(__dirname, '../backups');
-
+const DIST_DIR = path.join(**dirname, '../dist');
+const BACKUP_DIR = path.join(**dirname, '../backups');
 
 // 1. 检查备份目录
 if (!fs.existsSync(BACKUP_DIR)) {
-  console.error('❌ 没有找到备份目录');
-  process.exit(1);
+console.error('❌ 没有找到备份目录');
+process.exit(1);
 }
 
 // 2. 列出所有备份版本
@@ -1519,8 +1664,8 @@ const backups = fs.readdirSync(BACKUP_DIR)
 .reverse();
 
 if (backups.length === 0) {
-  console.error('❌ 没有找到任何备份版本');
-  process.exit(1);// 终止node进程，返回异常退出码
+console.error('❌ 没有找到任何备份版本');
+process.exit(1);// 终止node进程，返回异常退出码
 }
 
 // 打印提示文案
@@ -1534,33 +1679,33 @@ console.log(`  ${index + 1}. ${name}`);
 // 引入readline模块，创建命令行交互实例，读取键盘输入、控制台输出
 // 3. 让用户选择回滚到哪个版本
 const rl = readline.createInterface({
-  input: process.stdin,// 输入来源：终端键盘
-  output: process.stdout,// 输出位置：终端控制台
+input: process.stdin,// 输入来源：终端键盘
+output: process.stdout,// 输出位置：终端控制台
 });
 // 弹出问题，等待用户输入版本数字，回车后执行回调函数
 rl.question('\n请选择要回滚到的版本编号（输入数字）：', (answer) => {
-  // 用户输入是字符串，转数字；用户看到的序号从1开始，数组下标从0开始，所以-1
-  const index = parseInt(answer.trim()) - 1;
+// 用户输入是字符串，转数字；用户看到的序号从1开始，数组下标从0开始，所以-1
+const index = parseInt(answer.trim()) - 1;
 
-  if (isNaN(index) || index < 0 || index >= backups.length) {
-    console.error('❌ 无效的选择');
-    rl.close();
-    process.exit(1);
-  }
+if (isNaN(index) || index < 0 || index >= backups.length) {
+console.error('❌ 无效的选择');
+rl.close();
+process.exit(1);
+}
 
-  const selectedVersion = backups[index];
-  const backupPath = path.join(BACKUP_DIR, selectedVersion);
+const selectedVersion = backups[index];
+const backupPath = path.join(BACKUP_DIR, selectedVersion);
 
-  // 4. 确认回滚
-  console.log(`\n⚠️ 即将回滚到: ${selectedVersion}`);
-  console.log(' 当前 dist 将被完全替换');
+// 4. 确认回滚
+console.log(`\n⚠️ 即将回滚到: ${selectedVersion}`);
+console.log(' 当前 dist 将被完全替换');
 
-  rl.question('确认继续？(y/N)：', (confirm) => {
-    if (confirm.toLowerCase() !== 'y') {
-      console.log('👋 已取消回滚');
-      rl.close();
-      return;
-    }
+rl.question('确认继续？(y/N)：', (confirm) => {
+if (confirm.toLowerCase() !== 'y') {
+console.log('👋 已取消回滚');
+rl.close();
+return;
+}
 
     // 5. 执行回滚：删除当前 dist，复制备份到 dist
     console.log(`🔄 正在回滚到 ${selectedVersion}...`);
@@ -1572,24 +1717,30 @@ rl.question('\n请选择要回滚到的版本编号（输入数字）：', (answ
 
     console.log(`✅ 回滚完成！当前版本: ${selectedVersion}`);
     rl.close();
-  });
+
 });
+});
+
 ```
 
 ## 第二步：在 package.json 中添加回滚命令
 
 ```
+
 {
-  "scripts": {
-    "rollback": "node scripts/rollback.js"
-  }
+"scripts": {
+"rollback": "node scripts/rollback.js"
 }
+}
+
 ```
 
 ## 第三步：验证(先创建几个备份版本（多次执行 pnpm deploy），然后执行回滚：)
 
 ```
+
 pnpm rollback
+
 ```
 
 效果如图所示：
@@ -1604,9 +1755,11 @@ pnpm rollback
 ## 第一步：修改 vite.config.ts 配置 CDN 地址
 
 ```
+
 base: mode === 'production'
 ? 'https://cdn.example.com/demo2-env/' // 生产环境走 CDN
 : '/', // 开发环境走相对路径
+
 ```
 
 ## 第二步：构建并观察产物路径变化
@@ -1640,13 +1793,15 @@ pnpm build
 创建 src/utils/requestPool.ts：
 
 ```
+
 // src/utils/requestPool.ts
 
-/**
- * 请求池：控制并发请求数量，防止浏览器因并发过多崩溃
- * 浏览器对同一域名的并发连接数有限制（HTTP/1.1 约 6 个）
- */
-export class RequestPool {
+/\*\*
+
+- 请求池：控制并发请求数量，防止浏览器因并发过多崩溃
+- 浏览器对同一域名的并发连接数有限制（HTTP/1.1 约 6 个）
+  \*/
+  export class RequestPool {
   // 最大允许并发请求数量
   private limit: number;
   // 当前正在执行中的请求数量
@@ -1654,43 +1809,45 @@ export class RequestPool {
   // 请求等待队列：存放等待被唤醒的resolve函数
   private queue: Array<() => void>;
 
-  /**
-   * 构造函数，初始化请求池
-   * @param limit 最大并发上限，默认6，匹配浏览器HTTP1.1域名并发限制
-   */
+/\*\*
+
+- 构造函数，初始化请求池
+- @param limit 最大并发上限，默认6，匹配浏览器HTTP1.1域名并发限制
+  \*/
   constructor(limit = 6) {
-    this.limit = limit;      // 最大并发数
-    this.running = 0;        // 当前正在运行的请求数，初始0
-    this.queue = [];         // 等待队列，存放等待执行的任务放行函数
+  this.limit = limit; // 最大并发数
+  this.running = 0; // 当前正在运行的请求数，初始0
+  this.queue = []; // 等待队列，存放等待执行的任务放行函数
   }
 
-  /**
-   * 执行请求
-   * @param fn 返回 Promise 的请求函数（如 () => axios.get('/api')）
-   * @returns 请求结果
-   */
+/\*\*
+
+- 执行请求
+- @param fn 返回 Promise 的请求函数（如 () => axios.get('/api')）
+- @returns 请求结果
+  \*/
   async request<T>(fn: () => Promise<T>): Promise<T> {
-    // 1. 判断：当前运行请求 ≥ 最大并发上限，需要排队
-    if (this.running >= this.limit) {
-      // 创建Promise，把resolve函数存入队列，暂停当前请求，等待唤醒
-      await new Promise<void>((resolve) => {
-        this.queue.push(resolve);
-      });
-      // 代码阻塞在这里，直到队列前面某个任务执行完成调用resolve()
-    }
+  // 1. 判断：当前运行请求 ≥ 最大并发上限，需要排队
+  if (this.running >= this.limit) {
+  // 创建Promise，把resolve函数存入队列，暂停当前请求，等待唤醒
+  await new Promise<void>((resolve) => {
+  this.queue.push(resolve);
+  });
+  // 代码阻塞在这里，直到队列前面某个任务执行完成调用resolve()
+  }
 
-    // 2. 获取到并发名额，运行计数+1
-    this.running++;
-    console.log(`[请求池] 当前并发数: ${this.running}/${this.limit}`);
+  // 2. 获取到并发名额，运行计数+1
+  this.running++;
+  console.log(`[请求池] 当前并发数: ${this.running}/${this.limit}`);
 
-    try {
-      // 3. 真正发起网络请求，等待接口返回
-      const result = await fn();
-      return result;
-    } finally {
-      // 4. 无论请求成功、报错，都会进入finally，释放并发名额
-      this.running--;
-      console.log(`[请求池] 释放并发，剩余: ${this.running}/${this.limit}`);
+  try {
+  // 3. 真正发起网络请求，等待接口返回
+  const result = await fn();
+  return result;
+  } finally {
+  // 4. 无论请求成功、报错，都会进入finally，释放并发名额
+  this.running--;
+  console.log(`[请求池] 释放并发，剩余: ${this.running}/${this.limit}`);
 
       // 5. 如果队列还有排队任务，取出队首任务，唤醒它执行
       if (this.queue.length > 0) {
@@ -1700,17 +1857,21 @@ export class RequestPool {
           next(); // 调用resolve，上面await的Promise完成，继续执行下一个请求
         }
       }
-    }
+
   }
+
+}
 }
 
 // 导出全局单例：整个项目共用同一个请求池，统一管控全局接口并发
 export const requestPool = new RequestPool(6);
+
 ```
 
 ## 第二步：在 Vue 组件中模拟并发请求
 
 ```
+
 <template>
   <!-- 外层容器，设置内边距、等宽字体，控制台风格 -->
   <div style="padding: 40px; font-family: 'Courier New', monospace;">
@@ -1795,6 +1956,7 @@ const clearLogs = () => {
   logs.value = [];
 };
 </script>
+
 ```
 
 ## 第三步：验证
@@ -1833,29 +1995,32 @@ const clearLogs = () => {
 创建 src/utils/retry.ts：
 
 ```
+
 // src/utils/retry.ts
 
 // 1. 定义一个类型守卫，检查错误是否具有类似 Axios 错误的特征
 function isAxiosError(error: unknown): error is {
-  response?: { status: number };
-  code?: string;
-  message?: string;
+response?: { status: number };
+code?: string;
+message?: string;
 } {
-  return typeof error === 'object' && error !== null;
+return typeof error === 'object' && error !== null;
 }
 
 export interface RetryOptions {
-  maxRetries?: number;      // 最大重试次数，默认 3
-  baseDelay?: number;       // 基础延迟（毫秒），默认 500
-  maxDelay?: number;        // 最大延迟上限（毫秒），默认 10000
-  // ⭐ 这里把 any 改成了 unknown
-  shouldRetry?: (error: unknown) => boolean;
+maxRetries?: number; // 最大重试次数，默认 3
+baseDelay?: number; // 基础延迟（毫秒），默认 500
+maxDelay?: number; // 最大延迟上限（毫秒），默认 10000
+// ⭐ 这里把 any 改成了 unknown
+shouldRetry?: (error: unknown) => boolean;
 }
 
-/**
- * 指数退避重试
- */
- - 指数退避重试
+/\*\*
+
+- 指数退避重试
+  \*/
+
+* 指数退避重试
   \*/
   // fn: () => Promise<T>：参数1，传入一个无参函数，执行后返回Promise<T>
   // options: RetryOptions = {}：参数2，配置对象，不传则默认是空对象{}
@@ -1868,19 +2033,18 @@ export interface RetryOptions {
   RetryOptions：TS 接口，约束配置对象的结构（maxRetries /baseDelay/maxDelay /shouldRetry）
   = {}：默认值，代表调用时不传第二个参数，options默认等于空对象{}
 
-
 export async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {}
+fn: () => Promise<T>,
+options: RetryOptions = {}
 ): Promise<T> {
-  const {
-    maxRetries = 3,
-    baseDelay = 500,
-    maxDelay = 10000,
-    // 默认的重试判断逻辑
-    shouldRetry = (error: unknown) => {
-      // 如果不是对象类型，直接不重试
-      if (!isAxiosError(error)) return false;
+const {
+maxRetries = 3,
+baseDelay = 500,
+maxDelay = 10000,
+// 默认的重试判断逻辑
+shouldRetry = (error: unknown) => {
+// 如果不是对象类型，直接不重试
+if (!isAxiosError(error)) return false;
 
       // 只有 5xx 错误才重试（服务端错误）
       if (error.response?.status && error.response.status >= 500) return true;
@@ -1891,19 +2055,20 @@ export async function retryWithBackoff<T>(
 
       return false;
     },
-  } = options;
 
-  // ⭐ lastError 也改为 unknown
-  let lastError: unknown = null;
+} = options;
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      if (attempt > 1) {
-        console.log(`[重试] 第 ${attempt - 1} 次重试...`);
-      }
-      return await fn();
-    } catch (error) {
-      lastError = error;
+// ⭐ lastError 也改为 unknown
+let lastError: unknown = null;
+
+for (let attempt = 1; attempt <= maxRetries; attempt++) {
+try {
+if (attempt > 1) {
+console.log(`[重试] 第 ${attempt - 1} 次重试...`);
+}
+return await fn();
+} catch (error) {
+lastError = error;
 
       // 判断是否需要重试
       if (!shouldRetry(error)) {
@@ -1922,24 +2087,27 @@ export async function retryWithBackoff<T>(
 
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
-  }
 
-  throw lastError;
 }
+
+throw lastError;
+}
+
 ```
 
 any在eslintd的recommand模式里是默认被判断为error的 可以把any换成unknown 他比他的类型更强
 注意使用unknown的时候要加一个类型守卫 不然无法使用
 
 ```
+
 // 1.声明
 function isAxiosError(error: unknown): error is {
-  response?: { status: number };
-  code?: string;
-  message?: string;
+response?: { status: number };
+code?: string;
+message?: string;
 }
 {
-  return typeof error === 'object' && error !== null;
+return typeof error === 'object' && error !== null;
 }
 // 2. 在重试逻辑里使用它
 catch (error) { // 这里 error 是 unknown（未知包裹）
@@ -1961,6 +2129,7 @@ catch (error) { // 这里 error 是 unknown（未知包裹）
     }
 
 其他逻辑.....
+
 ```
 
 ## 第二步：创建测试 API（模拟失败）
@@ -1972,6 +2141,7 @@ catch (error) { // 这里 error 是 unknown（未知包裹）
 // src/api/testApi.ts
 
 ```
+
 import { retryWithBackoff } from '@/utils/retry';
 
 // 模拟一个会失败的请求
@@ -1979,9 +2149,9 @@ import { retryWithBackoff } from '@/utils/retry';
 let attemptCount = 0;
 
 export function mockUnstableApi(): Promise<{ success: boolean; data: string }> {
-  return new Promise((resolve, reject) => {
-  attemptCount++;
-  console.log(`[API] 第 ${attemptCount} 次调用`);
+return new Promise((resolve, reject) => {
+attemptCount++;
+console.log(`[API] 第 ${attemptCount} 次调用`);
 
     // 前 2 次返回 500 错误
     if (attemptCount < 3) {
@@ -1993,24 +2163,25 @@ export function mockUnstableApi(): Promise<{ success: boolean; data: string }> {
       resolve({ success: true, data: '请求成功！' });
     }
 
-  });
+});
 }
 
 // 重置计数器
 export function resetAttemptCount() {
-  attemptCount = 0;
+attemptCount = 0;
 }
 
 // 包装请求，应用重试策略
 export function fetchWithRetry() {
-  return retryWithBackoff(
-    () => mockUnstableApi(),
-    {
-      maxRetries: 3,
-      baseDelay: 500,
-    }
-  );
+return retryWithBackoff(
+() => mockUnstableApi(),
+{
+maxRetries: 3,
+baseDelay: 500,
 }
+);
+}
+
 ```
 
 ## 第三步：在 App.vue 中添加测试按钮
@@ -2018,6 +2189,7 @@ export function fetchWithRetry() {
 保持原有内容不变 新增一点内容 其实就是加了个按钮 ！！！但要注意@click要在style之后 不然会被warning
 
 ```
+
 <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
   <button @click="testRetry" style="padding: 12px 24px; font-size: 16px; cursor: pointer; background: #f0ad4e; border: none; border-radius: 4px; color: white;">
     🔄 测试重试 (前2次失败，第3次成功)
@@ -2027,22 +2199,21 @@ export function fetchWithRetry() {
   </button>
 </div>
 
-
 在script部分里
 
 import { fetchWithRetry, resetAttemptCount } from '@/api/testApi';const testRetry = async () => {
-  addLog('🔁 开始测试重试...');
-  try {
-    const result = await fetchWithRetry();
-    addLog(`✅ 请求成功: ${result.data}`);
-  } catch (error) {
-    addLog(`❌ 请求失败: ${(error as Error).message}`);
-  }
+addLog('🔁 开始测试重试...');
+try {
+const result = await fetchWithRetry();
+addLog(`✅ 请求成功: ${result.data}`);
+} catch (error) {
+addLog(`❌ 请求失败: ${(error as Error).message}`);
+}
 };
 
 const resetTest = () => {
-  resetAttemptCount();
-  addLog('🔄 已重置计数器');
+resetAttemptCount();
+addLog('🔄 已重置计数器');
 };
 
 ```
@@ -2074,13 +2245,14 @@ const resetTest = () => {
 ### 在项目根目录（demo2-env/ 下，不是 src/）创建 sw.js： 注意是项目根目录！！！
 
 ```
+
 // 定义缓存版本标识，修改后缀v1→v2 代表缓存版本更新，触发清理旧缓存
 const CACHE_NAME = 'demo-cache-v1';
 
 // 预缓存资源清单：install阶段主动缓存的静态资源
 const urlsToCache = [
-  '/',
-  '/index.html',
+'/',
+'/index.html',
 // Vite 构建产物JS/CSS带有hash，文件名每次构建变化，手动维护不现实
 // 正式项目推荐使用 Workbox，构建时自动注入资源清单
 // 本示例仅演示基础原理，采用运行时动态缓存策略
@@ -2089,18 +2261,18 @@ const urlsToCache = [
 // ===================== 1. Service Worker 安装事件 =====================
 // sw脚本首次被浏览器下载解析完成后，浏览器自动触发 install 生命周期
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] 安装中...');
+console.log('[Service Worker] 安装中...');
 
 // event.waitUntil()：告诉浏览器【等待内部异步操作全部完成】，再结束install阶段
 // 如果不包裹，浏览器可能提前终止sw，缓存操作中途失败
-  event.waitUntil(
-    // 打开指定名称的缓存存储空间，不存在则自动创建
-    caches.open(CACHE_NAME)
-    .then((cache) => {
-      console.log('[Service Worker] 缓存资源...');
-    // 批量请求清单内所有资源，并存入缓存；任意一个资源加载失败，整体失败
-      return cache.addAll(urlsToCache);
-  })
+event.waitUntil(
+// 打开指定名称的缓存存储空间，不存在则自动创建
+caches.open(CACHE_NAME)
+.then((cache) => {
+console.log('[Service Worker] 缓存资源...');
+// 批量请求清单内所有资源，并存入缓存；任意一个资源加载失败，整体失败
+return cache.addAll(urlsToCache);
+})
 .then(() => {
 console.log('[Service Worker] 安装完成');
 // self.skipWaiting()：强制跳过等待阶段，新sw立即进入activate激活状态
@@ -2203,6 +2375,7 @@ return cachedResponse;
 
 );
 });
+
 ```
 
 ## 第二步：配置 Vite 构建，把 sw.js 复制到 dist/
@@ -2210,6 +2383,7 @@ return cachedResponse;
 修改 vite.config.ts，添加 rollupOptions.input 和 publicDir 配置：
 
 ```
+
 // vite.config.ts
 
     // ========== 新增：让 sw.js 也被构建 ==========
@@ -2232,8 +2406,9 @@ return cachedResponse;
       },
     },
 
-  };
+};
 });
+
 ```
 
 但更简单的方式： 把 sw.js 放到 public/ 目录下，Vite 构建时会自动复制到 dist/，不需要改 rollupOptions。
@@ -2265,23 +2440,25 @@ mv sw.js public/
 // 👉 含义：开发环境不注册sw，避免缓存导致调试时资源不刷新
 
 ```
+
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    // 核心API：注册 Service Worker
-    // 参数：sw脚本路径 /sw.js
-    navigator.serviceWorker.register('/sw.js')
-    .then((registration) => {
-      // registration 对象包含sw状态、等待中的sw、激活的sw等信息
-      console.log('[SW] 注册成功:', registration);
-  }).catch((error) => {
-      // 注册失败常见原因：
-      // 1. sw.js 404 路径写错
-      // 2. 协议不是 HTTPS（localhost本地开发除外）
-      // 3. 浏览器禁用service worker
-      console.log('[SW] 注册失败:', error);
-    });
-  });
+window.addEventListener('load', () => {
+// 核心API：注册 Service Worker
+// 参数：sw脚本路径 /sw.js
+navigator.serviceWorker.register('/sw.js')
+.then((registration) => {
+// registration 对象包含sw状态、等待中的sw、激活的sw等信息
+console.log('[SW] 注册成功:', registration);
+}).catch((error) => {
+// 注册失败常见原因：
+// 1. sw.js 404 路径写错
+// 2. 协议不是 HTTPS（localhost本地开发除外）
+// 3. 浏览器禁用service worker
+console.log('[SW] 注册失败:', error);
+});
+});
 }
+
 ```
 
 ## 第四步：验证离线缓存
@@ -2312,10 +2489,12 @@ Service Worker 的 fetch 事件监听到这些失败请求，尝试缓存它们�
 如果你只是想跑通 Demo 14，不想用假 CDN，把 vite.config.ts 里的 base 改回默认值：
 
 ```
+
 // vite.config.ts
 export default defineConfig({
 base: '/', // 改回相对路径
 })
+
 ```
 
 然后重新构建（pnpm build）、重新预览（pnpm preview）。这样所有资源请求都会走本地 localhost，不会去请求 cdn.example.com。
@@ -2383,7 +2562,9 @@ C 端项目（电商、资讯、H5），线上出了 Bug 但本地无法复现�
  <!-- 全局安装 whistle -->
 
 ```
+
 pnpm install -g whistle
+
 ```
 
 可能会出现：
@@ -2398,7 +2579,9 @@ npx whistle
 ### 启动 whistle 服务
 
 ```
+
 w2 start
+
 ```
 
 但如果是npx非全局安装 就需要输入npx whistle start 否则会出现：
@@ -2988,6 +3171,7 @@ export interface PaymentError {
 ## 第二步：日志工具实现（文件：src/utils/logger.ts）
 
 ````
+
 // src/utils/logger.ts
 
 import type { LogEntry, LoggerOptions, PaymentError } from '@/types/logger.d';
@@ -2995,219 +3179,237 @@ import type { LogEntry, LoggerOptions, PaymentError } from '@/types/logger.d';
 // ==================== 配置 ====================
 
 const DEFAULT_OPTIONS: Required<LoggerOptions> = {
-  maxLogs: 50,
-  storageKey: 'error_logs',
+maxLogs: 50,
+storageKey: 'error_logs',
 };
 
 // ==================== 状态 ====================
 
-/** 内存缓存（避免频繁读取 localStorage） */
+/\*_ 内存缓存（避免频繁读取 localStorage） _/
 let logCache: LogEntry[] = [];
 
 // ==================== 私有工具函数 ====================
 
-/**
- * 从 localStorage 加载日志
- */
-function loadFromStorage(storageKey: string): LogEntry[] {
-  try {
-    const raw = localStorage.getItem(storageKey);
-    if (!raw) return [];
+/\*\*
 
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      // 简单校验：确保每条记录都有必要的字段
-      const isValid = parsed.every(
-        (item) =>
-          item &&
-          typeof item === 'object' &&
-          typeof item.time === 'string' &&
-          typeof item.url === 'string' &&
-          typeof item.msg === 'string'
-      );
-      if (isValid) {
-        return parsed as LogEntry[];
+- 从 localStorage 加载日志
+  \*/
+  function loadFromStorage(storageKey: string): LogEntry[] {
+  try {
+  const raw = localStorage.getItem(storageKey);
+  if (!raw) return [];
+
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        // 简单校验：确保每条记录都有必要的字段
+        const isValid = parsed.every(
+          (item) =>
+            item &&
+            typeof item === 'object' &&
+            typeof item.time === 'string' &&
+            typeof item.url === 'string' &&
+            typeof item.msg === 'string'
+        );
+        if (isValid) {
+          return parsed as LogEntry[];
+        }
       }
-    }
-    return [];
-  } catch {
-    return [];
-  }
-}
+      return [];
 
-/**
- * 保存到 localStorage
- */
-function saveToStorage(storageKey: string, logs: LogEntry[]): void {
+  } catch {
+  return [];
+  }
+  }
+
+/\*\*
+
+- 保存到 localStorage
+  \*/
+  function saveToStorage(storageKey: string, logs: LogEntry[]): void {
   try {
-    localStorage.setItem(storageKey, JSON.stringify(logs));
+  localStorage.setItem(storageKey, JSON.stringify(logs));
   } catch {
-    // localStorage 已满或不可用，静默失败
-    console.warn('[logger] 写入 localStorage 失败，请检查存储空间');
+  // localStorage 已满或不可用，静默失败
+  console.warn('[logger] 写入 localStorage 失败，请检查存储空间');
   }
+  }
+
+/\*\*
+
+- 将任意错误对象转换为可序列化的格式
+  \*/
+  function normalizeError(error: unknown): Record<string, unknown> | string {
+  if (error === null || error === undefined) {
+  return 'null or undefined';
+  }
+
+if (typeof error === 'string') {
+return error;
 }
 
-/**
- * 将任意错误对象转换为可序列化的格式
- */
-function normalizeError(error: unknown): Record<string, unknown> | string {
-  if (error === null || error === undefined) {
-    return 'null or undefined';
-  }
+if (error instanceof Error) {
+return {
+name: error.name,
+message: error.message,
+stack: error.stack,
+};
+}
 
-  if (typeof error === 'string') {
-    return error;
-  }
+if (typeof error === 'object') {
+try {
+// 尝试序列化，如果失败则返回字符串表示
+return JSON.parse(JSON.stringify(error));
+} catch {
+return String(error);
+}
+}
 
-  if (error instanceof Error) {
-    return {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-    };
-  }
-
-  if (typeof error === 'object') {
-    try {
-      // 尝试序列化，如果失败则返回字符串表示
-      return JSON.parse(JSON.stringify(error));
-    } catch {
-      return String(error);
-    }
-  }
-
-  return String(error);
+return String(error);
 }
 
 // ==================== 公开 API ====================
 
-/**
- * 记录错误日志
- *
- * @param msg 错误描述
- * @param data 附加数据
- * @param options 配置选项
- *
- * @example
- * ```ts
- * try {
- *   await payOrder();
- * } catch (e) {
- *   logError('支付失败', e);
- * }
- * ```
- */
-export function logError(
-  msg: string,
-  data?: unknown,
-  options?: LoggerOptions
-): void {
-  const { maxLogs, storageKey } = { ...DEFAULT_OPTIONS, ...options };
+/\*\*
 
-  // 初始化缓存（如果为空）
-  if (logCache.length === 0) {
-    logCache = loadFromStorage(storageKey);
-  }
+- 记录错误日志
+-
+- @param msg 错误描述
+- @param data 附加数据
+- @param options 配置选项
+-
+- @example
+- ```ts
 
-  // 构建日志条目
-  const entry: LogEntry = {
-    time: new Date().toISOString(),
-    url: window.location.href,
-    userAgent: navigator.userAgent,
-    msg,
-    data: normalizeError(data),
-  };
+  ```
 
-  // 追加并限制数量
-  logCache.push(entry);
-  if (logCache.length > maxLogs) {
-    logCache = logCache.slice(-maxLogs);
-  }
+- try {
+- await payOrder();
+- } catch (e) {
+- logError('支付失败', e);
+- }
+- ```
+   */
+  export function logError(
+    msg: string,
+    data?: unknown,
+    options?: LoggerOptions
+  ): void {
+    const { maxLogs, storageKey } = { ...DEFAULT_OPTIONS, ...options };
+  ```
 
-  // 持久化
-  saveToStorage(storageKey, logCache);
-
-  // 控制台输出（方便开发调试）
-  console.error(`[logger] ${msg}`, data);
+// 初始化缓存（如果为空）
+if (logCache.length === 0) {
+logCache = loadFromStorage(storageKey);
 }
 
-/**
- * 导出所有日志为格式化 JSON 字符串
- *
- * @param storageKey 自定义存储 key
- * @returns 格式化的 JSON 字符串
- *
- * @example
- * ```ts
- * const logs = exportLogs();
- * console.log(logs);
- * ```
- */
-export function exportLogs(storageKey?: string): string {
-  const key = storageKey || DEFAULT_OPTIONS.storageKey;
-  const raw = localStorage.getItem(key);
+// 构建日志条目
+const entry: LogEntry = {
+time: new Date().toISOString(),
+url: window.location.href,
+userAgent: navigator.userAgent,
+msg,
+data: normalizeError(data),
+};
 
-  if (!raw) {
-    return '暂无日志';
-  }
-
-  try {
-    const parsed = JSON.parse(raw);
-    return JSON.stringify(parsed, null, 2);
-  } catch {
-    // 不是合法 JSON，直接返回原始字符串
-    return raw;
-  }
+// 追加并限制数量
+logCache.push(entry);
+if (logCache.length > maxLogs) {
+logCache = logCache.slice(-maxLogs);
 }
 
-/**
- * 清除所有日志
- *
- * @param storageKey 自定义存储 key
- */
-export function clearLogs(storageKey?: string): void {
+// 持久化
+saveToStorage(storageKey, logCache);
+
+// 控制台输出（方便开发调试）
+console.error(`[logger] ${msg}`, data);
+}
+
+/\*\*
+
+- 导出所有日志为格式化 JSON 字符串
+-
+- @param storageKey 自定义存储 key
+- @returns 格式化的 JSON 字符串
+-
+- @example
+- ```ts
+
+  ```
+
+- const logs = exportLogs();
+- console.log(logs);
+- ```
+   */
+  export function exportLogs(storageKey?: string): string {
+    const key = storageKey || DEFAULT_OPTIONS.storageKey;
+    const raw = localStorage.getItem(key);
+  ```
+
+if (!raw) {
+return '暂无日志';
+}
+
+try {
+const parsed = JSON.parse(raw);
+return JSON.stringify(parsed, null, 2);
+} catch {
+// 不是合法 JSON，直接返回原始字符串
+return raw;
+}
+}
+
+/\*\*
+
+- 清除所有日志
+-
+- @param storageKey 自定义存储 key
+  \*/
+  export function clearLogs(storageKey?: string): void {
   const key = storageKey || DEFAULT_OPTIONS.storageKey;
   logCache = [];
   localStorage.removeItem(key);
   console.log('[logger] 日志已清除');
-}
+  }
 
-/**
- * 获取当前日志条数
- *
- * @param storageKey 自定义存储 key
- * @returns 日志条数
- */
-export function getLogCount(storageKey?: string): number {
+/\*\*
+
+- 获取当前日志条数
+-
+- @param storageKey 自定义存储 key
+- @returns 日志条数
+  \*/
+  export function getLogCount(storageKey?: string): number {
   const key = storageKey || DEFAULT_OPTIONS.storageKey;
   const raw = localStorage.getItem(key);
 
-  if (!raw) return 0;
+if (!raw) return 0;
 
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.length : 0;
-  } catch {
-    return 0;
-  }
+try {
+const parsed = JSON.parse(raw);
+return Array.isArray(parsed) ? parsed.length : 0;
+} catch {
+return 0;
+}
 }
 
-/**
- * 判断是否为支付错误（类型守卫）
- *
- * @param error 待判断的错误对象
- * @returns 是否为 PaymentError
- */
-export function isPaymentError(error: unknown): error is PaymentError {
+/\*\*
+
+- 判断是否为支付错误（类型守卫）
+-
+- @param error 待判断的错误对象
+- @returns 是否为 PaymentError
+  \*/
+  export function isPaymentError(error: unknown): error is PaymentError {
   if (!error || typeof error !== 'object') {
-    return false;
+  return false;
   }
   const maybe = error as Record<string, unknown>;
   return (
-    typeof maybe.code === 'string' &&
-    typeof maybe.message === 'string'
+  typeof maybe.code === 'string' &&
+  typeof maybe.message === 'string'
   );
-}
+  }
+
 ````
 
 ## 第三步：演示页面（文件：src/App.vue）(都是增加的内容 原内容不变)
@@ -4332,3 +4534,156 @@ secrets / environment 变化 :Github网页修改
 
 ⚠️ 这是**页面全屏**，不等同于浏览器窗口最大化；
 最小化后页面检测退出全屏，立刻重新申请全屏，看起来窗口强制弹回来
+
+# 附：package.json文件具体说明
+
+```
+{
+  // 项目名称，pnpm create vite 创建时生成
+  "name": "demo2-env",
+  // true：不会把本项目发布到npm公共仓库，脚手架自带
+  "private": true,
+  // 项目版本号
+  "version": "0.0.0",
+  // 模块规范：module = ESM，import/export；如果是commonjs用require
+  "type": "module",
+
+  "scripts": {
+    // 启动vite开发服务器，本地开发热更新
+    "dev": "vite",
+    // vite打包，生成dist生产构建产物
+    "build": "vite build",
+    // vite内置预览dist打包后的静态页面
+    "preview": "vite preview",
+
+    // eslint：修复src下vue/js/ts代码的格式、语法问题
+    "lint": "eslint src --ext .vue,.js,.ts --fix",
+    // prettier：全局格式化全部文件（空格、换行、引号）
+    "format": "prettier --write .",
+    // lint检查：只检测代码问题，不自动修复，用于CI流水线校验
+    "lint:check": "eslint . --ext .vue,.js,.ts",
+    // prettier检查：只检测格式，不修改，CI做门禁
+    "format:check": "prettier --check .",
+
+    // pnpm install自动执行，初始化husky git提交钩子
+    "prepare": "husky",
+    // 执行lint‑staged，只对git暂存区的文件做校验格式化（git commit前跑）
+    "lint-staged": "lint-staged",
+
+    // 执行scripts/generate.ts自定义脚本（生成知识图谱/代码生成工具脚本）
+    "gen": "node scripts/generate.ts",
+
+    // vitest运行单元测试，测试src目录下用例
+    "test": "vitest run src",
+    // vitest执行单元测试，同时输出代码覆盖率报告
+    "test:coverage": "vitest run --coverage",
+
+    // playwright执行E2E自动化测试，读取playwright.config.js配置
+    "test:e2e": "playwright test --config=playwright.config.js",
+    // playwright UI模式，可视化界面跑E2E，可以看浏览器回放、断点调试
+    "test:e2e:ui": "playwright test --ui",
+
+    // 部署脚本：先打包，再执行自己写的deploy.ts部署脚本（dist备份、上传逻辑）
+    "deploy": "pnpm build && node scripts/deploy.ts",
+    // 回滚脚本：执行rollback.ts，选择历史备份dist恢复版本
+    "rollback": "node scripts/rollback.ts",
+
+    // http‑server启动静态服务器，读取dist文件夹，8080端口，开启跨域，本地模拟cdn访问打包产物
+    "serve:cdn": "http-server dist --port 8080 --cors"
+  },
+
+  // lint‑staged配置：git提交时，只处理已经git add加入暂存的文件，不处理全部文件
+  "lint-staged": {
+    // js/ts/vue文件：eslint自动修复，再prettier格式化
+    "*.{js,ts,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    // css scss样式文件：prettier格式化
+    "*.{css,scss}": [
+      "prettier --write"
+    ],
+    // json md文档格式化
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+
+  // dependencies：业务运行时依赖，打包后会打入最终项目，浏览器运行需要
+  "dependencies": {
+    // axios http请求库，向后端发接口
+    "axios": "^1.18.1",
+    // pinia vue3全局状态管理仓库，跨组件共享数据
+    "pinia": "^4.0.2",
+    // vue核心库
+    "vue": "^3.5.39",
+    // vue‑router vue路由，页面跳转管理
+    "vue-router": "^5.2.0"
+  },
+
+  // devDependencies：仅开发阶段需要，打包上线不会被包含到dist
+  "devDependencies": {
+    // playwright E2E端到端自动化测试
+    "@playwright/test": "^1.62.0",
+    // node环境ts类型声明，ts识别node内置API(__dirname等)
+    "@types/node": "^26.1.2",
+    // ts‑eslint插件：让eslint能够校验ts语法
+    "@typescript-eslint/eslint-plugin": "^8.65.0",
+    "@typescript-eslint/parser": "^8.65.0",
+    // vite处理vue单文件组件插件
+    "@vitejs/plugin-vue": "^6.0.7",
+    // vitest覆盖率报告工具
+    "@vitest/coverage-v8": "^4.1.10",
+    // vue单文件编译工具
+    "@vue/compiler-sfc": "^3.5.40",
+    // vue ts的eslint配置预设
+    "@vue/eslint-config-typescript": "^14.9.0",
+    // vue组件单元测试工具
+    "@vue/test-utils": "^2.4.11",
+
+    // eslint js/ts/vue代码检查工具
+    "eslint": "^8.57.0",
+    // 关闭eslint和prettier冲突的规则
+    "eslint-config-prettier": "^10.1.8",
+    // eslint调用prettier做格式校验
+    "eslint-plugin-prettier": "^5.5.6",
+    // vue语法eslint校验插件
+    "eslint-plugin-vue": "^9.0.0",
+
+    // 文件遍历工具
+    "fast-glob": "^3.3.3",
+    // glob文件匹配库
+    "glob": "^13.0.6",
+    // http‑server静态文件服务器，本地预览dist
+    "http-server": "^14.1.1",
+    // husky git钩子工具，拦截git commit提交
+    "husky": "^9.1.7",
+    // inquirer 终端交互式选择库（你的rollback回滚脚本用到）
+    "inquirer": "8.2.6",
+    // jsdom 模拟浏览器DOM环境，vitest单元测试用
+    "jsdom": "^30.0.0",
+    // lint‑staged git暂存文件执行校验
+    "lint-staged": "^17.2.0",
+    // prettier代码格式化工具
+    "prettier": "^3.9.6",
+    // ts‑node：直接运行ts脚本，不用手动编译成js
+    "ts-node": "^10.9.2",
+    // ts‑morph ts代码AST操作库，生成知识图谱/解析代码用
+    "ts-morph": "^28.0.0",
+    // typescript类型系统
+    "typescript": "^5.5.3",
+    // vconsole移动端调试面板
+    "vconsole": "^3.15.1",
+    // vite构建工具
+    "vite": "^8.1.1",
+    // vitest单元测试框架
+    "vitest": "^4.1.10",
+    // vue文件eslint解析器
+    "vue-eslint-parser": "^9.4.3"
+  }
+}
+```
+
+```
+
+```
