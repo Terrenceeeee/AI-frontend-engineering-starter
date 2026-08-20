@@ -1750,6 +1750,8 @@ pnpm rollback
 
 # Demo 11：CDN 加速模拟
 
+## CDN（内容分发网络 Content Delivery Network） 把静态资源（图片、字体、js、css、视频、静态 html），缓存部署到全国各地很多节点服务器，用户访问的时候，不去遥远的源站服务器，访问离自己最近的节点。
+
 配置 Vite 的 base 选项，让构建产物的所有资源路径指向 CDN 地址，而不是相对路径。然后用 http-server 模拟 CDN 服务器，观察资源加载变化
 
 ## 第一步：修改 vite.config.ts 配置 CDN 地址
@@ -1782,6 +1784,41 @@ pnpm build
 那怎么验证 CDN 生效了？ 将 vite.config.ts 中的 base 改为 http://localhost:8080/（指向本地 CDN 模拟服务器），重新构建，再预览，此时资源就能正常加载了：
 更进一步： 如果你有一个真实的 CDN 域名（比如阿里云 OSS、腾讯云 COS），可以把构建产物上传上去，然后把 base 改成真实的 CDN 域名，就完成了生产环境的 CDN 部署。
 
+## CDN 有什么用
+
+### 1. 🚀访问速度变快（最核心）
+
+没有 CDN：重庆用户访问部署在北京的源站服务器，数据包要跨大半个中国，延迟高、加载慢。
+有 CDN：重庆用户直接读取**重庆本地 CDN 节点**上缓存好的图片 /js/css。
+
+- 图片、JS、CSS、视频、静态页面这类**静态资源**会被缓存。
+- 延迟大幅降低，网页打开更快，LCP 性能指标变好（Lighthouse 测的那个指标）。
+
+### 2. 🛡️扛大流量，保护源站
+
+活动大促、热搜，瞬间几万几十万用户同时访问。
+大量请求打到 CDN 节点，**不会全部打到你的源服务器**。
+源站压力被卸掉，不容易被打垮、不会 502 崩溃。
+
+### 3. 📍跨地域访问改善
+
+比如源服务器部署在上海，新疆、哈尔滨用户访问，延迟会很高；CDN 在新疆有节点，就近返回资源。
+
+### 4. 🛡️一定程度抗 DDoS 攻击
+
+攻击流量会打到遍布全国的 CDN 节点，不会直接打在你的源站，起到防护效果。
+
+### 5. 节省源站带宽成本
+
+#### 大量用户下载图片视频消耗带宽，由 CDN 服务商承担流量，减少源服务器带宽开销。
+
+### 两个名词
+
+```
+1. 回源：CDN 节点没有这个资源，就去原始源服务器拉取资源，拿到之后缓存到本地节点，再返回给用户。
+2. 缓存命中：CDN 本地已经有资源，直接返回用户，不用回源，速度最快。
+```
+
 ---
 
 # Demo12:请求池与并发控制
@@ -1796,12 +1833,11 @@ pnpm build
 
 // src/utils/requestPool.ts
 
-/\*\*
-
-- 请求池：控制并发请求数量，防止浏览器因并发过多崩溃
-- 浏览器对同一域名的并发连接数有限制（HTTP/1.1 约 6 个）
-  \*/
-  export class RequestPool {
+/**
+ * 请求池：控制并发请求数量，防止浏览器因并发过多崩溃
+ * 浏览器对同一域名的并发连接数有限制（HTTP/1.1 约 6 个）
+ */
+export class RequestPool {
   // 最大允许并发请求数量
   private limit: number;
   // 当前正在执行中的请求数量
@@ -1809,45 +1845,43 @@ pnpm build
   // 请求等待队列：存放等待被唤醒的resolve函数
   private queue: Array<() => void>;
 
-/\*\*
-
-- 构造函数，初始化请求池
-- @param limit 最大并发上限，默认6，匹配浏览器HTTP1.1域名并发限制
-  \*/
+  /**
+   * 构造函数，初始化请求池
+   * @param limit 最大并发上限，默认6，匹配浏览器HTTP1.1域名并发限制
+   */
   constructor(limit = 6) {
-  this.limit = limit; // 最大并发数
-  this.running = 0; // 当前正在运行的请求数，初始0
-  this.queue = []; // 等待队列，存放等待执行的任务放行函数
+    this.limit = limit;      // 最大并发数
+    this.running = 0;        // 当前正在运行的请求数，初始0
+    this.queue = [];         // 等待队列，存放等待执行的任务放行函数
   }
 
-/\*\*
-
-- 执行请求
-- @param fn 返回 Promise 的请求函数（如 () => axios.get('/api')）
-- @returns 请求结果
-  \*/
+  /**
+   * 执行请求
+   * @param fn 返回 Promise 的请求函数（如 () => axios.get('/api')）
+   * @returns 请求结果
+   */
   async request<T>(fn: () => Promise<T>): Promise<T> {
-  // 1. 判断：当前运行请求 ≥ 最大并发上限，需要排队
-  if (this.running >= this.limit) {
-  // 创建Promise，把resolve函数存入队列，暂停当前请求，等待唤醒
-  await new Promise<void>((resolve) => {
-  this.queue.push(resolve);
-  });
-  // 代码阻塞在这里，直到队列前面某个任务执行完成调用resolve()
-  }
+    // 1. 判断：当前运行请求 ≥ 最大并发上限，需要排队
+    if (this.running >= this.limit) {
+      // 创建Promise，把resolve函数存入队列，暂停当前请求，等待唤醒
+      await new Promise<void>((resolve) => {
+        this.queue.push(resolve);
+      });
+      // 代码阻塞在这里，直到队列前面某个任务执行完成调用resolve()
+    }
 
-  // 2. 获取到并发名额，运行计数+1
-  this.running++;
-  console.log(`[请求池] 当前并发数: ${this.running}/${this.limit}`);
+    // 2. 获取到并发名额，运行计数+1
+    this.running++;
+    console.log(`[请求池] 当前并发数: ${this.running}/${this.limit}`);
 
-  try {
-  // 3. 真正发起网络请求，等待接口返回
-  const result = await fn();
-  return result;
-  } finally {
-  // 4. 无论请求成功、报错，都会进入finally，释放并发名额
-  this.running--;
-  console.log(`[请求池] 释放并发，剩余: ${this.running}/${this.limit}`);
+    try {
+      // 3. 真正发起网络请求，等待接口返回
+      const result = await fn();
+      return result;
+    } finally {
+      // 4. 无论请求成功、报错，都会进入finally，释放并发名额
+      this.running--;
+      console.log(`[请求池] 释放并发，剩余: ${this.running}/${this.limit}`);
 
       // 5. 如果队列还有排队任务，取出队首任务，唤醒它执行
       if (this.queue.length > 0) {
@@ -1857,10 +1891,8 @@ pnpm build
           next(); // 调用resolve，上面await的Promise完成，继续执行下一个请求
         }
       }
-
+    }
   }
-
-}
 }
 
 // 导出全局单例：整个项目共用同一个请求池，统一管控全局接口并发
@@ -2000,51 +2032,36 @@ const clearLogs = () => {
 
 // 1. 定义一个类型守卫，检查错误是否具有类似 Axios 错误的特征
 function isAxiosError(error: unknown): error is {
-response?: { status: number };
-code?: string;
-message?: string;
+  response?: { status: number };
+  code?: string;
+  message?: string;
 } {
-return typeof error === 'object' && error !== null;
+  return typeof error === 'object' && error !== null;
 }
 
 export interface RetryOptions {
-maxRetries?: number; // 最大重试次数，默认 3
-baseDelay?: number; // 基础延迟（毫秒），默认 500
-maxDelay?: number; // 最大延迟上限（毫秒），默认 10000
-// ⭐ 这里把 any 改成了 unknown
-shouldRetry?: (error: unknown) => boolean;
+  maxRetries?: number;      // 最大重试次数，默认 3
+  baseDelay?: number;       // 基础延迟（毫秒），默认 500
+  maxDelay?: number;        // 最大延迟上限（毫秒），默认 10000
+  // ⭐ 这里把 any 改成了 unknown
+  shouldRetry?: (error: unknown) => boolean;
 }
 
-/\*\*
-
-- 指数退避重试
-  \*/
-
-* 指数退避重试
-  \*/
-  // fn: () => Promise<T>：参数1，传入一个无参函数，执行后返回Promise<T>
-  // options: RetryOptions = {}：参数2，配置对象，不传则默认是空对象{}
-  // ): Promise<T>：整个函数最终返回Promise，内部解析值类型为T
-  export async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {} //这是函数两个形参 把请求逻辑 “包成一个函数” 交给重试函数，让重试代码内部可以反复执行它。
-  ❗如果不包函数，直接传 Promise<T>（错误思路） 一开始promise就执行了 后面没法重新跑 这两段代码是和后端交互用的形参
-  ): Promise<T> { //options：参数名
-  RetryOptions：TS 接口，约束配置对象的结构（maxRetries /baseDelay/maxDelay /shouldRetry）
-  = {}：默认值，代表调用时不传第二个参数，options默认等于空对象{}
-
+/**
+ * 指数退避重试
+ */
 export async function retryWithBackoff<T>(
-fn: () => Promise<T>,
-options: RetryOptions = {}
+  fn: () => Promise<T>,
+  options: RetryOptions = {}
 ): Promise<T> {
-const {
-maxRetries = 3,
-baseDelay = 500,
-maxDelay = 10000,
-// 默认的重试判断逻辑
-shouldRetry = (error: unknown) => {
-// 如果不是对象类型，直接不重试
-if (!isAxiosError(error)) return false;
+  const {
+    maxRetries = 3,
+    baseDelay = 500,
+    maxDelay = 10000,
+    // 默认的重试判断逻辑
+    shouldRetry = (error: unknown) => {
+      // 如果不是对象类型，直接不重试
+      if (!isAxiosError(error)) return false;
 
       // 只有 5xx 错误才重试（服务端错误）
       if (error.response?.status && error.response.status >= 500) return true;
@@ -2055,20 +2072,19 @@ if (!isAxiosError(error)) return false;
 
       return false;
     },
+  } = options;
 
-} = options;
+  // ⭐ lastError 也改为 unknown
+  let lastError: unknown = null;
 
-// ⭐ lastError 也改为 unknown
-let lastError: unknown = null;
-
-for (let attempt = 1; attempt <= maxRetries; attempt++) {
-try {
-if (attempt > 1) {
-console.log(`[重试] 第 ${attempt - 1} 次重试...`);
-}
-return await fn();
-} catch (error) {
-lastError = error;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      if (attempt > 1) {
+        console.log(`[重试] 第 ${attempt - 1} 次重试...`);
+      }
+      return await fn();
+    } catch (error) {
+      lastError = error;
 
       // 判断是否需要重试
       if (!shouldRetry(error)) {
@@ -2087,10 +2103,9 @@ lastError = error;
 
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
+  }
 
-}
-
-throw lastError;
+  throw lastError;
 }
 
 ```
