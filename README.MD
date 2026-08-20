@@ -171,3 +171,9 @@ GitHub Pages 地址：https://terrenceeeee.github.io/Front-end-engineering/
 - GitHub: https://github.com/terrenceeeee
 - 完成时间：2026 年 9 月
 - 学习路径：从零搭建 23 个工程化 Demo + AI Code Review 项目
+
+---
+
+## License
+
+MIT © 2026 Terrenceeeee
