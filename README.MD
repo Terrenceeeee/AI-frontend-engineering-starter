@@ -157,12 +157,22 @@ GitHub Pages 地址：https://terrenceeeee.github.io/Front-end-engineering/
 工具函数	utils/retry.ts	                  直接复制到新项目
 工具函数	utils/logger.ts	                  直接复制到新项目
 工具函数	composables/useVConsole.ts	      直接复制到新项目
-配置文件	.eslintrc.cjs	                 复制 + 微调（改规则集）
-配置文件	.github/workflows/ci.yml	    复制 + 微调（改 Node 版本）
-配置文件	.github/workflows/deploy.yml	复制 + 微调（改部署路径）
-  脚本	  scripts/generate.ts	             改模板内容后复用
-  脚本	  scripts/deploy.ts	               改部署目标后复用
-  脚本	  scripts/rollback.ts	             改备份路径后复用
+工具函数	src/utils/performanceReporter.ts	      直接复制到新项目
+工具函数	src/components/LogoDebugTrigger.vue	      直接复制到新项目
+工具函数	src/components/WebSocketDemo.vue	      直接复制到新项目
+配置文件	.eslintrc.cjs	                    复制 + 微调（改规则集）
+配置文件	.prettierrc.cjs	                  复制 + 微调（改规则集）
+配置文件	.husky/pre-commit                 复制 + 微调（改规则集）
+配置文件	vite.config.ts 的 build.rollupOptions                复制 + 微调（改规则集）
+配置文件	.github/workflows/deploy.yml         复制 + 微调（改规则集）
+配置文件	playwright.config.js                 复制 + 微调（改规则集）
+配置文件	vite.config.ts 的 resolve.alias      复制 + 微调（改规则集）
+配置文件	vite.config.ts 的 test 配置          复制 + 微调（改规则集）
+配置文件	.github/workflows/ci.yml	           复制 + 微调（改 Node 版本）
+配置文件	.github/workflows/deploy.yml	       复制 + 微调（改部署路径）
+  脚本	     scripts/generate.ts	             改模板内容后复用
+  脚本	     scripts/deploy.ts	               改部署目标后复用
+  脚本	     scripts/rollback.ts	             改备份路径后复用
 ```
 
 ## 八、关于作者
