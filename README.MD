@@ -12,7 +12,142 @@
 
 ---
 
-## 二、技术栈与工具链
+## 二、项目结构
+
+```
+文件夹名字开头带点 `.`，代表这是隐藏文件夹
+```
+
+```text
+demo/
+├── .github/
+│ └── workflows/
+│ ├── ci.yml # CI 流水线
+│ └── deploy.yml # CD 流水线
+├── .vscode/
+│ └── setting.json # vscode 配置 此处是live server的端口配置
+├── Demo1 pnpm 硬链接与符号链接机制验证/
+│ ├── npm/ # npm 验证区
+│ └── pnpm/ # pnpm 验证区
+|── Demo2/
+| └── demo2-env/
+|    ├── package.json
+|    ├── pnpm-lock.yaml
+|    ├── index.html
+|    ├── visualize.html
+|    ├── knowledge-graph.json
+|    ├── tsconfig.json
+|    ├── vite.config.js
+|    ├── playwright.config.js
+|    │
+|    ├── public/
+|    │   ├── favicon.svg
+|    │   ├── icons.svg
+|    │   └── sw.js
+|    │
+|    ├── deploy/                         # 当前构建部署产物
+|    │   ├── index.html
+|    │   ├── favicon.svg
+|    │   ├── icons.svg
+|    │   └── assets/
+|    │       ├── index-yMkJyNDY.js
+|    │       ├── index-yMkJyNDY.js.map
+|    │       ├── vue-vendor-Ys7FJ5fz.js
+|    │       ├── vue-vendor-Ys7FJ5fz.js.map
+|    │       └── vue-vendor-DAacDxeL.css
+|    │
+|    ├── backups/                        # 历史构建备份
+|    │   ├── dist-2026-08-03T06-54-51-273Z/
+|    │   │   ├── index.html
+|    │   │   ├── favicon.svg
+|    │   │   ├── icons.svg
+|    │   │   └── assets/
+|    │   │       ├── index-yMkJyNDY.js
+|    │   │       ├── index-yMkJyNDY.js.map
+|    │   │       ├── vue-vendor-Ys7FJ5fz.js
+|    │   │       ├── vue-vendor-Ys7FJ5fz.js.map
+|    │   │       └── vue-vendor-DAacDxeL.css
+|    │   │
+|    │   └── dist-2026-08-03T08-04-27-411Z/
+|    │       ├── index.html
+|    │       ├── favicon.svg
+|    │       ├── icons.svg
+|    │       └── assets/
+|    │           ├── index-yMkJyNDY.js
+|    │           ├── index-yMkJyNDY.js.map
+|    │           ├── vue-vendor-Ys7FJ5fz.js
+|    │           ├── vue-vendor-Ys7FJ5fz.js.map
+|    │           └── vue-vendor-DAacDxeL.css
+|    │
+|    ├── router/
+|    │   └── index.ts
+|    │
+|    ├── scripts/
+|    │   ├── build-graph.ts
+|    │   ├── deploy.ts
+|    │   ├── generate.ts
+|    │   └── rollback.ts
+|    │
+|    ├── e2e/
+|    │   └── homepage.spec.ts
+|    │
+|    └── src/
+|        ├── App.vue
+|        ├── main.js
+|        ├── style.css
+|        │
+|        ├── assets/                      # 源码静态资源
+|        │   ├── hero.png
+|        │   ├── vite.svg
+|        │   └── vue.svg
+|        │
+|        ├── api/
+|        │   ├── product.ts
+|        │   └── testApi.ts
+|        │
+|        ├── components/
+|        │   ├── HelloWorld.vue
+|        │   ├── LogoDebugTrigger.vue
+|        │   └── WebSocketDemo.vue
+|        │
+|        ├── composables/
+|        │   └── useVConsole.ts
+|        │
+|        ├── stores/
+|        │   └── modules/
+|        │       └── product.ts
+|        │
+|        ├── types/
+|        │   ├── global.d.ts
+|        │   ├── logger.d.ts
+|        │   └── vconsole.d.ts
+|        │
+|        ├── utils/
+|        │   ├── logger.ts
+|        │   ├── performanceReporter.ts
+|        │   ├── request.ts
+|        │   ├── requestPool.ts
+|        │   ├── retry.ts
+|        │   └── _tests_/
+|        │       └── math.test.ts
+|        │
+|        └── views/
+|            ├── Admin.vue
+|            ├── Home.vue
+|            ├── User.vue
+|            └── product/
+|                └── index.vue
+├── screenshots/
+├── 全流程操作过程.MD
+├── LICENSE
+└── README.md
+省略:
+.git/
+node_modules/
+构建产物、Source Map 和部分静态资源细节
+```
+
+## 三、技术栈与工具链
 
 ```
 - | 框架 | Vue3+Typescript |
@@ -37,7 +172,7 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 
 ---
 
-## 三、核心能力矩阵
+## 四、核心能力矩阵
 
 ### 1.开发环境与环境
 
@@ -96,7 +231,7 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 
 ---
 
-## 四、快速启动
+## 五、快速启动
 
 ```bash
 # 1.安装依赖
@@ -125,7 +260,7 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 - pnpm ai-review # AI辅助审查 生成 AI Code Review
 ```
 
-## 五、项目亮点
+## 六、项目亮点
 
 ```
 ✅ 所有工程化能力均可复用：6 个工具函数即插即用（requestPool、retry、logger、useVConsole 等）
@@ -139,7 +274,7 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 
 ```
 
-## 六、在线演示
+## 七、在线演示
 
 ```
 GitHub Pages 地址：https://terrenceeeee.github.io/Front-end-engineering/
@@ -149,7 +284,7 @@ GitHub Pages 地址：https://terrenceeeee.github.io/Front-end-engineering/
 
 ---
 
-## 七、可复用资产清单
+## 八、可复用资产清单
 
 ```
   类型	         文件	                          复用方式
@@ -174,7 +309,7 @@ GitHub Pages 地址：https://terrenceeeee.github.io/Front-end-engineering/
   脚本	     scripts/rollback.ts	             改备份路径后复用
 ```
 
-## 八、关于作者
+## 九、关于作者
 
 - 作者：ChamLerrence
 - GitHub: https://github.com/terrenceeeee
