@@ -33,7 +33,7 @@ export function reportWebVitals() {
     for (const entry of list.getEntries() as Array<PerformanceEntry & { hadRecentInput?: boolean; value?: number }>) {
       // 只统计用户无操作时的偏移（有操作的不算）
       if (!entry.hadRecentInput) {
-        clsValue += entry.value;
+        clsValue += entry.value ?? 0;
       }
     }
     report.cls = clsValue;

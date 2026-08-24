@@ -12,6 +12,19 @@ dist
 dist-ssr
 *.local
 
+# Test and build artifacts
+coverage
+test-results
+playwright-report
+
+# Local deployment artifacts
+backups
+deploy
+
+# Environment files with local secrets
+.env.local
+.env.*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -18,6 +18,16 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
+  ignorePatterns: [
+    'dist/',
+    'dist-ssr/',
+    'coverage/',
+    'test-results/',
+    'playwright-report/',
+    'backups/',
+    'deploy/',
+    'node_modules/',
+  ],
   rules: {
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
