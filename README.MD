@@ -287,26 +287,26 @@ GitHub Pages 地址：https://terrenceeeee.github.io/Front-end-engineering/
 ## 八、可复用资产清单
 
 ```
-  类型	         文件	                          复用方式
-工具函数	utils/requestPool.ts	            直接复制到新项目
-工具函数	utils/retry.ts	                  直接复制到新项目
-工具函数	utils/logger.ts	                  直接复制到新项目
-工具函数	composables/useVConsole.ts	      直接复制到新项目
-工具函数	src/utils/performanceReporter.ts	      直接复制到新项目
-工具函数	src/components/LogoDebugTrigger.vue	      直接复制到新项目
-工具函数	src/components/WebSocketDemo.vue	      直接复制到新项目
-配置文件	.eslintrc.cjs	                    复制 + 微调（是 React 项目，去掉 plugin:vue，换成 React 规则集）
-配置文件	.prettierrc.cjs	                  复制 + 微调（改改 printWidth（行宽）、singleQuote（单引号）偏好）
-配置文件	.husky/pre-commit                 复制 + 微调（改规则集）
+  类型	         文件	                                          复用方式
+工具函数	utils/requestPool.ts	                            直接复制到新项目
+工具函数	utils/retry.ts	                                  直接复制到新项目
+工具函数	utils/logger.ts	                                  直接复制到新项目
+工具函数	composables/useVConsole.ts	                      直接复制到新项目
+工具函数	src/utils/performanceReporter.ts	                直接复制到新项目
+工具函数	src/components/LogoDebugTrigger.vue	              直接复制到新项目
+工具函数	src/components/WebSocketDemo.vue	                直接复制到新项目
+配置文件	.eslintrc.cjs	                            复制 + 微调（是 React 项目，去掉 plugin:vue，换成 React 规则集）
+配置文件	.prettierrc.cjs	                          复制 + 微调（改改 printWidth（行宽）、singleQuote（单引号）偏好）
+配置文件	.husky/pre-commit                                 复制 + 微调（改规则集）
 配置文件	vite.config.ts 的 build.rollupOptions                复制 + 微调（改规则集）
-配置文件	.github/workflows/deploy.yml         复制 + 微调（改VITE_BASE_PATH（部署子路径）、Node 版本）
-配置文件	playwright.config.js                 复制 + 微调（改baseURL（http://127.0.0.1:5173→新项目端口）、testDir（./e2e））
-配置文件	vite.config.ts 的 resolve.alias      复制 + 微调（改'@': path.resolve(__dirname, 'src') 路径）
-配置文件	vite.config.ts 的 test 配置          复制 + 微调（改规则集）
-配置文件	.github/workflows/ci.yml	           复制 + 微调（改 Node 版本）
-  脚本	     scripts/generate.ts	             改模板内容后复用
-  脚本	     scripts/deploy.ts	               改部署目标后复用
-  脚本	     scripts/rollback.ts	             改备份路径后复用
+配置文件	.github/workflows/deploy.yml                复制 + 微调（改VITE_BASE_PATH（部署子路径）、Node 版本）
+配置文件	playwright.config.js                        复制 + 微调（改baseURL（http://127.0.0.1:5173→新项目端口）、testDir（./e2e））
+配置文件	vite.config.ts 的 resolve.alias             复制 + 微调（改'@': path.resolve(__dirname, 'src') 路径）
+配置文件	vite.config.ts 的 test 配置                       复制 + 微调（改规则集）
+配置文件	.github/workflows/ci.yml	                         复制 + 微调（改 Node 版本）
+  脚本	     scripts/generate.ts	                          改模板内容后复用
+  脚本	     scripts/deploy.ts	                            改部署目标后复用
+  脚本	     scripts/rollback.ts	                          改备份路径后复用
 ```
 
 ## 九、关于作者
