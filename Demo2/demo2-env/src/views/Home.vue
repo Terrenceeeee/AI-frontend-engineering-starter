@@ -107,7 +107,7 @@ import { fetchWithRetry, resetAttemptCount } from '@/api/testApi';
 import WebSocketDemo from '@/components/WebSocketDemo.vue';
 import LogoDebugTrigger from '@/components/LogoDebugTrigger.vue';
 import { logError, exportLogs, getLogCount, clearLogs, isPaymentError } from '@/utils/logger';
-import type { PaymentError } from '@/types/logger.d';
+import type { PaymentError } from '@/types/logger';
 
 const mode = import.meta.env.MODE;
 const logs = ref<string[]>([]);

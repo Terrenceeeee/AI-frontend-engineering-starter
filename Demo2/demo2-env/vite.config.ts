@@ -2,28 +2,28 @@ import { resolve } from 'node:path';
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 // 增加强制的严格隔离模式 后该大段全部注释掉 否则报错
-// import fs = require('fs');
-// import path = require('path');
-// // ============================================================
-// // 这部分 console.log 全部保留，不动
-// // ============================================================
-// console.log('\n========== Vite 配置文件加载（pnpm 环境）==========');
-// console.log('当前命令:', process.argv[2]);
-// console.log('当前工作目录:', process.cwd());
+import fs = require('fs');
+import path = require('path');
+// ============================================================
+// 这部分 console.log 全部保留，不动
+// ============================================================
+console.log('\n========== Vite 配置文件加载（pnpm 环境）==========');
+console.log('当前命令:', process.argv[2]);
+console.log('当前工作目录:', process.cwd());
 
-// const pnpmDir = path.join(process.cwd(), 'node_modules', '.pnpm');
-// if (fs.existsSync(pnpmDir)) {
-//   console.log('✅ 检测到 pnpm 的 .pnpm 目录（严格隔离模式）');
-//   const items = fs.readdirSync(pnpmDir).slice(0, 6);
-//   console.log('   .pnpm 目录内容（前6个）:', items.join(', '));
-// } else {
-//   console.log('❌ 未检测到 .pnpm 目录，当前可能不是 pnpm 项目');
-// }
-// // 验证 node_modules 顶层只有声明过的依赖
-// const nodeModulesDir = path.join(process.cwd(), 'node_modules');
-// const topLevelDeps = fs.readdirSync(nodeModulesDir).filter(name => !name.startsWith('.'));
-// console.log('   node_modules 顶层依赖:', topLevelDeps.join(', '));
-// console.log('==================================================\n');
+const pnpmDir = path.join(process.cwd(), 'node_modules', '.pnpm');
+if (fs.existsSync(pnpmDir)) {
+  console.log('✅ 检测到 pnpm 的 .pnpm 目录（严格隔离模式）');
+  const items = fs.readdirSync(pnpmDir).slice(0, 6);
+  console.log('   .pnpm 目录内容（前6个）:', items.join(', '));
+} else {
+  console.log('❌ 未检测到 .pnpm 目录，当前可能不是 pnpm 项目');
+}
+// 验证 node_modules 顶层只有声明过的依赖
+const nodeModulesDir = path.join(process.cwd(), 'node_modules');
+const topLevelDeps = fs.readdirSync(nodeModulesDir).filter(name => !name.startsWith('.'));
+console.log('   node_modules 顶层依赖:', topLevelDeps.join(', '));
+console.log('==================================================\n');
 
 // ============================================================
 // 核心配置：保留所有原有配置，只新增 resolve 和 build.rollupOptions
@@ -36,12 +36,12 @@ export default defineConfig(({ command, mode }) => {
   return {
     plugins: [vue()],
     
-    // ✅ 新增：路径别名（让 @ 指向 src/）
-    // resolve: {
-    //   alias: {
-    //     '@': path.resolve(__dirname, 'src'),
-    //   },
-    // },   Vite2旧写法
+    //✅ 新增：路径别名（让 @ 指向 src/）
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, 'src'),
+      },
+    },   //Vite2旧写法  但是必须保留 防止报错无法运行
 
     server: {
       host: '127.0.0.1',

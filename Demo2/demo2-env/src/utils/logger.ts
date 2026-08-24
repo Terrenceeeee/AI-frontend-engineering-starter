@@ -1,6 +1,6 @@
 // src/utils/logger.ts
 
-import type { LogEntry, LoggerOptions, PaymentError } from '@/types/logger.d';
+import type { LogEntry, LoggerOptions, PaymentError } from '@/types/logger';
 
 // ==================== 配置 ====================
 
