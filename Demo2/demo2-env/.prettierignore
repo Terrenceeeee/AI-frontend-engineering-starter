@@ -7,4 +7,5 @@ test-results/
 playwright-report/
 backups/
 deploy/
-visualize.html
+# .prettierignore末尾追加
+knowledge-graph.json
