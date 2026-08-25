@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 // 增加强制的严格隔离模式 后该大段全部注释掉 否则报错
-import fs = require('fs'); 
+import fs = require('fs');
 import path = require('path');
 // ============================================================
 // 这部分 console.log 全部保留，不动
@@ -21,7 +21,7 @@ if (fs.existsSync(pnpmDir)) {
 }
 // 验证 node_modules 顶层只有声明过的依赖
 const nodeModulesDir = path.join(process.cwd(), 'node_modules');
-const topLevelDeps = fs.readdirSync(nodeModulesDir).filter(name => !name.startsWith('.'));
+const topLevelDeps = fs.readdirSync(nodeModulesDir).filter((name) => !name.startsWith('.'));
 console.log('   node_modules 顶层依赖:', topLevelDeps.join(', '));
 console.log('==================================================\n');
 
@@ -35,13 +35,13 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     plugins: [vue()],
-    
+
     //✅ 新增：路径别名（让 @ 指向 src/）
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
       },
-    },   //Vite2旧写法  但是必须保留 防止报错无法运行
+    }, //Vite2旧写法  但是必须保留 防止报错无法运行
 
     server: {
       host: '127.0.0.1',
@@ -50,11 +50,11 @@ export default defineConfig(({ command, mode }) => {
       open: false,
     },
     base: process.env.VITE_BASE_PATH || '/',
-    // base: mode === 'production' 
+    // base: mode === 'production'
     //   ? 'https://cdn.example.com/demo2-env/'  // 生产环境走 CDN
     //   : '/',                                   // 开发环境走相对路径    需要cdn的时候把它打开 不用的话就用相对路径 '/'
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': resolve(__dirname, 'src'),
     }, //Vite3 新写法
     build: {
       // ✅ 保留原有的 sourcemap
@@ -70,6 +70,10 @@ export default defineConfig(({ command, mode }) => {
           chunkFileNames: 'assets/[name]-[hash].js',
         },
       },
+    },
+    test: {
+      include: ['src/**/*.test.{ts,js}', 'src/**/*.spec.{ts,js}'],
+      exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
     },
   };
 });

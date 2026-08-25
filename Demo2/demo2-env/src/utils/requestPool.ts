@@ -17,9 +17,9 @@ export class RequestPool {
    * @param limit 最大并发上限，默认6，匹配浏览器HTTP1.1域名并发限制
    */
   constructor(limit = 6) {
-    this.limit = limit;      // 最大并发数
-    this.running = 0;        // 当前正在运行的请求数，初始0
-    this.queue = [];         // 等待队列，存放等待执行的任务放行函数
+    this.limit = limit; // 最大并发数
+    this.running = 0; // 当前正在运行的请求数，初始0
+    this.queue = []; // 等待队列，存放等待执行的任务放行函数
   }
 
   /**

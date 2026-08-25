@@ -167,7 +167,7 @@ async function main() {
   const force = cliArgs.includes('--force');
 
   // 交互式问答
-  const answers = await inquirer.prompt([
+  const answers = (await inquirer.prompt([
     {
       type: 'input',
       name: 'name',
@@ -188,8 +188,8 @@ async function main() {
         `即将生成 ${ans.name} 模块的 view + api + store，确认继续？`,
       default: true,
     },
-  ]) as PromptAnswers;
- 
+  ])) as PromptAnswers;
+
   if (!answers.confirm) {
     console.log('👋 已取消生成');
     return;

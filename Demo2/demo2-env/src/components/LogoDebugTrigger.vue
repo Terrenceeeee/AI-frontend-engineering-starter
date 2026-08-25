@@ -1,8 +1,14 @@
 <template>
-  <div class="logo-debug-trigger" @click="handleClick" @keydown.enter="handleClick" role="button" tabindex="0">
+  <div
+    class="logo-debug-trigger"
+    @click="handleClick"
+    @keydown.enter="handleClick"
+    role="button"
+    tabindex="0"
+  >
     <slot>
-      <span style="font-size: 24px;">🚀</span>
-      <span style="font-size: 14px; color: #888;">
+      <span style="font-size: 24px">🚀</span>
+      <span style="font-size: 14px; color: #888">
         {{ remainingClicks > 0 ? `点击 ${remainingClicks} 次` : '✨ 已触发' }}
       </span>
     </slot>

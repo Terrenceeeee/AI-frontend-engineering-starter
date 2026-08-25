@@ -30,7 +30,9 @@ export function reportWebVitals() {
   // 2. 监听 CLS（累积布局偏移）
   let clsValue = 0;
   new PerformanceObserver((list) => {
-    for (const entry of list.getEntries() as Array<PerformanceEntry & { hadRecentInput?: boolean; value?: number }>) {
+    for (const entry of list.getEntries() as Array<
+      PerformanceEntry & { hadRecentInput?: boolean; value?: number }
+    >) {
       // 只统计用户无操作时的偏移（有操作的不算）
       if (!entry.hadRecentInput) {
         clsValue += entry.value ?? 0;

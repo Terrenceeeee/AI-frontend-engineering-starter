@@ -19,8 +19,9 @@ if (!fs.existsSync(BACKUP_DIR)) {
 }
 
 // 2. 列出所有备份版本
-const backups = fs.readdirSync(BACKUP_DIR)
-  .filter(name => name.startsWith('dist-'))
+const backups = fs
+  .readdirSync(BACKUP_DIR)
+  .filter((name) => name.startsWith('dist-'))
   .sort()
   .reverse();
 

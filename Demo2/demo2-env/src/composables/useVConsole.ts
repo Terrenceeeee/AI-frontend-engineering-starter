@@ -62,8 +62,8 @@ export function useVConsole() {
       const module = await import('vconsole');
       // 实例化 vConsole，传入初始化配置
       const instance = new module.default({
-        theme: 'light',        // 浅色主题
-        maxLogNumber: 1000,    // 面板最大日志缓存数量
+        theme: 'light', // 浅色主题
+        maxLogNumber: 1000, // 面板最大日志缓存数量
       });
       // 挂载到全局window，方便项目任意位置访问
       window.vConsole = instance;

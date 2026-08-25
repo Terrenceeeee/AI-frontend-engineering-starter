@@ -30,7 +30,8 @@ if (import.meta.env.PROD) {
 }
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker
+      .register('/sw.js')
       .then((registration) => {
         console.log('[SW] 注册成功:', registration);
       })
@@ -39,4 +40,3 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
       });
   });
 }
-

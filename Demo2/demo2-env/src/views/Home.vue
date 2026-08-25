@@ -1,10 +1,22 @@
 <template>
-  <div style="padding: 40px; font-family: 'Courier New', monospace;">
-    <h1 style="color: #42b883;">🌍 Vite 分包验证 Demo</h1>
-    <p>当前环境：<strong>{{ mode }}</strong></p>
+  <div style="padding: 40px; font-family: 'Courier New', monospace">
+    <h1 style="color: #42b883">🌍 Vite 分包验证 Demo</h1>
+    <p>
+      当前环境：<strong>{{ mode }}</strong>
+    </p>
 
     <nav
-      style="margin: 20px 0; padding: 12px; background: #f5f5f5; border-radius: 6px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+      style="
+        margin: 20px 0;
+        padding: 12px;
+        background: #f5f5f5;
+        border-radius: 6px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        flex-wrap: wrap;
+      "
+    >
       <router-link to="/">🏠 首页</router-link>
       <router-link to="/user">👤 用户中心</router-link>
       <router-link to="/admin">🔐 管理后台</router-link>
@@ -14,87 +26,200 @@
     <hr />
 
     <section
-      style="margin-top: 20px; padding: 16px; background: #1e1e1e; color: #d4d4d4; border-radius: 8px; max-height: 400px; overflow-y: auto; font-size: 13px;">
-      <h1 style="margin-top: 0; color: #42b883;">🌍 请求池并发控制 Demo</h1>
-      <button style="padding: 12px 24px; font-size: 16px; cursor: pointer;" @click="sendRequests">
+      style="
+        margin-top: 20px;
+        padding: 16px;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        border-radius: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+        font-size: 13px;
+      "
+    >
+      <h1 style="margin-top: 0; color: #42b883">🌍 请求池并发控制 Demo</h1>
+      <button style="padding: 12px 24px; font-size: 16px; cursor: pointer" @click="sendRequests">
         🚀 发送 20 个并发请求
       </button>
-      <button style="padding: 12px 24px; font-size: 16px; cursor: pointer; margin-left: 12px;" @click="clearLogs">
+      <button
+        style="padding: 12px 24px; font-size: 16px; cursor: pointer; margin-left: 12px"
+        @click="clearLogs"
+      >
         🗑️ 清空日志
       </button>
-      <div v-for="(log, index) in logs" :key="index"
-        style="padding: 2px 0; border-bottom: 1px solid #333; margin-top: 12px;">
+      <div
+        v-for="(log, index) in logs"
+        :key="index"
+        style="padding: 2px 0; border-bottom: 1px solid #333; margin-top: 12px"
+      >
         {{ log }}
       </div>
     </section>
 
-    <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap;">
+    <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap">
       <button
-        style="padding: 12px 24px; font-size: 16px; cursor: pointer; background: #f0ad4e; border: none; border-radius: 4px; color: white;"
-        @click="testRetry">
+        style="
+          padding: 12px 24px;
+          font-size: 16px;
+          cursor: pointer;
+          background: #f0ad4e;
+          border: none;
+          border-radius: 4px;
+          color: white;
+        "
+        @click="testRetry"
+      >
         🔄 测试重试 (前2次失败，第3次成功)
       </button>
-      <button style="padding: 12px 24px; font-size: 16px; cursor: pointer;" @click="resetTest">
+      <button style="padding: 12px 24px; font-size: 16px; cursor: pointer" @click="resetTest">
         🔄 重置状态
       </button>
     </div>
 
-    <section style="margin-top: 30px; padding: 24px; background: #f5f5f5; border-radius: 8px;">
-      <h1 style="margin-top: 0; color: #42b883;">🌍 Whistle Mock 测试 Demo</h1>
+    <section style="margin-top: 30px; padding: 24px; background: #f5f5f5; border-radius: 8px">
+      <h1 style="margin-top: 0; color: #42b883">🌍 Whistle Mock 测试 Demo</h1>
       <button
-        style="padding: 12px 24px; font-size: 16px; cursor: pointer; background: #42b883; border: none; border-radius: 4px; color: white;"
-        @click="fetchUserInfo">
+        style="
+          padding: 12px 24px;
+          font-size: 16px;
+          cursor: pointer;
+          background: #42b883;
+          border: none;
+          border-radius: 4px;
+          color: white;
+        "
+        @click="fetchUserInfo"
+      >
         📡 请求用户信息
       </button>
-      <div style="margin-top: 20px; padding: 16px; background: #1e1e1e; border-radius: 8px;">
+      <div style="margin-top: 20px; padding: 16px; background: #1e1e1e; border-radius: 8px">
         <h4>返回结果：</h4>
         <pre
-          style="color: #d4d4d4; padding: 12px; border-radius: 4px; overflow-x: auto; margin: 0;">{{ responseData }}</pre>
+          style="color: #d4d4d4; padding: 12px; border-radius: 4px; overflow-x: auto; margin: 0"
+          >{{ responseData }}</pre>
       </div>
     </section>
 
-    <section style="margin-top: 30px; padding: 24px; background: #fff; border-radius: 8px; border: 1px solid #e5e7eb;">
-      <h1 style="margin-top: 0; color: #42b883;">🌍 WebSocket 双向通信 Demo</h1>
+    <section
+      style="
+        margin-top: 30px;
+        padding: 24px;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+      "
+    >
+      <h1 style="margin-top: 0; color: #42b883">🌍 WebSocket 双向通信 Demo</h1>
       <WebSocketDemo />
     </section>
 
-    <section style="margin-top: 30px; padding: 24px; background: #fff; border-radius: 8px; border: 1px solid #e5e7eb;">
-      <h1 style="margin-top: 0; color: #42b883;">📋 Demo 18：远程日志回捞系统</h1>
-      <div style="margin: 20px 0; display: flex; gap: 12px; flex-wrap: wrap;">
-        <button @click="handleSimulatePayment"
-          style="padding: 12px 24px; background: #42b883; color: white; border: none; border-radius: 4px; cursor: pointer;">
+    <section
+      style="
+        margin-top: 30px;
+        padding: 24px;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+      "
+    >
+      <h1 style="margin-top: 0; color: #42b883">📋 Demo 18：远程日志回捞系统</h1>
+      <div style="margin: 20px 0; display: flex; gap: 12px; flex-wrap: wrap">
+        <button
+          @click="handleSimulatePayment"
+          style="
+            padding: 12px 24px;
+            background: #42b883;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+          "
+        >
           💳 模拟支付（会随机失败）
         </button>
-        <button @click="handleExportLogs"
-          style="padding: 12px 24px; background: #f0ad4e; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        <button
+          @click="handleExportLogs"
+          style="
+            padding: 12px 24px;
+            background: #f0ad4e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+          "
+        >
           📤 导出日志
         </button>
-        <button @click="handleClearLogs"
-          style="padding: 12px 24px; background: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        <button
+          @click="handleClearLogs"
+          style="
+            padding: 12px 24px;
+            background: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+          "
+        >
           🗑️ 清除日志
         </button>
       </div>
 
-      <div style="font-size: 14px; color: #666; margin-bottom: 12px;">
+      <div style="font-size: 14px; color: #666; margin-bottom: 12px">
         📌 当前日志条数：<strong>{{ logCount }}</strong>
       </div>
 
       <div
-        style="padding: 16px; background: #1e1e1e; color: #d4d4d4; border-radius: 6px; font-size: 13px; max-height: 400px; overflow-y: auto;">
-        <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">{{ displayContent }}</pre>
+        style="
+          padding: 16px;
+          background: #1e1e1e;
+          color: #d4d4d4;
+          border-radius: 6px;
+          font-size: 13px;
+          max-height: 400px;
+          overflow-y: auto;
+        "
+      >
+        <pre style="margin: 0; white-space: pre-wrap; word-break: break-all">{{
+          displayContent
+        }}</pre>
       </div>
     </section>
 
-    <section style="margin-top: 30px; padding: 24px; background: #fff; border-radius: 8px; border: 1px solid #e5e7eb;">
-      <h1 style="margin-top: 0; color: #42b883;">🌍 Demo 19：线上隐藏调试入口</h1>
-      <LogoDebugTrigger :click-count="5" :timeout="2000" @trigger="onDebugTrigger" @load-success="onDebugLoadSuccess"
-        @load-error="onDebugLoadError" />
-      <p style="color: #888; font-size: 14px; margin-top: 8px;">
+    <section
+      style="
+        margin-top: 30px;
+        padding: 24px;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+      "
+    >
+      <h1 style="margin-top: 0; color: #42b883">🌍 Demo 19：线上隐藏调试入口</h1>
+      <LogoDebugTrigger
+        :click-count="5"
+        :timeout="2000"
+        @trigger="onDebugTrigger"
+        @load-success="onDebugLoadSuccess"
+        @load-error="onDebugLoadError"
+      />
+      <p style="color: #888; font-size: 14px; margin-top: 8px">
         提示：连续点击上方 Logo 5 次，会加载 vConsole 调试面板
       </p>
       <div
-        style="padding: 16px; background: #1e1e1e; color: #d4d4d4; border-radius: 6px; font-size: 13px; min-height: 100px; margin-top: 16px;">
-        <pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">{{ displayContent }}</pre>
+        style="
+          padding: 16px;
+          background: #1e1e1e;
+          color: #d4d4d4;
+          border-radius: 6px;
+          font-size: 13px;
+          min-height: 100px;
+          margin-top: 16px;
+        "
+      >
+        <pre style="margin: 0; white-space: pre-wrap; word-break: break-all">{{
+          displayContent
+        }}</pre>
       </div>
     </section>
   </div>
@@ -255,7 +380,8 @@ function onDebugTrigger(): void {
 }
 
 function onDebugLoadSuccess(): void {
-  displayContent.value = '✅ vConsole 调试面板已开启！\n\n点击页面右下角的绿色按钮，查看控制台、网络请求、DOM 结构等调试信息。';
+  displayContent.value =
+    '✅ vConsole 调试面板已开启！\n\n点击页面右下角的绿色按钮，查看控制台、网络请求、DOM 结构等调试信息。';
 }
 
 function onDebugLoadError(error: string): void {

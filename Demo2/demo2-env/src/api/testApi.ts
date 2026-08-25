@@ -5,7 +5,6 @@ import { retryWithBackoff } from '@/utils/retry';
 // 前 2 次失败，第 3 次成功
 let attemptCount = 0;
 
-
 export function mockUnstableApi(): Promise<{ success: boolean; data: string }> {
   return new Promise((resolve, reject) => {
     attemptCount++;
@@ -30,11 +29,8 @@ export function resetAttemptCount() {
 
 // 包装请求，应用重试策略
 export function fetchWithRetry() {
-  return retryWithBackoff(
-    () => mockUnstableApi(),
-    {
-      maxRetries: 3,
-      baseDelay: 500,
-    }
-  );
+  return retryWithBackoff(() => mockUnstableApi(), {
+    maxRetries: 3,
+    baseDelay: 500,
+  });
 }

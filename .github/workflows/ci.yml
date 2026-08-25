@@ -41,8 +41,17 @@ jobs:
       - name: 代码规范检查
         run: pnpm exec eslint src --ext .vue,.js,.ts
 
+      - name: 类型检查
+        run: pnpm type-check
+
+      - name: 格式检查
+        run: pnpm format:check
+
       - name: 单元测试
         run: pnpm test
+
+      - name: 覆盖率测试
+        run: pnpm test:coverage
 
       - name: 安装 Playwright 浏览器
         run: pnpm exec playwright install --with-deps chromium

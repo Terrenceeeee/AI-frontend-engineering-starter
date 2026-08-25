@@ -107,11 +107,7 @@ function normalizeError(error: unknown): Record<string, unknown> | string {
  * }
  * ```
  */
-export function logError(
-  msg: string,
-  data?: unknown,
-  options?: LoggerOptions
-): void {
+export function logError(msg: string, data?: unknown, options?: LoggerOptions): void {
   const { maxLogs, storageKey } = { ...DEFAULT_OPTIONS, ...options };
 
   // 初始化缓存（如果为空）
@@ -213,8 +209,5 @@ export function isPaymentError(error: unknown): error is PaymentError {
     return false;
   }
   const maybe = error as Record<string, unknown>;
-  return (
-    typeof maybe.code === 'string' &&
-    typeof maybe.message === 'string'
-  );
+  return typeof maybe.code === 'string' && typeof maybe.message === 'string';
 }

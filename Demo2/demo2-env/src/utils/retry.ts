@@ -10,9 +10,9 @@ function isAxiosError(error: unknown): error is {
 }
 
 export interface RetryOptions {
-  maxRetries?: number;      // 最大重试次数，默认 3
-  baseDelay?: number;       // 基础延迟（毫秒），默认 500
-  maxDelay?: number;        // 最大延迟上限（毫秒），默认 10000
+  maxRetries?: number; // 最大重试次数，默认 3
+  baseDelay?: number; // 基础延迟（毫秒），默认 500
+  maxDelay?: number; // 最大延迟上限（毫秒），默认 10000
   // ⭐ 这里把 any 改成了 unknown
   shouldRetry?: (error: unknown) => boolean;
 }

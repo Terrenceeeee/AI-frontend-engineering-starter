@@ -13,7 +13,7 @@ export interface LogEntry {
   /** 错误描述信息 */
   msg: string;
   /** 附加数据（错误对象、业务上下文等） */
-  data?: Record<string, unknown> | string | number | boolean | null; //存放额外上下文；支持对象、字符串、数字、布尔、null多种类型  
+  data?: Record<string, unknown> | string | number | boolean | null; //存放额外上下文；支持对象、字符串、数字、布尔、null多种类型
   // Record<string, unknown> 代表任意键值对象；? 表示该属性可以不存在
 }
 

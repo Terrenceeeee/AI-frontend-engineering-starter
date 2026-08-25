@@ -20,7 +20,8 @@ self.addEventListener('install', (event) => {
   // 如果不包裹，浏览器可能提前终止sw，缓存操作中途失败
   event.waitUntil(
     // 打开指定名称的缓存存储空间，不存在则自动创建
-    caches.open(CACHE_NAME)
+    caches
+      .open(CACHE_NAME)
       .then((cache) => {
         console.log('[Service Worker] 缓存资源...');
         // 批量请求清单内所有资源，并存入缓存；任意一个资源加载失败，整体失败
@@ -42,10 +43,11 @@ self.addEventListener('install', (event) => {
 // 作用：清理过期缓存、接管页面
 self.addEventListener('activate', (event) => {
   console.log('[Service Worker] 激活中...');
-  
+
   event.waitUntil(
     // 获取当前浏览器存在的所有缓存名称列表
-    caches.keys()
+    caches
+      .keys()
       .then((cacheNames) => {
         // 删除旧的缓存（如果有多个版本）
         // Promise.all 并行执行所有删除操作
@@ -55,7 +57,7 @@ self.addEventListener('activate', (event) => {
             if (cacheName !== CACHE_NAME) {
               console.log(`[Service Worker] 删除旧缓存: ${cacheName}`);
               // self.clients.claim()：让当前激活的sw，立刻接管所有已打开的页面
-              
+
               return caches.delete(cacheName);
             }
           })
@@ -71,7 +73,8 @@ self.addEventListener('activate', (event) => {
 
 // ===================== 3. 全局请求拦截 fetch 事件 =====================
 // 页面发起任意网络请求（img/fetch/axios/css/js）时，浏览器触发fetch事件
-self.addEventListener('fetch', (event) => {  //fetch () = 去网上拿东西  fetch 事件 = 有人要去网上拿东西，被 service worker 拦住，可以插手处理
+self.addEventListener('fetch', (event) => {
+  //fetch () = 去网上拿东西  fetch 事件 = 有人要去网上拿东西，被 service worker 拦住，可以插手处理
   // 解析请求完整URL，方便判断域名、路径
   const requestUrl = new URL(event.request.url);
   // 规则1：非同源请求（CDN、第三方接口），不经过缓存逻辑，直接放行走网络
@@ -91,40 +94,38 @@ self.addEventListener('fetch', (event) => {  //fetch () = 去网上拿东西  fe
   // 自定义本次请求的响应逻辑：缓存优先策略（Cache-First）
   event.respondWith(
     // 在缓存中查找匹配当前请求的资源
-    caches.match(event.request)
-      .then((cachedResponse) => {
-        // 如果缓存命中，直接返回缓存
-        if (cachedResponse) {
-          console.log(`[Service Worker] ✅ 命中缓存: ${event.request.url}`);
-          return cachedResponse;
-        }
+    caches.match(event.request).then((cachedResponse) => {
+      // 如果缓存命中，直接返回缓存
+      if (cachedResponse) {
+        console.log(`[Service Worker] ✅ 命中缓存: ${event.request.url}`);
+        return cachedResponse;
+      }
 
-        // ❌ 缓存未命中：发起真实网络请求
-        console.log(`[Service Worker] 缓存未命中，请求网络: ${event.request.url}`);
-        return fetch(event.request)
-          .then((response) => {
-            // 仅缓存HTTP状态200的成功响应，404/500等错误不存入缓存
-            if (response.status === 200) {
-              // ⚠️ Response对象是流，只能读取一次！必须clone一份副本存入缓存
-              const responseToCache = response.clone();
-              caches.open(CACHE_NAME)
-                .then((cache) => {
-                  // 将 请求-响应 键值对存入缓存
-                  cache.put(event.request, responseToCache);
-                });
-            }
-            return response;
-          })
-          .catch(() => {
-            // 网络请求失败，返回一个备用页面（可选）
-            console.error(`[Service Worker] ❌ 网络请求失败: ${event.request.url}`);
-            // 如果是 HTML 请求，返回 index.html
-            if (event.request.headers.get('accept')?.includes('text/html')) {
-              return caches.match('/');
-            }
-            // 其他请求返回 404
-            return new Response('Not Found', { status: 404 });
-          });
-      })
+      // ❌ 缓存未命中：发起真实网络请求
+      console.log(`[Service Worker] 缓存未命中，请求网络: ${event.request.url}`);
+      return fetch(event.request)
+        .then((response) => {
+          // 仅缓存HTTP状态200的成功响应，404/500等错误不存入缓存
+          if (response.status === 200) {
+            // ⚠️ Response对象是流，只能读取一次！必须clone一份副本存入缓存
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              // 将 请求-响应 键值对存入缓存
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // 网络请求失败，返回一个备用页面（可选）
+          console.error(`[Service Worker] ❌ 网络请求失败: ${event.request.url}`);
+          // 如果是 HTML 请求，返回 index.html
+          if (event.request.headers.get('accept')?.includes('text/html')) {
+            return caches.match('/');
+          }
+          // 其他请求返回 404
+          return new Response('Not Found', { status: 404 });
+        });
+    })
   );
 });

@@ -46,7 +46,9 @@ console.log('🧪 执行冒烟测试...');
 try {
   const result = execSync('curl -s -o /dev/null -w "%{http_code}" http://localhost:5173', {
     timeout: 5000,
-  }).toString().trim();
+  })
+    .toString()
+    .trim();
 
   if (result === '200') {
     console.log('✅ 冒烟测试通过！首页可访问');

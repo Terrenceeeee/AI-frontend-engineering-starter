@@ -1,31 +1,50 @@
 <template>
-  <div style="padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin: 20px 0;">
+  <div style="padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin: 20px 0">
     <h3>📡 WebSocket 实时推送 Demo</h3>
 
-    <div style="margin: 12px 0;">
-      <button @click="connect" :disabled="connected" style="padding: 6px 16px; cursor: pointer;">
+    <div style="margin: 12px 0">
+      <button @click="connect" :disabled="connected" style="padding: 6px 16px; cursor: pointer">
         🔗 连接
       </button>
-      <button @click="disconnect" :disabled="!connected" style="padding: 6px 16px; margin-left: 8px; cursor: pointer;">
+      <button
+        @click="disconnect"
+        :disabled="!connected"
+        style="padding: 6px 16px; margin-left: 8px; cursor: pointer"
+      >
         ❌ 断开
       </button>
-      <button @click="clearMessages" style="padding: 6px 16px; margin-left: 8px; cursor: pointer;">
+      <button @click="clearMessages" style="padding: 6px 16px; margin-left: 8px; cursor: pointer">
         🗑️ 清空消息
       </button>
-      <span style="margin-left: 16px; font-size: 14px;">
-        状态: <strong :style="{ color: connected ? '#42b883' : '#ff6b6b' }">
+      <span style="margin-left: 16px; font-size: 14px">
+        状态:
+        <strong :style="{ color: connected ? '#42b883' : '#ff6b6b' }">
           {{ connected ? '✅ 已连接' : '❌ 未连接' }}
         </strong>
       </span>
-      <span style="margin-left: 16px; font-size: 14px; color: #666;">
+      <span style="margin-left: 16px; font-size: 14px; color: #666">
         消息数: {{ messages.length }}
       </span>
     </div>
 
     <div
-      style="max-height: 300px; overflow-y: auto; background: #1e1e1e; color: #d4d4d4; padding: 12px; border-radius: 6px; font-size: 13px; font-family: 'Courier New', monospace;">
-      <div v-for="(msg, idx) in messages" :key="idx" style="padding: 4px 0; border-bottom: 1px solid #333;">
-        <span style="color: #888;">[{{ msg.time }}]</span>
+      style="
+        max-height: 300px;
+        overflow-y: auto;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-family: 'Courier New', monospace;
+      "
+    >
+      <div
+        v-for="(msg, idx) in messages"
+        :key="idx"
+        style="padding: 4px 0; border-bottom: 1px solid #333"
+      >
+        <span style="color: #888">[{{ msg.time }}]</span>
         <span :style="{ color: msg.type === 'recv' ? '#4ec9b0' : '#dcdcaa' }">
           {{ msg.type === 'recv' ? '⬅️ 收到' : '➡️ 发送' }}
         </span>
@@ -33,10 +52,18 @@
       </div>
     </div>
 
-    <div style="margin-top: 12px; display: flex; gap: 8px;">
-      <input v-model="inputMessage" placeholder="输入消息..." @keyup.enter="sendMessage"
-        style="flex: 1; padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px;" />
-      <button @click="sendMessage" :disabled="!connected" style="padding: 6px 16px; cursor: pointer;">
+    <div style="margin-top: 12px; display: flex; gap: 8px">
+      <input
+        v-model="inputMessage"
+        placeholder="输入消息..."
+        @keyup.enter="sendMessage"
+        style="flex: 1; padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px"
+      />
+      <button
+        @click="sendMessage"
+        :disabled="!connected"
+        style="padding: 6px 16px; cursor: pointer"
+      >
         📤 发送
       </button>
     </div>
