@@ -10,6 +10,8 @@
 
 **核心目标**：解决多人协作线下代码质量不可控，部署流程繁琐，线上问题难定位等团队痛点。
 
+**全程流程展示**：配有全程从搭建到代码到测试到完善的完整流程 fork 即看即用 快速上手 易于理解
+
 ---
 
 ## 二、项目结构
@@ -25,7 +27,7 @@ demo/
 │ ├── ci.yml # CI 流水线
 │ └── deploy.yml # CD 流水线
 ├── .vscode/
-│ └── setting.json # vscode 配置 此处是live server的端口配置
+│ └── setting.json # vscode 配置 此处是live server的端口配置 以及保存prettier自动化
 ├── Demo1 pnpm 硬链接与符号链接机制验证/
 │ ├── npm/ # npm 验证区
 │ └── pnpm/ # pnpm 验证区
@@ -139,7 +141,9 @@ demo/
 |                └── index.vue
 ├── screenshots/
 ├── 全流程操作过程.MD
+├── Full-process-Operation.MD
 ├── LICENSE
+├── README.en.md
 └── README.md
 省略:
 .git/
