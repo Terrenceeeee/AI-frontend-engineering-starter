@@ -74,6 +74,7 @@ export default defineConfig(({ command, mode }) => {
     test: {
       include: ['src/**/*.test.{ts,js}', 'src/**/*.spec.{ts,js}'],
       exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+      environment: 'jsdom',
     },
   };
 });

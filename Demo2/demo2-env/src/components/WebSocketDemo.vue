@@ -3,17 +3,17 @@
     <h3>📡 WebSocket 实时推送 Demo</h3>
 
     <div style="margin: 12px 0">
-      <button @click="connect" :disabled="connected" style="padding: 6px 16px; cursor: pointer">
+      <button :disabled="connected" style="padding: 6px 16px; cursor: pointer" @click="connect">
         🔗 连接
       </button>
       <button
-        @click="disconnect"
         :disabled="!connected"
         style="padding: 6px 16px; margin-left: 8px; cursor: pointer"
+        @click="disconnect"
       >
         ❌ 断开
       </button>
-      <button @click="clearMessages" style="padding: 6px 16px; margin-left: 8px; cursor: pointer">
+      <button style="padding: 6px 16px; margin-left: 8px; cursor: pointer" @click="clearMessages">
         🗑️ 清空消息
       </button>
       <span style="margin-left: 16px; font-size: 14px">
@@ -56,13 +56,13 @@
       <input
         v-model="inputMessage"
         placeholder="输入消息..."
-        @keyup.enter="sendMessage"
         style="flex: 1; padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px"
+        @keyup.enter="sendMessage"
       />
       <button
-        @click="sendMessage"
         :disabled="!connected"
         style="padding: 6px 16px; cursor: pointer"
+        @click="sendMessage"
       >
         📤 发送
       </button>

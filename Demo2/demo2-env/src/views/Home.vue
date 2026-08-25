@@ -125,7 +125,6 @@
       <h1 style="margin-top: 0; color: #42b883">📋 Demo 18：远程日志回捞系统</h1>
       <div style="margin: 20px 0; display: flex; gap: 12px; flex-wrap: wrap">
         <button
-          @click="handleSimulatePayment"
           style="
             padding: 12px 24px;
             background: #42b883;
@@ -134,11 +133,11 @@
             border-radius: 4px;
             cursor: pointer;
           "
+          @click="handleSimulatePayment"
         >
           💳 模拟支付（会随机失败）
         </button>
         <button
-          @click="handleExportLogs"
           style="
             padding: 12px 24px;
             background: #f0ad4e;
@@ -147,11 +146,11 @@
             border-radius: 4px;
             cursor: pointer;
           "
+          @click="handleExportLogs"
         >
           📤 导出日志
         </button>
         <button
-          @click="handleClearLogs"
           style="
             padding: 12px 24px;
             background: #d9534f;
@@ -160,6 +159,7 @@
             border-radius: 4px;
             cursor: pointer;
           "
+          @click="handleClearLogs"
         >
           🗑️ 清除日志
         </button>

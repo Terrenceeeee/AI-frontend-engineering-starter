@@ -46,8 +46,12 @@ function scanVueComponents(projectRoot: string): GraphNode[] {
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf-8');
     const { descriptor } = parseVue(content, { filename: file });
+    const normalizedFile = file.replace(/\\/g, '/');
 
-    const isPage = file.includes('/views/') || file.includes('/pages/') || file.includes('/page/');
+    const isPage =
+      normalizedFile.includes('/views/') ||
+      normalizedFile.includes('/pages/') ||
+      normalizedFile.includes('/page/');
 
     let name = path.basename(file, '.vue');
     if (descriptor.scriptSetup) {
@@ -73,7 +77,7 @@ function scanPiniaStores(projectRoot: string): GraphNode[] {
     tsConfigFilePath: path.join(projectRoot, 'tsconfig.json'),
   });
 
-  const storeFiles = globSync('src/**/*.store.ts', { cwd: projectRoot, absolute: true });
+  const storeFiles = globSync('src/**/*.ts', { cwd: projectRoot, absolute: true });
   const nodes: GraphNode[] = [];
 
   for (const file of storeFiles) {
@@ -269,7 +273,10 @@ function buildEdges(projectRoot: string, nodes: GraphNode[]): GraphEdge[] {
 // ============ 6. 建立路由关系 ============
 function buildRouteEdges(projectRoot: string, nodes: GraphNode[]): GraphEdge[] {
   const edges: GraphEdge[] = [];
-  const routerFiles = globSync('src/**/router*.ts', { cwd: projectRoot, absolute: true });
+  const routerFiles = globSync(['src/**/router*.ts', 'router/**/*.ts'], {
+    cwd: projectRoot,
+    absolute: true,
+  });
 
   for (const file of routerFiles) {
     const content = fs.readFileSync(file, 'utf-8');

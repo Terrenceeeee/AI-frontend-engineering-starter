@@ -8,25 +8,25 @@
     },
     {
       "id": "component:User",
-      "type": "component",
+      "type": "page",
       "name": "User",
       "filePath": "src\\views\\User.vue"
     },
     {
       "id": "component:Home",
-      "type": "component",
+      "type": "page",
       "name": "Home",
       "filePath": "src\\views\\Home.vue"
     },
     {
       "id": "component:Admin",
-      "type": "component",
+      "type": "page",
       "name": "Admin",
       "filePath": "src\\views\\Admin.vue"
     },
     {
       "id": "component:index",
-      "type": "component",
+      "type": "page",
       "name": "index",
       "filePath": "src\\views\\product\\index.vue"
     },
@@ -47,6 +47,12 @@
       "type": "component",
       "name": "HelloWorld",
       "filePath": "src\\components\\HelloWorld.vue"
+    },
+    {
+      "id": "store:product",
+      "type": "store",
+      "name": "product",
+      "filePath": "src\\stores\\modules\\product.ts"
     },
     {
       "id": "composable:useVConsole",
@@ -78,6 +84,26 @@
       "from": "component:LogoDebugTrigger",
       "to": "composable:useVConsole",
       "type": "calls"
+    },
+    {
+      "from": "route:/",
+      "to": "component:Home",
+      "type": "navigates-to"
+    },
+    {
+      "from": "route:/user",
+      "to": "component:User",
+      "type": "navigates-to"
+    },
+    {
+      "from": "route:/admin",
+      "to": "component:Admin",
+      "type": "navigates-to"
+    },
+    {
+      "from": "route:/product",
+      "to": "component:index",
+      "type": "navigates-to"
     }
   ]
 }

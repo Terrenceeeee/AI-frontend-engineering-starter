@@ -37,7 +37,7 @@ demo/
 │       ├── visualize.html
 │       ├── knowledge-graph.json
 │       ├── tsconfig.json
-│       ├── vite.config.js
+│       ├── vite.config.ts
 │       ├── playwright.config.js
 │       ├── public/
 │       │   ├── favicon.svg
@@ -155,7 +155,7 @@ Interaction to Next Paint (interaction response)
 - Knowledge graph generation: `ts-morph` statically analyzes source code, and `d3.js` visualizes function dependency relationships.
 - Three AI Code Review approaches:
   - Method 1: manually copy the prompt to AI (lowest cost).
-  - Method 2: `pnpm ai-review` semi-automatically generates the prompt.
+  - Method 2: run `pnpm graph`, then use the generated graph as AI review context.
   - Method 3: configure an API key and fully automatically call AI to generate the report.
 ```
 
@@ -186,8 +186,8 @@ pnpm deploy # Automated deployment
 pnpm rollback # One-command rollback
 
 # 7. AI-assisted development
-pnpm graph     # Generate the knowledge graph
-pnpm ai-review # Generate AI Code Review
+pnpm graph # Generate the knowledge graph
+Use knowledge-graph.json as AI context to generate an AI Code Review
 ```
 
 ## 6. Project Highlights

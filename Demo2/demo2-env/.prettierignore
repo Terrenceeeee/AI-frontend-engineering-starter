@@ -1,8 +1,9 @@
 dist/
 node_modules/
 *.log
-*.lock
-*.yaml
-*.yml
-*.html
-*.svg
+pnpm-lock.yaml
+coverage/
+test-results/
+playwright-report/
+backups/
+deploy/

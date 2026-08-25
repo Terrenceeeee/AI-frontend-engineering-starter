@@ -15,6 +15,7 @@
     "prepare": "husky",
     "lint-staged": "lint-staged",
     "gen": "node scripts/generate.ts",
+    "graph": "node scripts/build-graph.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test --config=playwright.config.js",

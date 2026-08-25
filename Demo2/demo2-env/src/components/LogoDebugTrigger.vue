@@ -1,10 +1,10 @@
 <template>
   <div
     class="logo-debug-trigger"
-    @click="handleClick"
-    @keydown.enter="handleClick"
     role="button"
     tabindex="0"
+    @click="handleClick"
+    @keydown.enter="handleClick"
   >
     <slot>
       <span style="font-size: 24px">🚀</span>

@@ -1400,6 +1400,259 @@ Stores status from the most recent E2E test run, for example:
 ‑ Whether the test suite passed
 ‑ List of failed test cases
 
+---
+
+# Standardized Open‑Source Project Supplement: DEMO27: Root‑Level .gitignore Deployment, Restricting Git Tracking, Tuning Prettier Scope & Adding Real‑World Unit Tests
+
+## 1. Governance of the .gitignore File
+
+The original `.gitignore` resided inside the subdirectory `Demo2/demo2‑env`.
+Consequently, Git tracked many unwanted artifacts in the repository, such as screenshots, build outputs, test reports and backup folders.
+In DEMO27, a new **repository‑root `.gitignore`** is introduced to constrain Git tracking and keep the repository clean.
+
+```
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+dist‑ssr/
+**/dist/
+**/dist‑ssr/
+
+# Test output
+coverage/
+test‑results/
+playwright‑report/
+**/coverage/
+**/test‑results/
+**/playwright‑report/
+
+# Local deployment output
+backups/
+deploy/
+**/backups/
+**/deploy/
+
+# Logs
+logs/
+*.log
+pnpm‑debug.log*
+npm‑debug.log*
+yarn‑debug.log*
+yarn‑error.log*
+
+# Local env files
+.env.local
+.env.*.local
+**/.env.local
+**/.env.*.local
+
+# Editor and OS generated files
+.idea/
+.DS_Store
+.git‑nested‑backup/
+**/.git‑nested‑backup/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+```
+
+## 2. Governance of .prettierignore
+
+Refine `.prettierignore` for precise file targeting instead of overly broad exclusion rules.
+
+Original version:
+
+```
+dist/
+node_modules/
+*.log
+*.lock
+*.yaml
+*.yml
+*.html
+*.svg
+```
+
+Revised version:
+
+```
+dist/
+node_modules/
+*.log
+pnpm‑lock.yaml
+coverage/
+test‑results/
+playwright‑report/
+backups/
+deploy/
+
+# No longer bluntly ignore *.yml, *.html, *.svg
+```
+
+> CI configuration files, HTML assets and other resources will now be covered by Prettier formatting checks.
+
+## 3. Add real‑world unit tests
+
+The existing unit‑test coverage was superficial; only a sample `math.test.ts` existed with no assertions against real business logic.
+We write tests for utility modules under `src/utils/`.
+Three new test files are created inside `src/utils/_tests_/`:
+`requestPool.test.ts`, `logger.test.ts`, `retry.test.ts`.
+
+You may leverage AI to generate test implementations; below are ready‑to‑use prompt templates.
+
+### Generic base prompt template
+
+````
+You are a frontend test engineer.
+
+Generate unit tests for Vitest based on the provided TypeScript source code.
+
+Requirements:
+1. Use Vitest.
+2. Test observable external behavior only; avoid asserting implementation details.
+3. Cover happy paths, error paths and edge‑case scenarios.
+4. If timers are present, enable vi.useFakeTimers.
+5. If the code depends on localStorage, window or navigator, explicitly note whether the jsdom environment is required.
+6. Place test files under src/utils/_tests_/xxx.test.ts.
+7. Output complete runnable code.
+8. Add brief comments explaining what each test case validates.
+
+Source code:
+```ts
+PASTE_SOURCE_FILE_CONTENT_HERE
+````
+
+### Specialized prompt for `retry.ts`
+
+```
+Write Vitest unit tests for the retryWithBackoff function.
+
+Key coverage requirements:
+‑ First‑attempt failure followed by success on retry
+‑ No further retries when shouldRetry returns false
+‑ Throw the final error once maxRetries is exhausted
+‑ Verify exponential backoff delay doubles using baseDelay
+‑ Confirm delay is capped when exceeding maxDelay
+
+Constraints:
+‑ Use vi.useFakeTimers to control timers
+‑ Mock console.log to suppress test‑run log pollution
+‑ Do not rely on real‑world setTimeout waits
+‑ Code must compile under TypeScript strict mode
+```
+
+### Specialized prompt for `requestPool.ts`
+
+```
+Write Vitest unit tests for the RequestPool class.
+
+Key coverage requirements:
+‑ Concurrent running count never exceeds the configured limit
+‑ Requests beyond concurrency limit get queued
+‑ Next queued task starts once an in‑flight request completes
+‑ Concurrency slot gets released even when a request rejects/fails
+‑ Promise resolve return values preserve correct order
+
+Constraints:
+‑ Use deferred promises to manually control request resolution timing
+‑ No real network calls
+‑ Mock console.log
+‑ Code must compile under TypeScript strict mode
+```
+
+### Specialized prompt for `logger.ts`
+
+```
+Write Vitest unit tests for logger.ts.
+
+Key coverage requirements:
+‑ logError persists records into localStorage
+‑ maxLogs threshold truncates log storage
+‑ exportLogs produces valid formatted JSON output
+‑ clearLogs fully wipes stored logs
+‑ getLogCount returns accurate log statistics
+‑ isPaymentError type‑guard correctly narrows types
+
+Constraints:
+‑ Run under jsdom environment
+‑ Clear localStorage before every individual test
+‑ Mock console.error and console.log
+‑ Avoid asserting against precise real‑world timestamps
+```
+
+> Since these tests reference browser‑global objects, enable jsdom in Vitest configuration, otherwise test runs will fail.
+
+Update `vitest.config.ts`:
+
+```
+// add inside test configuration block
+environment: 'jsdom',
+```
+
+Purpose: Vitest will simulate a browser runtime and inject these globals:
+
+```
+window;
+document;
+navigator;
+localStorage;
+location;
+```
+
+---
+
+# Appendix: .gitignore Syntax Reference
+
+```
+## Basic syntax rules
+
+1. Lines starting with # are comments; Git skips them
+
+# This is a comment
+node_modules
+
+2. Folder entry: write folder name to match the entire directory tree and all nested content
+
+# Ignore the whole node_modules directory
+node_modules
+
+# Ignore dist build output directory
+dist
+
+3. * wildcard: matches any character except path separator /
+
+*.log       # Match all files ending with .log
+*.local     # Match all files ending with .local
+
+4. ** recursive wildcard: matches files across any depth of subdirectories
+
+**/temp     # Match temp folders at any nesting level within project
+
+5. Meaning of forward slash /
+‑ Leading slash: resolves relative to repository root; matches only files/folders at project root
+
+/dist   # Ignore dist folder at root only; dist inside subfolders will NOT be ignored
+
+‑ Trailing slash: explicitly denotes a directory
+
+logs/   # Matches directory logs, skips regular file named logs
+
+6. ! negation rule: un‑ignore / force‑track specified items
+> Evaluation order: patterns are processed top‑down; apply ignore first, then override with !.
+
+.vscode/*          # Ignore everything inside .vscode
+!.vscode/extensions.json  # Except this single file, commit it into Git
+
+> Common use case: commit VSCode recommended plugin config for team members, ignore local user settings
+```
+
+---
+
 # Appendix: Git Commit Message Specification
 
 ## 1. Type (Required)

@@ -39,7 +39,7 @@ demo/
 |    ├── visualize.html
 |    ├── knowledge-graph.json
 |    ├── tsconfig.json
-|    ├── vite.config.js
+|    ├── vite.config.ts
 |    ├── playwright.config.js
 |    │
 |    ├── public/
@@ -229,7 +229,7 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 - 知识图谱生成：`ts-morph` 静态分析源码，`d3.js` 可视化展示函数依赖关系
 - AI Code Review 三种方式：
   - 方式一：手动复制 Prompt 喂给 AI（最低成本）
-  - 方式二：`pnpm ai-review` 半自动生成 Prompt
+  - 方式二：基于 `pnpm graph` 生成知识图谱后半自动整理 Prompt
   - 方式三：配置 API Key 全自动调用 AI 生成报告
 ```
 
@@ -261,7 +261,7 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 
 # 7.AI辅助研发
 - pnpm graph # 知识图谱生成
-- pnpm ai-review # AI辅助审查 生成 AI Code Review
+- 将 knowledge-graph.json 作为上下文输入 AI，生成 AI Code Review
 ```
 
 ## 六、项目亮点
