@@ -1305,6 +1305,68 @@ Finally, add this to the end of README:
 MIT (c) 2026 Terrenceeeee
 ```
 
+---
+
+# Appendix: Git Commit Message Specification
+
+## 1. Type (Required)
+
+```
+feat: New feature
+fix: Bug fixes
+docs: Documentation updates, markdown & comment changes
+style: Code‑formatting adjustments with no changes to business logic
+refactor: Code refactoring (neither new feature nor bug fix)
+test: Test‑related changes: add or update unit tests, E2E tests
+chore: Build / tooling configurations, scaffolding, miscellaneous chores, version bumps, no modifications to src business code
+perf: Performance optimization and performance‑related adjustments
+build: Build process, build tools, external dependencies, CI, pnpm, vite configurations
+ci: CI‑related changes for GitHub Actions / GitLab CI pipelines
+```
+
+## 2. Scope (Optional)
+
+Specify the target module or file.
+
+Examples: `vite‑config`, `request‑pool`, `task`, `eslint`, `ci`
+
+```text
+feat(task): add task priority filtering
+fix(request‑pool): fix overflow issue in request concurrency queue
+ci: adjust eslint scanning scope
+build(vite‑config): modify alias configuration
+```
+
+## 3. Subject (Short description, required)
+
+Keep it within 50 characters, start with a verb, use lowercase, **do not end with a period**.
+
+✅ Good examples:
+
+```text
+fix: fix counter error in request pool
+feat(task): add task sorting field
+ci: enable strict eslint validation
+```
+
+## 4. Body (Optional, for complex commits only)
+
+Leave one blank line before the body.
+Explain **why this change is made, background context and impacts**. Wrap lines at 72 characters.
+Use this for large refactors or breaking‑change commits.
+
+## 5. BREAKING CHANGE (For breaking modifications)
+
+Mandatory when API / configuration changes break existing project compatibility:
+
+```text
+feat(user): modify return fields of user API
+
+BREAKING CHANGE: The return structure of user API has changed. Existing code requires adapt
+```
+
+---
+
 ## Appendix: Markdown Code Fence Language Suffixes
 
 ````text
