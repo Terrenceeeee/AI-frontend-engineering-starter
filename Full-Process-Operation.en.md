@@ -1307,6 +1307,99 @@ MIT (c) 2026 Terrenceeeee
 
 ---
 
+# Supplementary for Standardized Open‑Source Project: DEMO26 — Improvements and Additions for Prettier Execution and CI/CD
+
+## 1. Two approaches to enable Prettier
+
+### Approach 1: Run via bash terminal (for local development & testing)
+
+```
+# Check: Only verify formatting without modifying files. Returns exit code 1 in CI if formatting rules are violated
+pnpm prettier --check .
+
+# Rewrite and format all files directly
+pnpm prettier --write .
+```
+
+### Approach 2: Auto‑format on save (widely‑used, mandatory for engineering workflows)
+
+Configure in `.vscode/settings.json`
+
+```
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true
+}
+```
+
+Prettier will run automatically the moment you save a file, no manual commands required.
+
+## 2. Add and refine CI/CD capabilities, adjust CI scope for stricter enforcement
+
+### Main Objectives
+
+- Make CI act as a genuine quality gate
+- Clarify responsibilities for test workflows
+- Keep consistent code style for future incoming code changes
+
+### Additional CI checks: type‑check, format check, coverage test
+
+```
+type‑check in CI: Catches TypeScript type errors early instead of discovering them only during build time
+format:check in CI: Enforces unified code style and reduces style‑related noise among team members
+test:coverage working properly: Confirms coverage pipeline is ready for gradually raising test coverage for critical code
+```
+
+```
+- name: Type Check
+  run: pnpm type‑check
+
+- name: Format Check
+  run: pnpm format:check
+
+- name: Coverage Test
+  run: pnpm test:coverage
+```
+
+## 3. Adjust Vitest test scope
+
+Inside `package.json`, change:
+
+```
+"test": "vitest run src",
+```
+
+to:
+
+```
+"test": "vitest run",
+```
+
+> This enables Vitest to scan the entire project instead of only the `src` directory.
+> Previously, some outer‑directory checks failed due to ESLint / Prettier violations. After fixing ESLint configurations, full‑project testing can execute successfully.
+
+> Important note: E2E test files may be mistakenly picked up by Vitest.
+> In `vitest.config.ts`, use `test.include` / `test.exclude` to explicitly exclude E2E directories and prevent E2E cases from being treated as unit tests.
+
+```
+        chunkFileNames: 'assets/[name]-[hash].js',
+      },
+    },
+  },
+  test: {
+    include: ['src/**/*.test.{ts,js}', 'src/**/*.spec.{ts,js}'],
+    exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
+  },
+```
+
+This configuration prevents Vitest from processing E2E test files.
+
+## 4. Auto‑generated `test‑results/last‑run.json` for CI/CD reporting
+
+Stores status from the most recent E2E test run, for example:
+‑ Whether the test suite passed
+‑ List of failed test cases
+
 # Appendix: Git Commit Message Specification
 
 ## 1. Type (Required)
