@@ -27,6 +27,7 @@ module.exports = {
     'backups/',
     'deploy/',
     'node_modules/',
+    'vite.config.ts',
   ],
   rules: {
     quotes: ['error', 'single'],

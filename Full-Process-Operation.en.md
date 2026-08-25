@@ -1090,11 +1090,24 @@ clsValue += entry.value ?? 0;
 
 Some `LayoutShift` entries may have an undefined value. Using `?? 0` prevents `NaN` in performance reporting.
 
+but now in the VSCODE is still this:
+![alt text](screenshots/Image.png)
+
+### If you want to solve this error and CI test and ESLint test exactly,you can add the following configuration in the the 'ignorePatterns' modules of .eslintrc.cjs
+
+```js
+'vite.config.ts',
+
+```
+
+![alt text](<screenshots/Screenshot 2026-08-25 085640.png>)
+and the problem is solved successfully
+
 ---
 
 # DEMO25. Open Source Project Standardization: README And LICENSE
 
-````md
+```md
 # Project Name
 
 > One sentence describing what the project is and what problem it solves.
@@ -1134,16 +1147,16 @@ This project is an e-commerce checkout page demo built with **Vue 3 + TypeScript
 
 ## Tech Stack
 
-| Area | Technology |
-| :--- | :--- |
-| Framework | Vue 3 + TypeScript |
-| Build Tool | Vite |
-| Package Manager | pnpm |
-| Code Standards | ESLint + Prettier + Husky |
-| Unit Testing | Vitest + jsdom |
-| E2E Testing | Playwright |
-| CI/CD | GitHub Actions + GitHub Pages |
-````
+| Area            | Technology                    |
+| :-------------- | :---------------------------- |
+| Framework       | Vue 3 + TypeScript            |
+| Build Tool      | Vite                          |
+| Package Manager | pnpm                          |
+| Code Standards  | ESLint + Prettier + Husky     |
+| Unit Testing    | Vitest + jsdom                |
+| E2E Testing     | Playwright                    |
+| CI/CD           | GitHub Actions + GitHub Pages |
+```
 
 ## Quick Start
 
