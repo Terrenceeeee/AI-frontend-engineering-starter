@@ -79,7 +79,7 @@ After modification, Vite behavior can be customized:
 
 After modification, the terminal output reflects these changes.
 
-![alt text](<screenshots/Screenshot 2026-07-27 151241.png>)
+![fail to load](<screenshots/Screenshot 2026-07-27 151241.png>)
 
 ```js
 import { defineConfig } from "vite";
@@ -184,7 +184,7 @@ This only takes effect during `pnpm build`.
 pnpm dev
 ```
 
-![alt text](<screenshots/Screenshot 2026-07-27 164314.png>)
+![fail to load](<screenshots/Screenshot 2026-07-27 164314.png>)
 
 ## Verify Custom Staging Environment
 
@@ -192,7 +192,7 @@ pnpm dev
 pnpm build -- --mode staging
 ```
 
-![alt text](<screenshots/Screenshot 2026-07-27 164455.png>)
+![fail to load](<screenshots/Screenshot 2026-07-27 164455.png>)
 
 ## Verify Test/Production-Like Environment
 
@@ -201,7 +201,7 @@ pnpm build -- --mode test
 pnpm preview
 ```
 
-![alt text](<screenshots/Screenshot 2026-07-27 164602.png>)
+![fail to load](<screenshots/Screenshot 2026-07-27 164602.png>)
 
 To switch back to development mode, run `pnpm dev`. This does not affect the build result. This is the core engineering idea of separating build and delivery.
 
@@ -1091,7 +1091,7 @@ clsValue += entry.value ?? 0;
 Some `LayoutShift` entries may have an undefined value. Using `?? 0` prevents `NaN` in performance reporting.
 
 but now in the VSCODE is still this:
-![alt text](screenshots/Image.png)
+![fail to load](screenshots/Image.png)
 
 ### If you want to solve this error and CI test and ESLint test exactly,you can add the following configuration in the the 'ignorePatterns' modules of .eslintrc.cjs
 
@@ -1100,7 +1100,7 @@ but now in the VSCODE is still this:
 
 ```
 
-![alt text](<screenshots/Screenshot 2026-08-25 085640.png>)
+![fail to load](<screenshots/Screenshot 2026-08-25 085640.png>)
 and the problem is solved successfully
 
 ---
@@ -1400,7 +1400,7 @@ Stores status from the most recent E2E test run, for example:
 ‑ Whether the test suite passed
 ‑ List of failed test cases
 
-![alt text](<screenshots/Screenshot 2026-08-26 093354.png>)
+![fail to load](<screenshots/Screenshot 2026-08-26 093354.png>)
 
 #### It can be observed that all six CI quality gates have passed.
 
@@ -1608,8 +1608,8 @@ localStorage;
 location;
 ```
 
-![alt text](<screenshots/Screenshot 2026-08-26 084802.png>)
-![alt text](<screenshots/Screenshot 2026-08-26 084807.png>)
+![fail to load](<screenshots/Screenshot 2026-08-26 084802.png>)
+![fail to load](<screenshots/Screenshot 2026-08-26 084807.png>)
 
 ```
 Now the coverage report is no longer empty. Current coverage metrics:
