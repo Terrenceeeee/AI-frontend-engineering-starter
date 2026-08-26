@@ -140,8 +140,9 @@ demo/
 |            └── product/
 |                └── index.vue
 ├── screenshots/
-├── 全流程操作过程.MD
-├── Full-process-Operation.MD
+├── Architect.MD
+├── Architect.en.MD
+├── .gitignore
 ├── LICENSE
 ├── README.en.md
 └── README.md
