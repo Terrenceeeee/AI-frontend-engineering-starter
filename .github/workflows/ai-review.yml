@@ -1,0 +1,71 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 生成知识图谱（如果还没有）
+        run: |
+          if [ ! -f knowledge-graph.json ]; then
+            pnpm graph
+          else
+            echo "✅ 知识图谱已存在，跳过生成"
+          fi
+
+      - name: 运行 AI Code Review（PR 模式）
+        id: review
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          pnpm ai-review --pr
+
+      - name: 将 Review 结果发布到 PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            
+            let reviewContent = '🤖 **AI Code Review 报告**\n\n';
+            try {
+              const content = fs.readFileSync('ai-review-result.md', 'utf-8');
+              reviewContent += content;
+            } catch (e) {
+              reviewContent += '⚠️ 未能生成 Review 报告，请检查脚本执行日志。';
+            }
+            
+            const prNumber = context.payload.pull_request.number;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: reviewContent
+            });
