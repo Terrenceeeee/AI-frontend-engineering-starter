@@ -5511,54 +5511,443 @@ coverage:{
 
 ---
 
+# 智能化AI辅助开发补充：Demo28:AI结合PR辅助开发，分析代码改动风险等等
+
+## 开发前附加条件：
+
+① 项目已经关联到 GitHub 仓库
+② 有 DeepSeek API Key
+③ 项目中已有 knowledge-graph.json
+④ package.json 里有 ai-review 脚本
+
+四是目前没有的 需要我们手动添加
+
+## 1.添加package.json中的ai-review脚本
+
+```json
+script:{
+  "ai-review":"ts-node --esm scripts/ai-review.ts"
+}
+
+```
+
+## 2.创建AI Review脚本文件
+
+### 但要先确认openai该模块下载了
+
+```bash
+pnpm add -D openai
+```
+
+```ts
+// scripts/ai-review.ts
+
+import fs from "fs";
+import path from "path";
+import { execSync } from "child_process";
+import { fileURLToPath } from "url";
+import OpenAI from "openai";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// ============================================================
+// 类型定义
+// ============================================================
+
+interface GraphImpact {
+  filePath: string;
+  upstream: string[];
+  testedBy: string[];
+  description: string;
+}
+
+interface KnowledgeGraph {
+  impactIndex: Record<string, GraphImpact>;
+}
+
+interface ImpactResult {
+  functionName: string;
+  upstream: string[];
+  testedBy: string[];
+  description: string;
+}
+
+interface ChangedFileDiff {
+  file: string;
+  diff: string;
+}
+
+// ============================================================
+// 1. 获取本次改动的文件
+// ============================================================
+function getChangedFiles(): string[] {
+  try {
+    const output = execSync("git diff HEAD~1 --name-only", {
+      encoding: "utf-8",
+    });
+    return output.split("\n").filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+// ============================================================
+// 2. 获取改动文件的 Diff
+// ============================================================
+function getDiff(file: string): string {
+  try {
+    return execSync(`git diff HEAD~1 -- ${file}`, { encoding: "utf-8" });
+  } catch {
+    return "";
+  }
+}
+
+// ============================================================
+// 3. 加载知识图谱
+// ============================================================
+function loadGraph(): KnowledgeGraph {
+  const graphPath = path.resolve(__dirname, "../knowledge-graph.json");
+  if (!fs.existsSync(graphPath)) {
+    console.error("❌ 请先运行 pnpm graph 生成知识图谱");
+    process.exit(1);
+  }
+  const raw = fs.readFileSync(graphPath, "utf-8");
+  return JSON.parse(raw) as KnowledgeGraph;
+}
+
+// ============================================================
+// 4. 查询影响范围
+// ============================================================
+function queryImpact(graph: KnowledgeGraph, filePath: string): ImpactResult[] {
+  const results: ImpactResult[] = [];
+  const { impactIndex } = graph;
+
+  for (const [functionName, info] of Object.entries(impactIndex)) {
+    if (info.filePath === filePath) {
+      results.push({
+        functionName,
+        upstream: info.upstream || [],
+        testedBy: info.testedBy || [],
+        description: info.description || "",
+      });
+    }
+  }
+
+  return results;
+}
+
+// ============================================================
+// 5. 生成 AI Prompt
+// ============================================================
+function generatePrompt(
+  changedFiles: string[],
+  diffs: ChangedFileDiff[],
+  impacts: ImpactResult[],
+): string {
+  let prompt = "【AI Code Review 请求】\n\n";
+  prompt += "## 本次 Commit 改动的文件：\n";
+  for (const file of changedFiles) {
+    prompt += `- ${file}\n`;
+  }
+
+  prompt += "\n## 知识图谱 - 影响范围分析：\n";
+  if (impacts.length === 0) {
+    prompt += "- 未在知识图谱中找到相关影响信息（该文件可能不涉及核心函数）\n";
+  } else {
+    for (const impact of impacts) {
+      prompt += `\n### ${impact.functionName}\n`;
+      prompt += `- 描述：${impact.description}\n`;
+      prompt += `- 被调用方：${impact.upstream.join(" → ") || "（无）"}\n`;
+      prompt += `- 测试覆盖：${impact.testedBy.length > 0 ? impact.testedBy.join(", ") : "❌ 无测试"}\n`;
+      if (impact.testedBy.length === 0) {
+        prompt += "- ⚠️ 建议：该函数无测试覆盖，请手动回归验证\n";
+      }
+      if (impact.upstream.length > 3) {
+        prompt += `- ⚠️ 该函数被 ${impact.upstream.length} 个地方引用，修改需谨慎\n`;
+      }
+    }
+  }
+
+  prompt += "\n## 代码 Diff：\n";
+  for (const { file, diff } of diffs) {
+    if (diff) {
+      prompt += `\n### ${file}\n\`\`\`diff\n${diff}\n\`\`\`\n`;
+    }
+  }
+
+  prompt += "\n请评估本次改动的风险，并给出具体的 Review 意见。";
+  prompt += "\n格式要求：";
+  prompt += "\n1. 风险等级（高/中/低）";
+  prompt += "\n2. 影响范围摘要";
+  prompt += "\n3. 具体的 Review 建议";
+  prompt += "\n4. 如果有潜在 Bug，请明确指出";
+  prompt += "\n5. 给出是否建议合并的结论";
+
+  return prompt;
+}
+
+// ============================================================
+// 6. 调用 AI API
+// ============================================================
+async function callAI(prompt: string): Promise<string> {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    console.error("❌ 请设置环境变量 DEEPSEEK_API_KEY");
+    console.error("   - 在本地：在终端执行 export DEEPSEEK_API_KEY=sk-xxx");
+    console.error(
+      "   - 在 GitHub：在仓库 Settings → Secrets → Actions 中添加 DEEPSEEK_API_KEY",
+    );
+    process.exit(1);
+  }
+
+  const client = new OpenAI({
+    apiKey: apiKey,
+    baseURL: "https://api.deepseek.com",
+  });
+
+  const response = await client.chat.completions.create({
+    model: "deepseek-chat",
+    messages: [
+      {
+        role: "system",
+        content: `你是一个资深前端工程师，负责 Code Review。
+请基于影响范围分析，给出准确的 Review 意见。
+格式要求：
+1. 风险等级（高/中/低）
+2. 影响范围摘要
+3. 具体的 Review 建议
+4. 如果有潜在 Bug，请明确指出
+5. 给出是否建议合并的结论`,
+      },
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
+    temperature: 0.3,
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error("AI 返回内容为空");
+  }
+  return content;
+}
+
+// ============================================================
+// 7. 主函数
+// ============================================================
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  const isPR = args.includes("--pr");
+
+  console.log("🔍 开始 AI Code Review...\n");
+
+  const changedFiles = getChangedFiles();
+  if (changedFiles.length === 0) {
+    console.log("ℹ️ 没有检测到文件改动");
+    return;
+  }
+
+  console.log("📁 改动的文件：");
+  changedFiles.forEach((f) => console.log(`  - ${f}`));
+
+  const diffs: ChangedFileDiff[] = changedFiles.map((file) => ({
+    file,
+    diff: getDiff(file),
+  }));
+
+  const graph = loadGraph();
+
+  const impacts: ImpactResult[] = [];
+  for (const file of changedFiles) {
+    const result = queryImpact(graph, file);
+    impacts.push(...result);
+  }
+
+  console.log("\n📊 影响范围查询结果：");
+  if (impacts.length === 0) {
+    console.log(" ℹ️ 未找到相关影响信息");
+  } else {
+    for (const impact of impacts) {
+      console.log(`\n  ${impact.functionName}:`);
+      console.log(`    被调用方: ${impact.upstream.join(", ") || "无"}`);
+      console.log(`    测试覆盖: ${impact.testedBy.length > 0 ? "✅" : "❌"}`);
+    }
+  }
+
+  const prompt = generatePrompt(changedFiles, diffs, impacts);
+
+  console.log("\n" + "=".repeat(60));
+  console.log("🤖 正在调用 AI 进行 Review...");
+  console.log("=".repeat(60));
+
+  try {
+    const review = await callAI(prompt);
+
+    if (isPR) {
+      // ✅ PR 模式：写入文件
+      fs.writeFileSync("ai-review-result.md", review);
+      console.log("✅ AI Review 报告已生成: ai-review-result.md");
+    } else {
+      // ✅ 本地模式：打印到控制台
+      console.log("\n" + "=".repeat(60));
+      console.log("📋 AI Code Review 报告");
+      console.log("=".repeat(60));
+      console.log("\n" + review + "\n");
+      console.log("=".repeat(60));
+
+      const reportPath = path.resolve(__dirname, "../ai-review-report.txt");
+      fs.writeFileSync(reportPath, review);
+      console.log(`\n✅ 报告已保存至: ${reportPath}`);
+    }
+  } catch (err) {
+    const error = err as Error;
+    console.error("❌ AI 调用失败:", error.message);
+    console.log("\n💡 可以手动复制以下 Prompt 发给 AI：");
+    console.log("=".repeat(60));
+    console.log(prompt);
+    console.log("=".repeat(60));
+  }
+}
+
+main().catch((err) => {
+  const error = err as Error;
+  console.error("❌ 执行失败:", error.message);
+  process.exit(1);
+});
+```
+
+## 3.创建GitHub Actions工作流文件
+
+在 `.github/workflows` 文件夹下创建一个名为 `ai-review.yml` 的文件，内容如下：
+
+```yml
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "pnpm"
+
+      - name: 安装依赖
+        run: pnpm install
+
+      - name: 生成知识图谱（如果还没有）
+        run: |
+          if [ ! -f knowledge-graph.json ]; then
+            pnpm graph
+          else
+            echo "✅ 知识图谱已存在，跳过生成"
+          fi
+
+      - name: 运行 AI Code Review（PR 模式）
+        id: review
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          pnpm ai-review --pr
+
+      - name: 将 Review 结果发布到 PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            let reviewContent = '🤖 **AI Code Review 报告**\n\n';
+            try {
+              const content = fs.readFileSync('ai-review-result.md', 'utf-8');
+              reviewContent += content;
+            } catch (e) {
+              reviewContent += '⚠️ 未能生成 Review 报告，请检查脚本执行日志。';
+            }
+
+            const prNumber = context.payload.pull_request.number;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: reviewContent
+            });
+```
+
+---
+
 # 附：ignore文件内部书写格式
 
 ```
+
 ## 基础语法规则
 
 1. `#` 开头 = 注释，git 忽略这一行
 
 # 这是一行注释
-node_modules
 
+node_modules
 
 2. 写文件夹名字：直接写文件夹名称，匹配整个目录以及内部全部内容
 
 # 忽略 node_modules 整个文件夹
+
 node_modules
 
 # 忽略 dist 输出目录
-dist
 
+dist
 
 3. `*` 通配符：匹配任意字符（不匹配 `/`）
 
-*.log       # 所有 .log 后缀文件
-*.local     # 所有 .local 后缀文件
-
+_.log # 所有 .log 后缀文件
+_.local # 所有 .local 后缀文件
 
 4. `**` 递归通配符，匹配任意层级子目录
 
-**/temp     # 任意层级下面的 temp 文件夹
-
+\*\*/temp # 任意层级下面的 temp 文件夹
 
 5. `/` 斜杠含义
+
 - 写在**开头**：代表项目根目录，只匹配根目录下的文件
 
-/dist   # 只忽略根目录dist文件夹，子文件夹里的dist不会被忽略
+/dist # 只忽略根目录dist文件夹，子文件夹里的dist不会被忽略
 
 - 写在**末尾**：代表这是一个**文件夹**
 
-logs/   # 只匹配文件夹logs，不会匹配名叫logs的文件
-
+logs/ # 只匹配文件夹logs，不会匹配名叫logs的文件
 
 6. `!` 取反（不忽略，强制纳入 git）
-> 优先级：先忽略，再用！取消忽略。
+   > 优先级：先忽略，再用！取消忽略。
 
-.vscode/*          # 忽略 .vscode 下面全部文件
-!.vscode/extensions.json  # 唯独这个文件不要忽略，要提交进仓库
+.vscode/\* # 忽略 .vscode 下面全部文件
+!.vscode/extensions.json # 唯独这个文件不要忽略，要提交进仓库
 
 > 非常常用：把编辑器推荐插件配置提交给团队，但是忽略 vscode 本地用户设置
+
 ```
 
 ---

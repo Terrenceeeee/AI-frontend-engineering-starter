@@ -6,7 +6,7 @@
 
 ## 1. Project Introduction
 
-This project is based on the **Vue 3 + TypeScript + Vite + pnpm** stack. Through 23 topic demos and 1 AI Code Review tool, it fully practices the engineering workflow from local development to online deployment.
+This project is based on the **Vue 3 + TypeScript + Vite + pnpm** stack. Through 28 topic demos and 2 AI Code Review tool, it fully practices the engineering workflow from local development to online deployment.
 
 **Core goal**: solve common team pain points such as uncontrollable code quality in multi-person collaboration, cumbersome deployment processes, and difficult online issue diagnosis.
 
@@ -314,7 +314,7 @@ Script                scripts/rollback.ts                        Reuse after cha
 - Author: ChamLerrence
 - GitHub: https://github.com/terrenceeeee
 - Completion time: September 2026
-- Learning path: built 23 engineering demos + AI Code Review project from scratch
+- Learning path: built 28 engineering demos + AI Code Review project from scratch
 
 ---
 

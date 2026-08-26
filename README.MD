@@ -6,7 +6,7 @@
 
 ## 一、项目简介
 
-本项目基于 **Vue3+Typescript+Vite+pnpm** 技术栈，通过23个专题Demo+1个AI Code Review工具，完整实践了从“本地开发”到“线上部署”的工程化全流程。
+本项目基于 **Vue3+Typescript+Vite+pnpm** 技术栈，通过28个专题Demo+2个AI Code Review工具，完整实践了从“本地开发”到“线上部署”的工程化全流程。
 
 **核心目标**：解决多人协作线下代码质量不可控，部署流程繁琐，线上问题难定位等团队痛点。
 
@@ -319,7 +319,7 @@ GitHub Pages 地址：https://terrenceeeee.github.io/Front-end-engineering/
 - 作者：ChamLerrence
 - GitHub: https://github.com/terrenceeeee
 - 完成时间：2026 年 9 月
-- 学习路径：从零搭建 23 个工程化 Demo + AI Code Review 项目
+- 学习路径：从零搭建 28 个工程化 Demo + AI Code Review 项目
 
 ---
 
