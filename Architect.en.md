@@ -1400,6 +1400,10 @@ Stores status from the most recent E2E test run, for example:
 ‑ Whether the test suite passed
 ‑ List of failed test cases
 
+![alt text](<screenshots/Screenshot 2026-08-26 093354.png>)
+
+#### It can be observed that all six CI quality gates have passed.
+
 ---
 
 # Standardized Open‑Source Project Supplement: DEMO27: Root‑Level .gitignore Deployment, Restricting Git Tracking, Tuning Prettier Scope & Adding Real‑World Unit Tests
@@ -1603,6 +1607,69 @@ navigator;
 localStorage;
 location;
 ```
+
+![alt text](<screenshots/Screenshot 2026-08-26 084802.png>)
+![alt text](<screenshots/Screenshot 2026-08-26 084807.png>)
+
+```
+Now the coverage report is no longer empty. Current coverage metrics:
+- Statements: 77.98%
+- Lines: 79.2%
+- Functions: 93.75%
+
+> **Coverage is NOT testing itself. It is a statistics reporting tool** that tells you: **how much of your source code has been executed by your unit tests**.
+> Four metrics: `%Stmts` (Statement), `%Branch`, `%Funcs` (Function), `%Lines` (Line)
+
+### Practical meaning of each metric
+
+1. **% Lines (Line Coverage)**
+The percentage of lines in your TypeScript source code that get executed during unit‑test runs.
+
+>
+> 79.2%: 79.2% of source lines in the project are hit by unit tests; the remaining 20.8% of lines have never been executed in tests.
+
+2. **% Stmts (Statement Coverage)**
+One single line may contain multiple JS/TS statements. This metric counts every executable statement, which is more granular than line coverage.
+
+3. **% Funcs (Function Coverage)**
+The percentage of source‑code functions invoked during tests. In this project it reaches 93.75%, meaning most functions have been exercised.
+
+4. **% Branch Coverage [High‑frequency interview topic]**
+Covers `if‑else`, ternary expressions, `&&`, `||`, `switch` statements.
+
+>
+> A branch is only counted as covered when both the if branch AND the else branch are executed.
+> The overall branch coverage is only 68.49%, indicating many `else` branches have never been triggered by unit tests.
+
+5. Uncovered Line #s
+Directly shows line numbers of source code that have never been reached during unit‑test execution.
+
+```
+
+#### PS: Real‑world usage of code coverage
+
+1. 📍**Spot gaps: identify logic without test cases**
+   Uncovered line numbers reveal code paths lacking unit tests, which are potential bug hot‑spots and require additional test cases.
+2. 🚧Set threshold gates for CI (configure the `thresholds` field under `test` in vitest.config.ts)
+
+```
+coverage:{
+  provider: 'v8', // coverage engine, options: v8(default) / istanbul
+  thresholds:{
+    lines:70,    // minimum line‑coverage threshold: 70%
+    branches:60, // minimum branch‑coverage threshold: 60%
+    functions:80
+  },
+  // Count source code only under src, exclude test files
+  include: ['src/**/*.ts'],
+  exclude: ['src/**/_tests_/**/*'],
+}
+```
+
+If actual coverage falls below configured thresholds, **CI fails directly and blocks PR merge**.
+
+> 100% coverage is NOT mandatory! It brings extremely high maintenance cost. For utils in business projects, 70‑80% coverage is acceptable.
+> Common misconception: High coverage ≠ bug‑free code. 100% coverage is not a hard requirement!
 
 ---
 
