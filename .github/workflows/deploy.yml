@@ -45,7 +45,7 @@ jobs:
 
       - name: 构建网站
         env:
-          VITE_BASE_PATH: /Front-end-engineering/
+          VITE_BASE_PATH: /AI-frontend-engineering-starter/
         run: pnpm build
 
       - name: 支持 Vue Router 历史模式

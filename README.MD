@@ -1,3 +1,11 @@
+[![CI Status](https://img.shields.io/badge/CI-passing-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter/actions)
+[![Coverage](https://img.shields.io/badge/coverage-78%25-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter)
+[![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![Deploy](https://img.shields.io/badge/GitHub%20Pages-online-blueviolet)](https://terrenceeeee.github.io/AI-frontend-engineering-starter/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter/pulls)
+
+# “从零到一，亲手搭建一套生产级前端工程化体系。28 个实战 Demo，打通编码、测试、部署、监控全链路。”
+
 # 🚀 前端工程化实战项目集
 
 > 从0搭建完整的企业级前端工程化体系，覆盖代码规范，CI/CD,性能优化，AI辅助审查全链路
@@ -6,11 +14,30 @@
 
 ## 一、项目简介
 
-本项目基于 **Vue3+Typescript+Vite+pnpm** 技术栈，通过28个专题Demo+2个AI Code Review工具，完整实践了从“本地开发”到“线上部署”的工程化全流程。
+本仓库实现了一套**前端工程化最小可行产品（MVP）**，技术栈基于 **Vue 3 + TypeScript + Vite + pnpm**，系统完整演示了从本地代码开发到线上运维的全链路工程化实践。
 
-**核心目标**：解决多人协作线下代码质量不可控，部署流程繁琐，线上问题难定位等团队痛点。
+项目覆盖包管理、代码规范、构建优化、自动化脚本、CI/CD 流水线、单元测试与 E2E 测试、性能监控、调试工具链、请求治理、离线缓存、AI 辅助开发等前端工程化核心领域，通过 Demo1、Demo2 两套示例完成流程验证。当前可直接运行的 Demo2，重点实现了环境配置、路由代码分割、网络治理、调试工具、自动化测试、部署回滚以及 AI 代码评审能力。
 
-**全程流程展示**：配有全程从搭建到代码到测试到完善的完整流程 fork 即看即用 快速上手 易于理解
+### 解决的问题
+
+- 多人协作场景下代码风格不统一
+- 部署流程繁琐，极易出现人为错误
+- 线上故障难以快速定位排查
+- 缺少体系化的前端工程化知识框架
+
+### 适用人群
+
+- 希望系统学习前端工程化的初中级开发者
+- 正在搭建团队工程化基础设施的技术负责人
+- 备考高级前端岗位的面试求职者
+
+### 核心目标
+
+解决团队开发中的典型痛点：协作开发时代码质量参差不齐、部署流程冗长繁琐、线上问题难以诊断。
+
+### 全流程实践
+
+本仓库完整记录了项目初始化、编码、测试到部署的整套流程。克隆仓库，参照文档即可上手体验。
 
 ---
 
@@ -141,8 +168,8 @@ demo/
 |            └── product/
 |                └── index.vue
 ├── screenshots/
-├── Architect.MD
-├── Architect.en.MD
+├── Architecture.MD
+├── Architecture.en.MD
 ├── .gitignore
 ├── LICENSE
 ├── README.en.md
@@ -156,15 +183,17 @@ node_modules/
 ## 三、技术栈与工具链
 
 ```
-- | 框架 | Vue3+Typescript |
+- | 框架 | Vue 3 + TypeScript |
 - | 构建工具 | Vite |
 - | 包管理工具 | pnpm |
+- | 状态管理 | Pinia |
+- | 路由 | Vue Router |
 - | 代码规范 | ESLint+Prettier |
 - | CI/CD | Github Actions + Github Pages|
 - | 单元测试 | Vitest |
 - | 代码规范 | ESLint+Prettier+Husky+Lint-Staged |
 - | E2E测试 | Playwright |
-- | 网络治理 | Axios + 请求池 +指数退避重试 |
+- | 网络治理 | Axios + 请求池 + 指数退避重试 |
 - | 抓包代理 | whistle |
 - | 调试工具 | vConsole + SourceMap + 远程日志回捞 |
 - | 性能优化 | Lighthouse |
@@ -186,6 +215,8 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 - ESLint + Prettier + Husky 强制代码规范，不合格代码无法提交
 - 多环境配置（.env.production/.env.staging/.env.development），不同环境不同配置 一套代码三套环境
 - 自动化代码生成器(`pnpm gen`)，一键生成界面/ API / Store骨架
+- 路径别名 `@` 指向 `src`，统一源码导入方式
+- `pnpm type-check`、`pnpm lint:check`、`pnpm format:check` 分别校验类型、代码规范和格式
 ```
 
 ### 2.构建与性能优化
@@ -195,6 +226,7 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 - SourceMap生产报错精准定位源码
 - CDN 路径配置 + 版本资源号 hash 控制浏览器缓存
 - Lighthouse性能分析，性能优化
+- Vite 通过 `manualChunks` 将 Vue 和 Vue Router 拆分为 `vue-vendor`，并保留 Source Map 方便定位生产问题
 ```
 
 ### 3.网络层治理
@@ -210,6 +242,7 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 ```
 - 单元测试：Vitest，覆盖核心工具函数
 - E2E测试：Playwright自动打开浏览器，模拟用户真实操作
+- 当前 E2E 冒烟用例覆盖首页加载和用户中心路由跳转
 - CI流水线：Github Actions，push后自动执行 lint+test+build,失败则阻止合并
 - CD流水线：CI通过后自动构建并发布到Github Pages
 - 部署与回滚：`pnpm deploy` 备份+部署+冒烟测试，`pnpm rollback` 回滚一键恢复
@@ -229,41 +262,115 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 
 ```
 - 知识图谱生成：`ts-morph` 静态分析源码，`d3.js` 可视化展示函数依赖关系
-- AI Code Review 三种方式：
-  - 方式一：手动复制 Prompt 喂给 AI（最低成本）
-  - 方式二：基于 `pnpm graph` 生成知识图谱后半自动整理 Prompt
-  - 方式三：配置 API Key 全自动调用 AI 生成报告
+ AI Code Review 三种方式：
+   - 方式一：手动复制 Prompt 喂给 AI（最低成本）
+   - 方式二：基于 `pnpm graph` 生成知识图谱后半自动整理 Prompt
+   - 方式三：配置 API Key 全自动调用 AI 生成报告
+- `pnpm ai-review` 会读取 Git Diff 和 `knowledge-graph.json`，结合 `DEEPSEEK_API_KEY` 生成影响范围与合并建议
+
+```
+
+### 7.当前可访问页面
+
+- `/`：环境信息、请求池并发控制、重试、Whistle Mock、WebSocket、远程日志和隐藏调试入口
+- `/user`：用户中心懒加载页面
+- `/admin`：管理后台懒加载页面
+- `/product`：由代码生成器生成的 Product 页面示例
+
+```
+
 ```
 
 ---
 
 ## 五、快速启动
 
-```bash
-# 1.安装依赖
+# 进入当前主项目
+
+cd Demo2/demo2-env
+
+# 1. 安装依赖
+
+pnpm i
+
 - pnpm i
 
-# 2.启动开发环境
+# 2. 启动开发环境（默认 http://127.0.0.1:5173）
+
+pnpm dev
+
 - pnpm dev
 
-# 3.启动生产环境
-- pnpm build
+# 3. 类型检查、代码检查与格式检查
+
+pnpm type-check
+pnpm lint:check
+pnpm format:check
+
+# 4. 启动生产预览
+
+pnpm build
+pnpm preview
+
 - pnpm preview
 
-# 4.启动测试环境
-- pnpm test  # 单元测试
-- pnpm test:e2e  # E2E测试
+# 5. 启动测试
 
-# 5.构建与部署
-- pnpm build  # 构建生产产物
+pnpm test # 单元测试
+pnpm test:coverage # 单元测试并生成覆盖率
+pnpm test:e2e # Playwright E2E 测试
+pnpm test:e2e:ui # Playwright UI 模式
+
+- pnpm test:e2e # E2E测试
+
+# 6. 构建与部署
+
+pnpm deploy # 构建、备份、部署并执行冒烟测试
+
 - pnpm deploy # 自动化部署
 
-# 6.回滚
+# 7. 回滚
+
+pnpm rollback
+
 - pnpm rollback # 一键回滚
 
-# 7.AI辅助研发
-- pnpm graph # 知识图谱生成
-- 将 knowledge-graph.json 作为上下文输入 AI，生成 AI Code Review
+# 8. AI 辅助研发
+
+pnpm graph # 生成 knowledge-graph.json 和 visualize.html
+
+# 配置 DEEPSEEK_API_KEY 后再执行
+
+pnpm ai-review
+
+# 9. 代码生成
+
+pnpm gen # 交互式生成 view + api + store
+
+# pnpm gen -- --force # 允许覆盖已存在文件
+
+````
+
+### 环境变量
+
+项目提供 `.env.development`、`.env.staging`、`.env.production` 和 `.env.test` 配置文件。复制 `.env.example` 后，根据运行场景调整 `VITE_BASE_PATH` 等变量；AI Review 还需要配置 `DEEPSEEK_API_KEY`，不要将密钥提交到仓库。
+
+```bash
+# 例如使用 staging 配置启动
+pnpm vite --mode staging
+````
+
+### 知识图谱与 AI Review
+
+```bash
+# 先生成源码依赖图
+pnpm graph
+
+# 打开生成的可视化页面
+# visualize.html
+
+# 配置密钥后自动生成 Review
+# PowerShell：$env:DEEPSEEK_API_KEY="sk-xxx"; pnpm ai-review
 ```
 
 ## 六、项目亮点
@@ -283,7 +390,7 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 ## 七、在线演示
 
 ```
-GitHub Pages 地址：https://terrenceeeee.github.io/Front-end-engineering/
+GitHub Pages 地址：https://terrenceeeee.github.io/AI-frontend-engineering-starter/
 
 知识图谱示例：运行 pnpm graph 后生成 visualize.html 打开即可查看
 ```

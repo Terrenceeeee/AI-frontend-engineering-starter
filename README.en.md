@@ -1,16 +1,43 @@
-# Front-End Engineering Practice Project Collection
+﻿[![CI Status](https://img.shields.io/badge/CI-passing-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter/actions)
+[![Coverage](https://img.shields.io/badge/coverage-78%25-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter)
+[![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![Deploy](https://img.shields.io/badge/GitHub%20Pages-online-blueviolet)](https://terrenceeeee.github.io/AI-frontend-engineering-starter/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter/pulls)
 
-> Builds a complete enterprise-level front-end engineering system, covering the full chain of code standards, CI/CD, performance optimization, and AI-assisted review.
+# “Build a production‑ready frontend engineering system from scratch. 28 hands‑on demos covering the entire lifecycle – from code to monitoring.”
+
+# 🚀 Front-End Engineering Practice Project Collection
+
+> A practical collection for building an enterprise-level front-end engineering workflow, covering code standards, CI/CD, performance optimization, observability, and AI-assisted review.
 
 ---
 
-## 1. Project Introduction
+## Project Introduction
 
-This project is based on the **Vue 3 + TypeScript + Vite + pnpm** stack. Through 28 topic demos and 2 AI Code Review tool, it fully practices the engineering workflow from local development to online deployment.
+This repository implements a **Minimum Viable Product (MVP) for frontend engineering**, built with **Vue 3 + TypeScript + Vite + pnpm**. It systematically demonstrates the full‑chain engineering practices from local code development through to production operation and maintenance.
 
-**Core goal**: solve common team pain points such as uncontrollable code quality in multi-person collaboration, cumbersome deployment processes, and difficult online issue diagnosis.
+Covering core frontend engineering domains including package management, code style standardization, build optimization, automation scripts, CI/CD pipelines, unit testing & E2E testing, performance monitoring, debugging toolchains, request governance, offline caching, and AI‑assisted development, the project validates workflows via Demo1 and Demo2. The functional Demo2 focuses on environment configuration, route code‑splitting, network governance, debugging utilities, automated testing, deployment & rollback, as well as AI Code Review.
 
----
+### Problems solved
+
+- Inconsistent code styles across multi‑person collaboration
+- Cumbersome and error‑prone deployment workflows
+- Difficulties in rapid troubleshooting for production‑side issues
+- Lack of systematic knowledge of frontend engineering
+
+### Target audience
+
+- Junior‑to‑intermediate developers aiming to learn frontend engineering systematically
+- Tech leads building engineering infrastructure for their teams
+- Candidates preparing for senior‑level frontend interviews
+
+### Core goals
+
+Resolve typical team pain points including inconsistent code quality in collaborative development, tedious deployment procedures, and hard‑to‑diagnose online failures.
+
+### End‑to‑end practice
+
+## The repo records the complete workflow spanning project initialization, coding, testing and deployment. Clone the repository and follow the documentation to run and explore.
 
 ## 2. Project Structure
 
@@ -137,10 +164,11 @@ demo/
 |               └── product/
 |                   └── index.vue
 ├── screenshots/
-├── Architect.MD
-├── Architect.en.MD
+├── Architecture.MD
+├── Architecture.en.MD
 ├── LICENSE
 ├── .gitignore
+├── README.en.md
 └── README.md
 
 Omitted:
@@ -277,7 +305,7 @@ AI-assisted Code Review: the knowledge graph precisely analyzes impact scope, an
 ## 7. Online Demo
 
 ```text
-GitHub Pages URL: https://terrenceeeee.github.io/Front-end-engineering/
+GitHub Pages URL: https://terrenceeeee.github.io/AI-frontend-engineering-starter/
 
 Knowledge graph demo: run `pnpm graph` to generate `visualize.html`, then open it to view the graph.
 ```

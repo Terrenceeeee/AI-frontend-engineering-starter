@@ -1,3 +1,84 @@
+[![CI Status](https://img.shields.io/badge/CI-passing-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter/actions)
+[![Coverage](https://img.shields.io/badge/coverage-78%25-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter)
+[![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![Deploy](https://img.shields.io/badge/GitHub%20Pages-online-blueviolet)](https://terrenceeeee.github.io/AI-frontend-engineering-starter/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter/pulls)
+
+# 📚 Frontend Engineering Architecture in Practice — Table of Contents
+
+> Covers 28 core demos + 3 specification appendices, spanning the entire engineering toolchain from local development to AI-assisted workflows.
+
+---
+
+## I. Core Architecture & Package Management
+
+- [DEMO 1: Key Differences Between pnpm and npm (Hard Links & Inode Verification)](#demo1-pnpm和npm的不同点txt)
+- [DEMO 2: Vite Multi-Environment Configuration & Runtime Mode Validation](#demo2vite-多环境配置与-mode-运行时验证)
+
+## II. Code Quality & Automated Standards
+
+- [DEMO 3: Full Workflow of ESLint + Prettier + Husky + lint-staged (with Pitfalls)](#demo3eslint--prettier--husky--lint-staged-全流程卡点实战-直接在demo2内操作)
+- [DEMO 24: Standardization Enhancements (.env Management, ESLint Ignores, .gitignore Improvements)](#彻底规范化补充demo24规范化eslint配置)
+- [DEMO 25: Open-Source Project Standards (Standardized README & LICENSE)](#规范化开源项目补充demo25规范化readmemd-以及规范化的license文件的创建)
+- [DEMO 26: Prettier Automation & CI Gate Enhancements](#规范化开源项目补充demo26规范化prettier运行以及cicd功能增加与修改的完善)
+- [DEMO 27: Root Directory Governance & Real-World Unit Test Coverage](#规范化开源项目补充demo27规范化根目录gitignore文件部署限制git跟踪修改prettier格式化范围以及补充真实的单元测试)
+
+## III. Build Optimization & Performance Strategies
+
+- [DEMO 4: Vite Code Splitting & Lazy Loading (Including Hash-Based Caching)](#demo4-vite-分包策略与路由懒加载效果验证)
+- [DEMO 11: CDN Acceleration Simulation (Base Path & http-server)](#demo11cdn-加速模拟)
+
+## IV. Automation Scripts & Deployment Systems
+
+- [DEMO 5: Automated Code Generator Based on fs + inquirer](#demo5基于-fs--inquirer-的自动化代码生成器)
+- [DEMO 9: Automated Deployment Script (Backup + Simulated Nginx Reload)](#demo9自动化部署脚本)
+- [DEMO 10: Version Rollback Mechanism (Interactive Backup Selection & Restore)](#demo10版本回滚机制--写一个回滚脚本列出所有备份版本选择其中一个快速恢复模拟线上出问题后秒级回滚)
+- [DEMO 22: Continuous Deployment (CD) to GitHub Pages](#demo22-github-pages-持续部署cd)
+
+## V. CI/CD Pipelines (Continuous Integration & Delivery)
+
+- [DEMO 6: GitHub Actions CI Pipeline (Lint + Test + Build)](#demo-6-github-actions-ci-流水线)
+- [DEMO 21: Major CI/CD Overhaul (Type Hardening & Error Fixes)](#demo21cicd-github-actions-大修改)
+- [DEMO 23: Playwright E2E Configuration Overhaul (Specified Directories & Auto-Start)](#demo23-playwright-e2e端到端测试可实现化大修改)
+
+## VI. Testing Systems (Unit & E2E)
+
+- [DEMO 7: Playwright End-to-End (E2E) Testing](#demo-7playwright-端到端e2e测试对应导图中的-e2e-部分)
+- [DEMO 27 (Extended): Vitest Real-World Business Tests (RequestPool/Logger/Retry)](#规范化开源项目补充demo27规范化根目录gitignore文件部署限制git跟踪修改prettier格式化范围以及补充真实的单元测试)
+
+## VII. Observability, Monitoring & Debugging
+
+- [DEMO 8: Performance Monitoring SDK (LCP/CLS/FID/TTFB)](#demo-8性能监控-sdk对应导图中的运行时监控层)
+- [DEMO 15: Local Packet Capture with Whistle & HTTPS Decryption (Including CORS Bypass)](#demo-15本地抓包环境配置--https-解密验证)
+- [DEMO 16: vConsole Debug Hook + SourceMap Configuration](#demo-16vconsole-调试钩子--sourcemap-配置)
+- [DEMO 18: Remote Log Retrieval System (localStorage Storage & Export)](#demo18远程日志回捞系统)
+- [DEMO 19: Hidden Debug Entry in Production (Tap Logo 5 Times to Load vConsole)](#demo19线上隐藏调试入口)
+
+## VIII. Network Layer Deep Control
+
+- [DEMO 12: Request Pool & Concurrency Control (Limiting to 6 Concurrent Requests per Domain)](#demo12请求池与并发控制)
+- [DEMO 13: Exponential Backoff Retry Mechanism (Preventing Thundering Herd & Infinite Loops)](#demo13指数退避重试限制最大重试次数杜绝无限死循环)
+- [DEMO 17: WebSocket Bidirectional Communication (Full-Duplex & Persistent Connections)](#demo-17websocket-双向通信验证)
+
+## IX. Offline & Edge Caching
+
+- [DEMO 14: Service Worker Offline Caching (Accessible Even Without Network)](#demo-14service-worker-离线缓存断网依旧可以加载资源)
+
+## X. AI-Assisted Intelligence & Visualization
+
+- [DEMO 20: Generating Project Knowledge Graphs with ChatGPT + d3.js](#demo20使用chatgpt和d3js美观的绘制项目关联知识图谱)
+- [DEMO 28: AI-Assisted PR Development (DeepSeek Code Review & Impact Analysis)](#智能化ai辅助开发补充demo28ai结合pr辅助开发分析代码改动风险等等)
+
+---
+
+## 📎 Appendices: Quick Reference for Engineering Standards
+
+- [Appendix 1: .gitignore File Syntax Rules](#附ignore文件内部书写格式)
+- [Appendix 2: Git Commit Message Specifications (feat/fix/docs/...)](#附git提交信息规范)
+- [Appendix 3: Quick Reference for Markdown Code Block Suffixes](#附md文档后缀类型)
+
+---
+
 # DEMO1. Differences Between pnpm And npm
 
 ## In Git Bash, create two identical Vue projects with different package managers: npm and pnpm
@@ -947,8 +1028,8 @@ Flow:
 ```text
 1. After the master branch updates, deploy.yml triggers CD deployment to GitHub Pages.
 2. Actions enters Demo2/demo2-env, installs dependencies, and runs pnpm build.
-3. VITE_BASE_PATH is injected as /Front-end-engineering/.
-4. vite.config.js uses it as base so asset paths point to https://terrenceeeee.github.io/Front-end-engineering/.
+3. VITE_BASE_PATH is injected as /AI-frontend-engineering-starter/.
+4. vite.config.js uses it as base so asset paths point to https://terrenceeeee.github.io/AI-frontend-engineering-starter/.
 5. dist is uploaded and published to Pages.
 ```
 

@@ -1,3 +1,86 @@
+[![CI Status](https://img.shields.io/badge/CI-passing-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter/actions)
+[![Coverage](https://img.shields.io/badge/coverage-78%25-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter)
+[![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![Deploy](https://img.shields.io/badge/GitHub%20Pages-online-blueviolet)](https://terrenceeeee.github.io/AI-frontend-engineering-starter/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter/pulls)
+
+# 📚 前端工程化架构实战 —— 目录索引
+
+> 共 28 个核心 Demo + 3 个规范附录，覆盖从本地开发到 AI 辅助的全链路工程化能力。
+
+---
+
+## 一、基础架构与包管理
+
+- [DEMO 1：pnpm 与 npm 的核心差异（硬链接与 inode 验证）](#demo1-pnpm-和npm的不同点txt)
+- [DEMO 2：Vite 多环境配置与 mode 运行时验证](#demo2vite-多环境配置与-mode-运行时验证)
+
+## 二、代码质量与自动化规范
+
+- [DEMO 3：ESLint + Prettier + Husky + lint-staged 全流程卡点实战](#demo3eslint--prettier--husky--lint-staged-全流程卡点实战-直接在demo2内操作)
+- [DEMO 24：规范化补充（.env 治理、ESLint 忽略、Gitignore 完善）](#彻底规范化补充demo24规范化eslint配置)
+- [DEMO 25：开源项目规范（README 与 LICENSE 标准化）](#规范化开源项目补充demo25规范化readmemd-以及规范化的license文件的创建)
+- [DEMO 26：Prettier 自动化与 CI 门禁增强](#规范化开源项目补充demo26规范化prettier运行以及cicd功能增加与修改的完善)
+- [DEMO 27：根目录治理与真实的单元测试覆盖率](#规范化开源项目补充demo27规范化根目录gitignore文件部署限制git跟踪修改prettier格式化范围以及补充真实的单元测试)
+
+## 三、构建优化与性能策略
+
+- [DEMO 4：Vite 分包策略与路由懒加载（含 hash 缓存原理）](#demo4-vite-分包策略与路由懒加载效果验证)
+- [DEMO 11：CDN 加速模拟（base 路径与 http-server）](#demo11cdn-加速模拟)
+
+## 四、自动化脚本与部署体系
+
+- [DEMO 5：基于 fs + inquirer 的自动化代码生成器](#demo5基于-fs--inquirer-的自动化代码生成器)
+- [DEMO 9：自动化部署脚本（备份 + 模拟 Nginx 刷新）](#demo9自动化部署脚本)
+- [DEMO 10：版本回滚机制（交互式选择备份恢复）](#demo10版本回滚机制--写一个回滚脚本列出所有备份版本选择其中一个快速恢复模拟线上出问题后秒级回滚)
+- [DEMO 22：GitHub Pages 持续部署（CD）](#demo22-github-pages-持续部署cd)
+
+## 五、CI/CD 流水线（持续集成与交付）
+
+- [DEMO 6：GitHub Actions CI 流水线（Lint + Test + Build）](#demo-6-github-actions-ci-流水线)
+- [DEMO 21：CI/CD 大修（类型强化与错误修复）](#demo21cicd-github-actions-大修改)
+- [DEMO 23：Playwright E2E 配置大修（指定目录与自动启动）](#demo23-playwright-e2e端到端测试可实现化大修改)
+
+## 六、测试体系（单元 & E2E）
+
+- [DEMO 7：Playwright 端到端（E2E）测试](#demo-7playwright-端到端e2e测试对应导图中的-e2e-部分)
+- [DEMO 27（延伸）：Vitest 真实业务测试（RequestPool/Logger/Retry）](#规范化开源项目补充demo27规范化根目录gitignore文件部署限制git跟踪修改prettier格式化范围以及补充真实的单元测试)
+
+## 七、可观测性、监控与调试
+
+- [DEMO 8：性能监控 SDK（LCP/CLS/FID/TTFB）](#demo-8性能监控-sdk对应导图中的运行时监控层)
+- [DEMO 15：Whistle 本地抓包与 HTTPS 解密（含 CORS 绕过）](#demo-15本地抓包环境配置--https-解密验证)
+- [DEMO 16：vConsole 调试钩子 + SourceMap 配置](#demo-16vconsole-调试钩子--sourcemap-配置)
+- [DEMO 18：远程日志回捞系统（localStorage 存储与导出）](#demo18远程日志回捞系统)
+- [DEMO 19：线上隐藏调试入口（Logo 连点 5 次加载 vConsole）](#demo19线上隐藏调试入口)
+
+## 八、网络层深度控制
+
+- [DEMO 12：请求池与并发控制（限制同域名 6 个并发）](#demo12请求池与并发控制)
+- [DEMO 13：指数退避重试机制（防止雪崩与无限死循环）](#demo13指数退避重试限制最大重试次数杜绝无限死循环)
+- [DEMO 17：WebSocket 双向通信验证（全双工与长连接）](#demo-17websocket-双向通信验证)
+
+## 九、离线化与边缘缓存
+
+- [DEMO 14：Service Worker 离线缓存（断网依然可访问）](#demo-14service-worker-离线缓存断网依旧可以加载资源)
+
+## 十、智能化辅助（AI + 可视化）
+
+- [DEMO 20：ChatGPT + d3.js 生成项目知识图谱](#demo20使用chatgpt和d3js美观的绘制项目关联知识图谱)
+- [DEMO 28：AI 辅助 PR 开发（DeepSeek 代码审查与影响范围分析）](#智能化ai辅助开发补充demo28ai结合pr辅助开发分析代码改动风险等等)
+
+---
+
+## 📎 附录：工程化规范速查
+
+- [附 1：.gitignore 文件书写格式](#附ignore文件内部书写格式)
+- [附 2：Git Commit 信息规范（feat/fix/docs...）](#附git提交信息规范)
+- [附 3：Markdown 代码块后缀类型速查](#附md文档后缀类型)
+
+---
+
+<!-- 正文开始！ -->
+
 # DEMO1. pnpm 和npm的不同点
 
 ## 图为在Git bash中 分别创建两个不同的依赖（npm pnpm）创建的相同的vue文件
@@ -4305,7 +4388,7 @@ jobs:
 
       - name: 构建网站
         env:
-          VITE_BASE_PATH: /Front-end-engineering/
+          VITE_BASE_PATH: /AI-frontend-engineering-starter/
         run: pnpm build
 
       - name: 支持 Vue Router 历史模式
@@ -4359,10 +4442,10 @@ Settings → Pages → Build and deployment → Source → GitHub Actions
 本仓库的 Pages 地址为：
 
 ```text
-https://terrenceeeee.github.io/Front-end-engineering/
+https://terrenceeeee.github.io/AI-frontend-engineering-starter/
 ```
 
-由于仓库不是用户主页仓库，Vite 的资源前缀设置为 `/Front-end-engineering/`，Vue Router 也使用同一个 `BASE_URL`。不要把这里改回单独的 `/`，否则部署后 JavaScript 和 CSS 会请求错误路径。
+由于仓库不是用户主页仓库，Vite 的资源前缀设置为 `/AI-frontend-engineering-starter/`，Vue Router 也使用同一个 `BASE_URL`。不要把这里改回单独的 `/`，否则部署后 JavaScript 和 CSS 会请求错误路径。
 
 如果只修改了 README，CD 不会触发；可以进入 Actions，选择 `CD 部署到 GitHub Pages`，点击 `Run workflow` 手动发布。
 
@@ -4370,14 +4453,14 @@ https://terrenceeeee.github.io/Front-end-engineering/
 
 ### 1. Vite 的 Pages 子路径
 
-你的仓库地址是：https://github.com/Terrenceeeee/Front-end-engineering
+你的仓库地址是：https://github.com/Terrenceeeee/AI-frontend-engineering-starter
 
-它不是用户主页仓库，所以部署地址会带仓库名：https://terrenceeeee.github.io/Front-end-engineering/
+它不是用户主页仓库，所以部署地址会带仓库名：https://terrenceeeee.github.io/AI-frontend-engineering-starter/
 
 因此构建时必须使用：
 
 ```js
-env: VITE_BASE_PATH: /Front-end-engineering/;
+env: VITE_BASE_PATH: /AI-frontend-engineering-starter/;
 ```
 
 并且 Vite 中保留：
@@ -4390,7 +4473,7 @@ base: process.env.VITE_BASE_PATH || '/',
 
 部署后 HTML 会请求：https://terrenceeeee.github.io/assets/index.js
 
-但正确路径应该是：https://terrenceeeee.github.io/Front-end-engineering/assets/index.js
+但正确路径应该是：https://terrenceeeee.github.io/AI-frontend-engineering-starter/assets/index.js
 
 页面就会出现白屏或资源 404。
 
@@ -4402,7 +4485,7 @@ base: process.env.VITE_BASE_PATH || '/',
 
 不要改回：history: createWebHistory()
 
-否则 /Front-end-engineering/user 等子路由可能无法正确工作。
+否则 /AI-frontend-engineering-starter/user 等子路由可能无法正确工作。
 
 ## 最终达成：
 
@@ -4580,7 +4663,7 @@ secrets / environment 变化 :Github网页修改
 部署目标变化:.github/workflows/deploy.yml, vercel.json, netlify.toml, firebase.json, k8s/*.yaml
 ```
 
-## github pages中部署的静态外部展示网站(https://terrenceeeee.github.io/Front-end-engineering/)是如何实现的？
+## github pages中部署的静态外部展示网站(https://terrenceeeee.github.io/AI-frontend-engineering-starter/)是如何实现的？
 
 ### 通过GitHub Actions的CI/CD以及Github pages自动部署的
 
@@ -4590,9 +4673,9 @@ secrets / environment 变化 :Github网页修改
 1.master 分支有更新后，触发deploy.yml:name: CD 部署到 GitHub Pages
 CI/CD，CI/CD中会触发github pages自动部署
 2.Actions 进入 Demo2/demo2-env，安装依赖并执行 pnpm build
-3.构建时注入:VITE_BASE_PATH: /Front-end-engineering/
+3.构建时注入:VITE_BASE_PATH: /AI-frontend-engineering-starter/
 4.vite.config.js 里用这个值作为 base：base: process.env.VITE_BASE_PATH || '/'
-这样资源路径才会正确指向 https://terrenceeeee.github.io/Front-end-engineering/
+这样资源路径才会正确指向 https://terrenceeeee.github.io/AI-frontend-engineering-starter/
 5.然后把 dist 上传并发布到 Pages
 ```
 
