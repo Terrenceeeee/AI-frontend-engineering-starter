@@ -64,3 +64,5 @@ export class RequestPool {
 
 // 导出全局单例：整个项目共用同一个请求池，统一管控全局接口并发
 export const requestPool = new RequestPool(6);
+
+// AI Review 测试：这个改动会被 AI 审查
