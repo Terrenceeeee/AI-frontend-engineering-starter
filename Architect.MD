@@ -5940,7 +5940,30 @@ jobs:
 如果没有黄色提示条，点击 “Pull requests” 标签 → 点击 “New pull request” → 选择 feature/ai-review-test 分支 → 点击 “Create pull request”
 ```
 
-## 会看到
+![alt text](<screenshots/Screenshot 2026-08-27 092433.png>) 点击右下角的Create Pull Request即可触发AI Review
+
+### 稍等待几分钟 此时会看到
+
+![alt text](<screenshots/Screenshot 2026-08-27 093243.png>)
+发现报错了 可以看一下细节
+
+![alt text](<screenshots/Screenshot 2026-08-27 093238.png>)
+原来是CI流水线报错了 原因是刚刚修改的utils/requestPool.ts中出现了错误 建议我们使用prettier run --write格式化一下
+但是这里我们在package.json中申明过"format": "prettier --write ." 所以直接到目标文件输入pnpm format:check 看一下是什么地方出了问题
+发现是我们刚刚添加的AI Review测试代码出错了 没有按照prettier的格式在每个文件最后留一行空行 我们可以在此时直接在目标文件终端中输入pnpm format就可以自动格式化了
+
+![alt text](<screenshots/Screenshot 2026-08-27 093630.png>)
+AI Review流水线未能正常运行 原因报错是根目录下没有检测到pnpm-lock.yaml 这是因为此时的ai-review流水线是在全局运行的
+我们只想要检测Demo2文件夹
+所以在ai-review.yml中加入检测路径 就像之前在CI流水线那里加入具体的路径一样 在on中加入paths：
+
+```yml
+paths:
+  - "Demo2/demo2-env/**"
+  - ".github/workflows/deploy.yml"
+```
+
+---
 
 # 附：ignore文件内部书写格式
 

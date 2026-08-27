@@ -3,6 +3,9 @@ name: AI Code Review
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - "Demo2/demo2-env/**"
+      - ".github/workflows/deploy.yml"
 
 permissions:
   contents: read
@@ -25,8 +28,8 @@ jobs:
       - name: 安装 Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'pnpm'
+          node-version: "18"
+          cache: "pnpm"
 
       - name: 安装依赖
         run: pnpm install
@@ -52,7 +55,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            
+
             let reviewContent = '🤖 **AI Code Review 报告**\n\n';
             try {
               const content = fs.readFileSync('ai-review-result.md', 'utf-8');
@@ -60,9 +63,9 @@ jobs:
             } catch (e) {
               reviewContent += '⚠️ 未能生成 Review 报告，请检查脚本执行日志。';
             }
-            
+
             const prNumber = context.payload.pull_request.number;
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
