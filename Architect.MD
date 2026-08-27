@@ -5925,7 +5925,22 @@ jobs:
 按回车确认
 ```
 
----
+**此时显示的就会是**：
+![alt text](<screenshots/Screenshot 2026-08-27 091613.png>)
+
+### 4.创建Pull Request（PR）
+
+**直接在浏览器创建**
+
+```
+打开 GitHub 仓库页面
+
+如果看到黄色提示条“feature/ai-review-test had recent pushes”，点击 “Compare & pull request”
+
+如果没有黄色提示条，点击 “Pull requests” 标签 → 点击 “New pull request” → 选择 feature/ai-review-test 分支 → 点击 “Create pull request”
+```
+
+## 会看到
 
 # 附：ignore文件内部书写格式
 
