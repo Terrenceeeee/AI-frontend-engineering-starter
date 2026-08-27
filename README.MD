@@ -25,7 +25,8 @@ demo/
 ├── .github/
 │ └── workflows/
 │ ├── ci.yml # CI 流水线
-│ └── deploy.yml # CD 流水线
+│ ├── deploy.yml # CD 流水线
+│ └──ai-review.yml # AI Code Review
 ├── .vscode/
 │ └── setting.json # vscode 配置 此处是live server的端口配置 以及保存prettier自动化
 ├── Demo1 pnpm 硬链接与符号链接机制验证/

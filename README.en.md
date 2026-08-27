@@ -23,7 +23,8 @@ demo/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml # CI pipeline
-│       └── deploy.yml # CD pipeline
+│       ├── deploy.yml # CD pipeline
+│       └──ai-review.yml # AI Code Review
 ├── .vscode/
 │   └── setting.json # VS Code configuration, live server port configuration
 ├── Demo1 pnpm hard link and symbolic link mechanism verification/
@@ -39,103 +40,102 @@ demo/
 │       ├── tsconfig.json
 │       ├── vite.config.ts
 │       ├── playwright.config.js
-|    ├── public/
-|    │   ├── favicon.svg
-|    │   ├── icons.svg
-|    │   └── sw.js
-|    │
-|    ├── deploy/                         # Now build production artifacts
-|    │   ├── index.html
-|    │   ├── favicon.svg
-|    │   ├── icons.svg
-|    │   └── assets/
-|    │       ├── index-yMkJyNDY.js
-|    │       ├── index-yMkJyNDY.js.map
-|    │       ├── vue-vendor-Ys7FJ5fz.js
-|    │       ├── vue-vendor-Ys7FJ5fz.js.map
-|    │       └── vue-vendor-DAacDxeL.css
-|    │
-|    ├── backups/                        # History build backup
-|    │   ├── dist-2026-08-03T06-54-51-273Z/
-|    │   │   ├── index.html
-|    │   │   ├── favicon.svg
-|    │   │   ├── icons.svg
-|    │   │   └── assets/
-|    │   │       ├── index-yMkJyNDY.js
-|    │   │       ├── index-yMkJyNDY.js.map
-|    │   │       ├── vue-vendor-Ys7FJ5fz.js
-|    │   │       ├── vue-vendor-Ys7FJ5fz.js.map
-|    │   │       └── vue-vendor-DAacDxeL.css
-|    │   │
-|    │   └── dist-2026-08-03T08-04-27-411Z/
-|    │       ├── index.html
-|    │       ├── favicon.svg
-|    │       ├── icons.svg
-|    │       └── assets/
-|    │           ├── index-yMkJyNDY.js
-|    │           ├── index-yMkJyNDY.js.map
-|    │           ├── vue-vendor-Ys7FJ5fz.js
-|    │           ├── vue-vendor-Ys7FJ5fz.js.map
-|    │           └── vue-vendor-DAacDxeL.css
-|    │
-|    ├── router/
-|    │   └── index.ts
-|    │
-|    ├── scripts/
-|    │   ├── build-graph.ts
-|    │   ├── deploy.ts
-|    │   ├── generate.ts
-|    │   └── rollback.ts
-|    │
-|    ├── e2e/
-|    │   └── homepage.spec.ts
-|    │
-|    └── src/
-|        ├── App.vue
-|        ├── main.js
-|        ├── style.css
-|        │
-|        ├── assets/                      # Static resource source
-|        │   ├── hero.png
-|        │   ├── vite.svg
-|        │   └── vue.svg
-|        │
-|        ├── api/
-|        │   ├── product.ts
-|        │   └── testApi.ts
-|        │
-|        ├── components/
-|        │   ├── HelloWorld.vue
-|        │   ├── LogoDebugTrigger.vue
-|        │   └── WebSocketDemo.vue
-|        │
-|        ├── composables/
-|        │   └── useVConsole.ts
-|        │
-|        ├── stores/
-|        │   └── modules/
-|        │       └── product.ts
-|        │
-|        ├── types/
-|        │   ├── global.d.ts
-|        │   ├── logger.d.ts
-|        │   └── vconsole.d.ts
-|        │
-|        ├── utils/
-|        │   ├── logger.ts
-|        │   ├── performanceReporter.ts
-|        │   ├── request.ts
-|        │   ├── requestPool.ts
-|        │   ├── retry.ts
-|        │   └── _tests_/
-|        │       └── math.test.ts
-|        │
-|        └── views/
-|            ├── Admin.vue
-|            ├── Home.vue
-|            ├── User.vue
-|            └── product/
-|                └── index.vue
+|       ├── public/
+|       ├── favicon.svg
+|       ├── icons.svg
+|       └── sw.js
+|       ├── deploy/                         # Now build production artifacts
+|       │   ├── index.html
+|       │   ├── favicon.svg
+|       │   ├── icons.svg
+|       │   └── assets/
+|       │       ├── index-yMkJyNDY.js
+|       │       ├── index-yMkJyNDY.js.map
+|       │       ├── vue-vendor-Ys7FJ5fz.js
+|       │       ├── vue-vendor-Ys7FJ5fz.js.map
+|       │       └── vue-vendor-DAacDxeL.css
+|       │
+|       ├── backups/                        # History build backup
+|       │   ├── dist-2026-08-03T06-54-51-273Z/
+|       │   │   ├── index.html
+|       │   │   ├── favicon.svg
+|       │   │   ├── icons.svg
+|       │   │   └── assets/
+|       │   │       ├── index-yMkJyNDY.js
+|       │   │       ├── index-yMkJyNDY.js.map
+|       │   │       ├── vue-vendor-Ys7FJ5fz.js
+|       │   │       ├── vue-vendor-Ys7FJ5fz.js.map
+|       │   │       └── vue-vendor-DAacDxeL.css
+|       │   │
+|       │   └── dist-2026-08-03T08-04-27-411Z/
+|       │       ├── index.html
+|       │       ├── favicon.svg
+|       │       ├── icons.svg
+|       │       └── assets/
+|       │           ├── index-yMkJyNDY.js
+|       │           ├── index-yMkJyNDY.js.map
+|       │           ├── vue-vendor-Ys7FJ5fz.js
+|       │           ├── vue-vendor-Ys7FJ5fz.js.map
+|       │           └── vue-vendor-DAacDxeL.css
+|       │
+|       ├── router/
+|       │   └── index.ts
+|       │
+|       ├── scripts/
+|       │   ├── build-graph.ts
+|       │   ├── deploy.ts
+|       │   ├── generate.ts
+|       │   └── rollback.ts
+|       │
+|       ├── e2e/
+|       │   └── homepage.spec.ts
+|       │
+|       └── src/
+|            ├── App.vue
+|            ├── main.js
+|            ├── style.css
+|            │
+|            ├── assets/                      # Static resource source
+|            │   ├── hero.png
+|            │   ├── vite.svg
+|            │   └── vue.svg
+|            │
+|            ├── api/
+|            │   ├── product.ts
+|            │   └── testApi.ts
+|            │
+|            ├── components/
+|            │   ├── HelloWorld.vue
+|            │   ├── LogoDebugTrigger.vue
+|            │   └── WebSocketDemo.vue
+|            │
+|            ├── composables/
+|            │   └── useVConsole.ts
+|            │
+|            ├── stores/
+|            │   └── modules/
+|            │       └── product.ts
+|            │
+|            ├── types/
+|            │   ├── global.d.ts
+|            │   ├── logger.d.ts
+|            │   └── vconsole.d.ts
+|            │
+|            ├── utils/
+|            │   ├── logger.ts
+|            │   ├── performanceReporter.ts
+|            │   ├── request.ts
+|            │   ├── requestPool.ts
+|            │   ├── retry.ts
+|            │   └── _tests_/
+|            │       └── math.test.ts
+|            │
+|            └── views/
+|               ├── Admin.vue
+|               ├── Home.vue
+|               ├── User.vue
+|               └── product/
+|                   └── index.vue
 ├── screenshots/
 ├── Architect.MD
 ├── Architect.en.MD

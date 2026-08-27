@@ -5897,6 +5897,234 @@ jobs:
             });
 ```
 
+## 4.创建测试分支并且提交代码（触发PR）
+
+### 在VSCODE中完成此操作，不需要终端
+
+### 1.创建新分支
+
+```
+点击 VSCode 左下角状态栏的分支名称（如 main）
+在弹出的列表中选择 “创建新分支...”（或“Create new branch...”）
+输入分支名：feature/ai-review-test
+按回车确认
+```
+
+### 2.修改任意代码以触发AI Review
+
+打开 src/utils/requestPool.ts，在文件末尾或任意位置添加一行注释：
+
+```ts
+// AI Review 测试：这个改动会被 AI 审查
+```
+
+### 3.暂存修改并提交
+
+```
+提交 输入提交信息“ test:触发AI Review验证 ”
+按回车确认
+```
+
+**此时显示的就会是**：
+![alt text](<screenshots/Screenshot 2026-08-27 091613.png>)
+
+### 4.创建Pull Request（PR）
+
+**直接在浏览器创建**
+
+```
+打开 GitHub 仓库页面
+
+如果看到黄色提示条“feature/ai-review-test had recent pushes”，点击 “Compare & pull request”
+
+如果没有黄色提示条，点击 “Pull requests” 标签 → 点击 “New pull request” → 选择 feature/ai-review-test 分支 → 点击 “Create pull request”
+```
+
+![alt text](<screenshots/Screenshot 2026-08-27 092433.png>) 点击右下角的Create Pull Request即可触发AI Review
+
+### 稍等待几分钟 此时会看到
+
+![alt text](<screenshots/Screenshot 2026-08-27 093243.png>)
+发现报错了 可以看一下细节
+
+![alt text](<screenshots/Screenshot 2026-08-27 093238.png>)
+原来是CI流水线报错了 原因是刚刚修改的utils/requestPool.ts中出现了错误 建议我们使用prettier run --write格式化一下
+但是这里我们在package.json中申明过"format": "prettier --write ." 所以直接到目标文件输入pnpm format:check 看一下是什么地方出了问题
+发现是我们刚刚添加的AI Review测试代码出错了 没有按照prettier的格式在每个文件最后留一行空行 我们可以在此时直接在目标文件终端中输入pnpm format就可以自动格式化了
+
+![alt text](<screenshots/Screenshot 2026-08-27 093630.png>)
+AI Review流水线未能正常运行 原因报错是根目录下没有检测到pnpm-lock.yaml 这是因为此时的ai-review流水线是在全局运行的
+我们只想要检测Demo2文件夹，检测向master分支提交的，只针对 Demo2/demo2-env 目录下的改动触发，让run实际在Demo2/demo2-env目录下运行，以及cache-dependency-path正确的指向子目录的子文件，以及actions/github-script正确的指向子目录,且文件在子目录中生成
+且要求pnpm依赖必须都是一个版本
+
+所以在ai-review.yml中加入检测路径 就像之前在CI流水线那里加入具体的路径一样 在on中加入paths： branches: [master] run，cache-dependency-path，actions/github-script指向正确目录,运行run: pnpm install --frozen-lockfile 强制一个版本
+
+#### 同时也发现ai-review.yml 里的 pnpm 版本太旧，和现在的 lockfile 不匹配
+
+```
+Demo2/demo2-env/pnpm-lock.yaml 的 lockfileVersion 是 9.0
+但 .github/workflows/ai-review.yml 还在用：- pnpm/action-setup@v3
+- version: 8
+- node-version: "18"
+
+这很容易在 pnpm install --frozen-lockfile 这里直接炸掉，典型报错就是 lockfile 不兼容
+
+```
+
+改动：
+
+- [.github/workflows/ai-review.yml](/D:/qianduan/demo/.github/workflows/ai-review.yml)
+  - pnpm/action-setup 从 v3 升到 v4
+  - pnpm 从 8 升到 10
+  - Node 从 18 升到 22
+- [Demo2/demo2-env/package.json](/D:/qianduan/demo/Demo2/demo2-env/package.json)
+  - 新增 packageManager: "pnpm@10.0.0"
+
+```
+
+```
+
+```yml
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    # 触发类型过滤 不写默认也是这几个
+    # opened:新建PR触发
+    # synchronize:同步PR触发
+    # reopened:重新打开PR触发
+    branches: [master]
+    # ⭐ 新增：只针对 Demo2/demo2-env 目录下的改动触发
+    paths:
+      - "Demo2/demo2-env/**"
+      - ".github/workflows/ai-review.yml"
+  # ⭐ 新增：支持手动触发
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    # ⭐ 新增：设置工作目录为 Demo2/demo2-env
+    defaults:
+      run:
+        working-directory: ./Demo2/demo2-env
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: Demo2/demo2-env/pnpm-lock.yaml
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 生成知识图谱（如果还没有）
+        run: |
+          if [ ! -f knowledge-graph.json ]; then
+            pnpm graph
+          else
+            echo "✅ 知识图谱已存在，跳过生成"
+          fi
+
+      - name: 运行 AI Code Review（PR 模式）
+        id: review
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          pnpm ai-review --pr
+
+      - name: 将 Review 结果发布到 PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // ⭐ 新增：AI Review 结果在子目录中生成
+            const resultPath = path.join('Demo2/demo2-env', 'ai-review-result.md');
+
+            let reviewContent = '🤖 **AI Code Review 报告**\n\n';
+            try {
+              const content = fs.readFileSync(resultPath, 'utf-8');
+              reviewContent += content;
+            } catch (e) {
+              reviewContent += '⚠️ 未能生成 Review 报告，请检查脚本执行日志。';
+            }
+
+            const prNumber = context.payload.pull_request.number;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: reviewContent
+            });
+```
+
+### 再次提交，我们就会看见：
+
+![alt text](<screenshots/Screenshot 2026-08-27 114512.png>)
+这次NODE.JS不报错了 说明问题已经解决 而在PR检查时报错 我们需要回到终端 输入pnpm ai-review --pr 就会看到AI Review结果 以及报错原因
+
+#### 发现是
+
+```text
+**Cannot convert undefined or null to object**
+```
+
+和github actions里的报错一样
+
+#### 这是因为：scripts/ai-review.ts 还在按旧结构读取 knowledge-graph.json
+
+在这个文件里 读取 knowledge-graph.json 是graph.impactIndex
+但是现在的是
+
+```
+{
+  "nodes": [],
+  "edges": []
+}
+```
+
+所以 impactIndex 是 undefined，脚本执行到 Object.entries(impactIndex) 就炸了。
+可以改的既兼容旧结构，又能读取新结构的 scripts/ai-review.ts
+
+#### 这一步推荐使用AI
+
+然后再一次提交，或者直接在终端输入pnpm ai-review --pr就会看到
+通过了
+![alt text](<screenshots/Screenshot 2026-08-27 141805.png>)
+
+并且在pull request页也出现了AI PR Review的报告
+![alt text](<screenshots/Screenshot 2026-08-27 141922.png>)
+运行成功
+
+### 但是要注意的是 我们要及时按照PR AI Review的报告进行修改，不然会导致PR无法合并，但注意的是“部分采纳 而非全部采纳”
+
+由于我是作者，此处可以采纳的就是去除生成的一系列的： 500+ 个 pnpm 缓存文件（二进制内容、索引数据库、链接文件），这些文件属于本地包管理器的缓存产物，不应纳入版本控制 将他们处理掉
+而那些的截图增加等等 是不可以去掉的
+
+![alt text](<screenshots/Screenshot 2026-08-27 142301.png>)
+采取AI PR review的建议
+
 ---
 
 # 附：ignore文件内部书写格式
@@ -5928,7 +6156,7 @@ _.local # 所有 .local 后缀文件
 
 4. `**` 递归通配符，匹配任意层级子目录
 
-\*\*/temp # 任意层级下面的 temp 文件夹
+**/temp # 任意层级下面的 temp 文件夹
 
 5. `/` 斜杠含义
 
