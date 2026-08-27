@@ -3,9 +3,13 @@ name: AI Code Review
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    branches: [master]
+    # ⭐ 新增：只针对 Demo2/demo2-env 目录下的改动触发
     paths:
       - "Demo2/demo2-env/**"
-      - ".github/workflows/deploy.yml"
+      - ".github/workflows/ai-review.yml"
+  # ⭐ 新增：支持手动触发
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,6 +18,11 @@ permissions:
 jobs:
   review:
     runs-on: ubuntu-latest
+    # ⭐ 新增：设置工作目录为 Demo2/demo2-env
+    defaults:
+      run:
+        working-directory: ./Demo2/demo2-env
+
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
@@ -29,10 +38,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "18"
-          cache: "pnpm"
+          cache: pnpm
+          cache-dependency-path: Demo2/demo2-env/pnpm-lock.yaml
 
       - name: 安装依赖
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: 生成知识图谱（如果还没有）
         run: |
@@ -55,10 +65,14 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
+            const path = require('path');
+
+            // ⭐ 新增：AI Review 结果在子目录中生成
+            const resultPath = path.join('Demo2/demo2-env', 'ai-review-result.md');
 
             let reviewContent = '🤖 **AI Code Review 报告**\n\n';
             try {
-              const content = fs.readFileSync('ai-review-result.md', 'utf-8');
+              const content = fs.readFileSync(resultPath, 'utf-8');
               reviewContent += content;
             } catch (e) {
               reviewContent += '⚠️ 未能生成 Review 报告，请检查脚本执行日志。';
