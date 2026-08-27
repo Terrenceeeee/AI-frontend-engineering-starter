@@ -20,8 +20,24 @@ interface GraphImpact {
   description: string;
 }
 
+interface GraphNode {
+  id: string;
+  type: string;
+  name: string;
+  filePath: string;
+  props?: Record<string, unknown>;
+}
+
+interface GraphEdge {
+  from: string;
+  to: string;
+  type: string;
+}
+
 interface KnowledgeGraph {
-  impactIndex: Record<string, GraphImpact>;
+  impactIndex?: Record<string, GraphImpact>;
+  nodes?: GraphNode[];
+  edges?: GraphEdge[];
 }
 
 interface ImpactResult {
@@ -59,6 +75,16 @@ function getDiff(file: string): string {
   }
 }
 
+function normalizePath(filePath: string): string {
+  return filePath.replace(/\\/g, '/').replace(/^\.?\//, '');
+}
+
+function toProjectRelativePath(filePath: string): string {
+  const normalized = normalizePath(filePath);
+  const projectPrefix = 'Demo2/demo2-env/';
+  return normalized.startsWith(projectPrefix) ? normalized.slice(projectPrefix.length) : normalized;
+}
+
 // ============================================================
 // 3. 加载知识图谱
 // ============================================================
@@ -77,17 +103,41 @@ function loadGraph(): KnowledgeGraph {
 // ============================================================
 function queryImpact(graph: KnowledgeGraph, filePath: string): ImpactResult[] {
   const results: ImpactResult[] = [];
-  const { impactIndex } = graph;
+  const normalizedFile = toProjectRelativePath(filePath);
 
-  for (const [functionName, info] of Object.entries(impactIndex)) {
-    if (info.filePath === filePath) {
-      results.push({
-        functionName,
-        upstream: info.upstream || [],
-        testedBy: info.testedBy || [],
-        description: info.description || '',
-      });
+  if (graph.impactIndex) {
+    for (const [functionName, info] of Object.entries(graph.impactIndex)) {
+      if (normalizePath(info.filePath) === normalizedFile) {
+        results.push({
+          functionName,
+          upstream: info.upstream || [],
+          testedBy: info.testedBy || [],
+          description: info.description || '',
+        });
+      }
     }
+
+    return results;
+  }
+
+  const nodes = graph.nodes || [];
+  const edges = graph.edges || [];
+  const changedNodes = nodes.filter((node) => normalizePath(node.filePath) === normalizedFile);
+
+  for (const node of changedNodes) {
+    const relatedEdges = edges.filter((edge) => edge.from === node.id || edge.to === node.id);
+    const upstream = relatedEdges.map((edge) =>
+      edge.from === node.id ? `${edge.type}: ${edge.to}` : `${edge.type}: ${edge.from}`
+    );
+
+    results.push({
+      functionName: node.name,
+      upstream,
+      testedBy: nodes
+        .filter((item) => normalizePath(item.filePath).includes('_tests_'))
+        .map((item) => item.name),
+      description: `${node.type} 节点，路径：${normalizePath(node.filePath)}`,
+    });
   }
 
   return results;

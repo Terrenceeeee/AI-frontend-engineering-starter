@@ -1,0 +1,50 @@
+#!/bin/sh
+# Resolve $0 through symlinks so basedir is the shim's real directory.
+# Cap hops at the kernel's ELOOP limit so a cycle cannot hang the shim.
+link="$0"
+hops=0
+while [ -L "$link" ] && [ "$hops" -lt 40 ]; do
+  hops=$((hops+1))
+  target=$(readlink "$link")
+  case "$target" in
+    /*) link="$target" ;;
+    *)  link="$(dirname "$link")/$target" ;;
+  esac
+done
+basedir=$(dirname "$(echo "$link" | sed -e 's,\\,/,g')")
+basedir_win="$basedir"
+exe=""
+msys=""
+
+case `uname -a` in
+  *CYGWIN*|*MINGW*|*MSYS*)
+    if command -v cygpath > /dev/null 2>&1; then
+      basedir_win=`cygpath -w "$basedir"`
+    fi
+    exe=".exe"
+    msys="true"
+  ;;
+  *WSL2*)
+    if command -v wslpath > /dev/null 2>&1; then
+      basedir_win="$(wslpath -w "$basedir" 2> /dev/null)"
+      if [ $? -ne 0 ] || [ -z "$basedir_win" ]; then
+        basedir_win="$basedir"
+      else
+        exe=".exe"
+      fi
+    fi
+  ;;
+esac
+
+if [ -n "$exe" ] && [ -x "$basedir/node.exe" ]; then
+  exec "$basedir/node.exe"  "$basedir_win/../node_modules/pnpm/bin/pnpx.cjs" "$@"
+elif [ -x "$basedir/node" ]; then
+  exec "$basedir/node"  "$basedir/../node_modules/pnpm/bin/pnpx.cjs" "$@"
+elif command -v node >/dev/null 2>&1; then
+  exec node  "$basedir/../node_modules/pnpm/bin/pnpx.cjs" "$@"
+elif [ -n "$exe" ] && command -v node.exe >/dev/null 2>&1; then
+  exec node.exe  "$basedir_win/../node_modules/pnpm/bin/pnpx.cjs" "$@"
+else
+  exec node  "$basedir/../node_modules/pnpm/bin/pnpx.cjs" "$@"
+fi
+# cmd-shim-target=D:/qianduan/demo/.pnpm-store/v11/links/@/pnpm/10.0.0/3ba8449dce7ff2e7d6525f1a2aea04b703ded0a12302abb323967036d7b3f0f8/node_modules/pnpm/bin/pnpx.cjs
