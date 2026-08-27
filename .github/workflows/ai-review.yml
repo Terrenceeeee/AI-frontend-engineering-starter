@@ -3,6 +3,10 @@ name: AI Code Review
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    # 触发类型过滤 不写默认也是这几个
+    # opened:新建PR触发
+    # synchronize:同步PR触发
+    # reopened:重新打开PR触发
     branches: [master]
     # ⭐ 新增：只针对 Demo2/demo2-env 目录下的改动触发
     paths:
