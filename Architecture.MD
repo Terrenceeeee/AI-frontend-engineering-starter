@@ -6859,9 +6859,47 @@ git add .
 
 我们刚刚将src/main.js改为了src/main.ts
 全程无报错 且 无警告 vite顺利打包顺利在开发环境下运行了
-![alt text](<screenshots/Screenshot 2026-08-28 102656.png>)
+![未能成功加载](<screenshots/Screenshot 2026-08-28 102656.png>)
 但是需要注意的是 其他文件内可能有该文件的引用 如果没有发现并修改 可能导致意想不到的后果
 此时就显现出了我们知识图谱显示引用导入关系的优越性
+就是因为这一点 我们想到并推出了上面的DEMO29
+现在可以看到全面的知识图谱了
+![未能成功加载](<screenshots/Screenshot 2026-08-28 151347.png>)
+这就是和main.ts有关的文件
+指向它代表对它有引用
+这样就看出来了：**index.html对main.ts有引用**
+所以我们需要去找到index.html 并修改他对**main.js**的引用为**main.ts**
+
+## 还有一点需要注意的是 js文件改为ts文件后 其内部引用的vue文件 是没有原本声明的
+
+所以即使你在ts中引入vue文件 也会报错 无法通过CI检测 类型检测报错
+![未能成功加载](<screenshots/Screenshot 2026-08-28 152410.png>)
+此时解决方案就是：**在ts中引入vue文件**
+在src/types/vue.d.ts中添加如下
+
+```ts
+/// <reference types="vite/client" />  //这个三斜线指令（只在.d.ts中生效）原本就有 是我们之前在配置文件中引入的 目的是为了告知引入 Vite 内置的类型定义包 `vite/client`，给 TS 补充 Vite 环境下的类型 如果没有这一行 import.meta.env 会报错不存在
+
+// TypeScript 模块声明语法：declare module 用来对外部模块做类型补充
+// "*.vue" 匹配所有后缀为 .vue 的文件，只要代码里 import xxx from 'xxx.vue' 就会套用下面这套类型
+declare module "*.vue" {
+  // 仅导入类型（import type），从vue包引入 DefineComponent 类型，这是Vue3组件的类型描述
+  import type { DefineComponent } from "vue";
+
+  // 声明一个常量 component，类型为 DefineComponent
+  // DefineComponent<Props, Bindings, Emits>
+  // 第1个参数 object：组件props属性，这里不做精细推导，使用兜底object
+  // 第2个参数 object：setup函数返回暴露给模板的对象
+  // 第3个参数 unknown：组件触发的emit事件类型，unknown代表不约束
+  const component: DefineComponent<object, object, unknown>;
+
+  // .vue文件默认导出就是这个component组件对象
+  // 对应 import 组件 from './xxx.vue' 拿到的就是这个default导出
+  export default component;
+}
+```
+
+此时就不会CI报错了，CI顺利通过
 
 ---
 

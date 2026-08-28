@@ -2626,6 +2626,65 @@ logs/   # Matches directory logs, skips regular file named logs
 
 ---
 
+# Appendix: Points to Note When Converting JS Files to TS Files
+
+We have just renamed `src/main.js` to `src/main.ts`.
+There were zero errors or warnings throughout the process; Vite built successfully and ran properly in the development environment.
+![fail to load successfully](<screenshots/Screenshot 2026-08-28 102656.png>)
+However, be aware that other files may contain references pointing to this file. Failing to locate and update those references can lead to unexpected side‑effects.
+
+This is where our knowledge graph, which visualizes import‑reference relationships, shows its advantages.
+It is precisely for this reason that we designed and implemented Demo29 described above.
+We can now view the complete knowledge graph.
+![fail to load successfully](<screenshots/Screenshot 2026-08-28 151347.png>)
+These are the files related to `main.ts`.
+Edges pointing toward it indicate files that reference it.
+We can clearly see that **`index.html` references `main.ts`**.
+
+Therefore we must open `index.html` and update its reference from **`main.js`** to **`main.ts`**.
+
+## Another important consideration
+
+After converting a JS file to a TS file, type declarations for imported Vue components are not automatically available.
+
+Consequently, importing `.vue` files inside TypeScript will trigger type‑checking failures and cause CI checks to fail.
+![fail to load successfully](<screenshots/Screenshot 2026-08-28 152410.png>)
+**Solution for importing Vue files in TypeScript:**
+
+Add the following content to `src/types/vue.d.ts`:
+
+```
+/// <reference types="vite/client" />
+// This triple‑slash directive only takes effect in .d.ts declaration files.
+// We added it in earlier configurations. It tells TypeScript to load Vite’s built‑in type definitions from `vite/client`,
+// supplying extra type information for Vite‑specific features.
+// Without this line, TypeScript will complain that `import.meta.env` does not exist.
+
+// TypeScript module‑declaration syntax: declare module supplements type information for external modules.
+// "*.vue" matches all files ending with the .vue extension.
+// Any statement such as import xxx from 'xxx.vue' will use the type definitions below.
+declare module "*.vue" {
+  // import type imports only type information.
+  // We import DefineComponent from Vue, which describes the type of Vue 3 components.
+  import type { DefineComponent } from "vue";
+
+  // Declare a constant component of type DefineComponent.
+  // DefineComponent<Props, Bindings, Emits>
+  // 1st parameter object: component props; generic fallback used here without precise inference.
+  // 2nd parameter object: values returned by setup() and exposed to templates.
+  // 3rd parameter unknown: emitted events; unknown means no constraints are applied.
+  const component: DefineComponent<object, object, unknown>;
+
+  // The default export of a .vue file is this component object.
+  // Matches what you receive when writing import Component from './xxx.vue'.
+  export default component;
+}
+```
+
+After adding this declaration, CI type‑check errors disappear and CI passes successfully.
+
+---
+
 # Appendix: Git Commit Message Specification
 
 ## 1. Type (Required)
