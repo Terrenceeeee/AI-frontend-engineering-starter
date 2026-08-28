@@ -87,7 +87,7 @@
 
 ### pnpm create vite my-vue-project --template vue
 
-![未加载成功](<./screenshots/Screenshot 2026-07-27 093856.png>)
+![未能加载成功](<./screenshots/Screenshot 2026-07-27 093856.png>)
 其显示出的pnpm与npm所依赖的node_modules大小几乎一致 原因是二者的vue项目目前都是空的 依赖包数量少 体积小
 如果创建了n个npm项目 那么内存就会成为n倍 而同样的情况下 pnpm的所占内存不变
 
@@ -109,8 +109,8 @@
 
 ### -l（long） 使用长格式详细列表，展示完整信息：
 
-![未加载成功](<screenshots/Screenshot 2026-07-27 112654.png>)
-![未加载成功](<screenshots/Screenshot 2026-07-27 113110.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-27 112654.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-27 113110.png>)
 
 ## 这两张图中的inode号相同说明确实证明是硬链接，不是复制 这极大地省下了巨大的内存空间
 
@@ -118,12 +118,12 @@
 
 ## 证明pnpm强制的严格隔离性 lodash未申明未依赖 绝不安装
 
-![未加载成功](<screenshots/Screenshot 2026-07-27 113202.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-27 113202.png>)
 
 ## 未在所属环境中 引入VITE\_前缀的变量 在界面内直接引用 会报undefined
 
-![未加载成功](<screenshots/Screenshot 2026-07-27 142038.png>)
-![未加载成功](<screenshots/Screenshot 2026-07-27 144531.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-27 142038.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-27 144531.png>)
 
 ## 修改vite.config.js 以及为什么要修改
 
@@ -136,7 +136,7 @@
 1.改端口2.自动打开浏览器3.生成 sourcemap 4.根据 command 和 mode 做条件判断5.配置代理、别名、插件等
 
 改完之后他会在终端中显示体现
-![](<screenshots/Screenshot 2026-07-27 151241.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-27 151241.png>)
 
 ```js
 import { defineConfig } from "vite";
@@ -259,15 +259,15 @@ build.sourcemap: true 生成 .map 文件，方便调试时看到源码位置（�
 
 ## 检测开发环境 pnpm dev
 
-![](<screenshots/Screenshot 2026-07-27 164314.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-27 164314.png>)
 
 ## 检测自定义 staging 环境 pnpm build -- --mode staging
 
-![](<screenshots/Screenshot 2026-07-27 164455.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-27 164455.png>)
 
 ## 检测生产环境 pnpm build -- --mode test // pnpm preview
 
-![](<screenshots/Screenshot 2026-07-27 164602.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-27 164602.png>)
 
 ### 需要切回开发模式的话 直接pnpm dev即可 毫不影响 正是工程化“构建与交付分离”的核心设计思想
 
@@ -496,7 +496,7 @@ pnpm lint-staged
 
 ### pnpm lint-staged
 
-![](<screenshots/Screenshot 2026-07-28 111857.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-28 111857.png>)
 发现代码报错 原因是 eslint版本过新 不支持原本的.eslintrc.cjs文件 需要改用eslint.config.js
 
 ## 解决方案：
@@ -534,7 +534,7 @@ pnpm add -D @eslint/js typescript-eslint eslint-config-prettier //10代需要添
 
 #### ESLint 9/10 是大版本破坏性更新，抛弃传统 .eslintrc 所有格式，强制全新扁平化配置
 
-![](<screenshots/Screenshot 2026-07-28 114743.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-28 114743.png>)
 运行正常 但是一堆报错 是因为他扫描了一堆本不该扫描的文档/文件
 可以改为
 
@@ -544,13 +544,13 @@ pnpm add -D @eslint/js typescript-eslint eslint-config-prettier //10代需要添
 
 ```
 
-![](<screenshots/Screenshot 2026-07-28 115605.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-28 115605.png>)
 可以发现 改完不扫描无关文档/文件 只扫描src文件夹下的 就不会报错了
 
-![](<screenshots/Screenshot 2026-07-28 135458.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-28 135458.png>)
 Prettier正常运行
 
-![](<screenshots/Screenshot 2026-07-28 135622.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-28 135622.png>)
 Lint-staged正常运行
 
 ## 第八步：故意写一段“坏代码”（验证卡点）
@@ -744,24 +744,24 @@ manualChunks(id) {
 
 ### 在开发环境下： pnpm dev ： 不做完整打包，按需加载文件，启动，热更新极快
 
-![](<screenshots/Screenshot 2026-07-29 101232.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-29 101232.png>)
 可以看出：所有 .vue 组件是通过 ?import 请求分别加载的（因为 Vite 在开发模式下不做打包合并）
-![](<screenshots/Screenshot 2026-07-29 101246.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-29 101246.png>)
 再次观察：打开其他界面时（切换路由），浏览器network面板可以看见该界面的动态加载
 
 ### 在生产环境下： pnpm build
 
 1.读取环境变量2.解析入口3.构建依赖图谱4.插件转换（把输入的.vue,.ts,.less转换为.js,.css 5.摇树优化6.代码拆分7.压缩混淆8.输出dist/目录+清单（manifest）
-![](<screenshots/Screenshot 2026-07-29 102514.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-29 102514.png>)
 
 ### 在预览环境下： pnpm preview（最重要的一步）
 
-![](<screenshots/Screenshot 2026-07-29 102713.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-29 102713.png>)
 明显的发现Network面板少了不少加载的东西
 没有出现 User-xxx.js 或 Admin-xxx.js。说明它们没有被加载，实现了“按需加载”
 然后点击导航栏的“用户中心”，观察 Network 面板，或者也可以观察console面板
 发现这时出现了我们点击对应的路由的名字
-![](<screenshots/Screenshot 2026-07-29 103241.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-29 103241.png>)
 
 ### 这就是路由懒加载的效果——用户不访问的页面，代码不会提前加载
 
@@ -1083,7 +1083,7 @@ pnpm gen
 
 ```
 
-![](<screenshots/Screenshot 2026-07-29 145016.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-29 145016.png>)
 
 ## 第七步：验证生成的文件
 
@@ -1183,7 +1183,7 @@ pnpm test
 ```
 
 预期结果：
-![](<screenshots/Screenshot 2026-07-30 101217.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-30 101217.png>)
 如果显示 Test Files 1 passed，说明测试跑通了。如果没有输出或报错，检查是否安装了 vitest，以及 **tests** 目录是否在 src/utils/ 下
 
 ## 第五步：在 GitHub 上创建仓库并推送代码
@@ -1284,8 +1284,8 @@ git push
 你会看到 CI 流水线 正在运行（黄色圆点表示运行中）
 
 点击进去，可以看到每一步的执行日志
-![](<screenshots/Screenshot 2026-07-30 114707.png>)
-![](<screenshots/Screenshot 2026-07-30 114651.png>)报错详细说明
+![未能加载成功](<screenshots/Screenshot 2026-07-30 114707.png>)
+![未能加载成功](<screenshots/Screenshot 2026-07-30 114651.png>)报错详细说明
 流水线标红 ❌，阻止了这次提交的合并（如果你配置了分支保护规则，这个 PR 会被自动标记为不可合并）
 
 ---
@@ -1573,7 +1573,7 @@ if (import.meta.env.PROD) {
 
 在eslint里把eslintrc.cjs里的rule里的 no-console的内容 改成 'off' （必须是单引号）
 就像这样：
-![](<screenshots/Screenshot 2026-08-05 153938.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-05 153938.png>)
 
 预期输出（控制台）：
 [性能监控] FCP: 456.2
@@ -1703,7 +1703,7 @@ pnpm deploy
 
 ### 预计输出结果：
 
-![未加载成功](<screenshots/Screenshot 2026-08-03 145847.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-03 145847.png>)
 
 ---
 
@@ -2097,7 +2097,7 @@ const clearLogs = () => {
 
 ### 预期结果：
 
-![未加载成功](<screenshots/Screenshot 2026-08-04 110302.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-04 110302.png>)
 
 1.控制台显示 当前并发数: 1/6 → 2/6 → ... → 6/6
 
@@ -2609,9 +2609,9 @@ CDN 域名是真实可访问的（不是 cdn.example.com 这种假地址）。
 #### 且谨记 Service Worker 规范要求：SW 脚本必须是 JavaScript 文件，且 MIME 类型必须是 text/javascript 或 application/javascript。如果是ts类型 就会拿到视频类型，直接拒绝注册。
 
 就像这样：
-![](<screenshots/Screenshot 2026-08-05 153315.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-05 153315.png>)
 改正后 正常运行
-![](<screenshots/Screenshot 2026-08-05 153938.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-05 153938.png>)
 
 ---
 
@@ -2648,7 +2648,7 @@ Whistle 体现：配一条规则 api.xxx.com resDelay://3000（所有接口延�
 效果：你的页面瞬间变成“3G 弱网模式”。你可以亲自体验 Loading 动画、超时重试逻辑是否正常，提前优化用户体验，而不是等用户投诉后再改代码。
 
 如图：
-![](<screenshots/Screenshot 2026-08-06 091253.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 091253.png>)
 这些东西不需要天天用，但当你碰到“后端没写好”、“线上报错复现不了”、“手机上看不到报错”时，你心里得清楚
 ——Whistle（或类似的代理工具）就是专门解决这些“非代码本身”的环境问题的。 这就是它在日常开发里的“隐形价值”——它是你的后备武器，不是日常主武器。
 
@@ -2666,7 +2666,7 @@ pnpm install -g whistle
 ```
 
 可能会出现：
-![](<screenshots/Screenshot 2026-08-06 091746.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 091746.png>)
 这是因为pnpm 全局命令的存放目录 C:\Users\29453\AppData\Local\pnpm\bin 没有加入系统环境变量 PATH。
 在powershell 直接输入 pnpm setup pnpm setup 会自动把 pnpm 的全局 bin 目录写入 Windows 用户环境变量。
 然后关掉powershell 重新打开 再次输入即可
@@ -2683,7 +2683,7 @@ w2 start
 ```
 
 但如果是npx非全局安装 就需要输入npx whistle start 否则会出现：
-![](<screenshots/Screenshot 2026-08-06 093530.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 093530.png>)
 
 ### 启动后会在终端输出访问地址，通常是 http://127.0.0.1:8899
 
@@ -2693,7 +2693,7 @@ w2 start
 
 方式 A：使用 SwitchyOmega 插件（推荐）
 在 Chrome 应用商店搜索安装 SwitchyOmega。（edge也行）
-![](<screenshots/Screenshot 2026-08-06 094918.png>)选这个 稳定
+![未能加载成功](<screenshots/Screenshot 2026-08-06 094918.png>)选这个 稳定
 新建情景模式 → 选择“代理服务器”：
 协议：HTTP
 服务器：127.0.0.1
@@ -2710,7 +2710,7 @@ Windows：设置 → 网络和Internet → 代理 → 手动设置代理，地�
 ## 第三步：访问 Whistle 管理界面
 
 打开浏览器，访问 http://127.0.0.1:8899，你会看到一个仪表盘界面：
-![](<screenshots/Screenshot 2026-08-06 100139.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 100139.png>)
 Network 面板：查看所有经过代理的请求列表，点开任意请求可以看到完整的请求头、响应头、响应体（明文）。要看接口返回了什么 -> 点 Network 标签页，找请求。
 
 Rules 面板：配置代理规则（把 api.xxx.com 指向 localhost:3000、修改请求/响应内容等）。要写 Mock 数据 -> 点 Rules 标签页，写规则
@@ -2735,7 +2735,7 @@ Mac 安装：
 
 Windows 安装：
 双击 .crt 文件 → 点击“安装证书” → 选择“本地计算机” → 选择“将所有证书放入下列存储” → 浏览选择“受信任的根证书颁发机构” → 完成。
-![](<screenshots/Screenshot 2026-08-06 101944.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 101944.png>)
 
 ### 验证 HTTPS 解密是否生效：
 
@@ -2743,12 +2743,12 @@ Windows 安装：
 
 然后访问一个 HTTPS 网站（比如 https://www.baidu.com），回到 Whistle 管理界面（http://127.0.0.1:8899）的 Network 面板。如果你看到 HTTPS 请求的状态是 200 而不是 Tunnel，点击请求能看到明文响应内容，就说明根证书安装成功了。
 但是此处极易出现这样的情况
-![](<screenshots/Screenshot 2026-08-06 103219.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 103219.png>)
 
 ### 这是因为没有在浏览器自带的扩展里 打开设置的预先配置（对应第二步）
 
 这样就可以了：
-![](<screenshots/Screenshot 2026-08-06 104010.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 104010.png>)
 在 Whistle 的 Network 面板里，应该能看到百度首页的所有 HTTPS 请求（www.baidu.com、sp0.baidu.com 等）。
 
 点击任意一个请求，右侧查看 Response 标签页，能看到 HTML 源码（明文）。
@@ -2757,13 +2757,13 @@ Windows 安装：
 ### 这也是因为没有打开一些设置
 
 在setting里打开response设置：
-![](<screenshots/Screenshot 2026-08-06 104753.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 104753.png>)
 在http里打开
-![](<screenshots/Screenshot 2026-08-06 105444.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 105444.png>)
 直至http显示为
-![](<screenshots/Screenshot 2026-08-06 105455.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 105455.png>)
 就可以在Inspector里底部看见Response界面了
-![](<screenshots/Screenshot 2026-08-06 105722.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 105722.png>)
 
 ### 对比不开启代理时，HTTPS 请求的内容在浏览器 DevTools 里虽然也能看到，但 Whistle 里能看到的是“明文传输内容”，证明了 HTTPS 抓包解密的成功。
 
@@ -2884,8 +2884,8 @@ resBody://{userInfo}：把该 URL 的响应内容替换为 Values 里 userInfo �
 
 1.回到浏览器，打开你的项目页面 http://localhost:5173。2.点击 “请求用户信息” 按钮。3.观察页面显示的内容
 就会发现
-![](<screenshots/Screenshot 2026-08-06 140453.png>)
-![](<screenshots/Screenshot 2026-08-06 141457.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 140453.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 141457.png>)
 这是因为localhost:5173和我们既定的https://api.example.com/user/info产生了跨域 引发了CORS警报
 
 ### 解决方案：在 Whistle 里直接加上 CORS 响应头
@@ -2904,7 +2904,7 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 ```
 
 就可以使用whistle了
-![](<screenshots/Screenshot 2026-08-06 152939.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-06 152939.png>)
 
 ## ！！！！！用完记得要将代理关掉 不然会影响其他项目以及其他网页的正常请求：
 
@@ -2980,16 +2980,16 @@ build: {
 1.执行 pnpm dev，打开 http://localhost:5173。
 
 2.预期结果：页面右下角出现绿色的 vConsole 按钮。点击它，可以看到 Console、Network、Elements 等调试面板。
-![](<screenshots/Screenshot 2026-08-07 090116.png>)
-![](<screenshots/Screenshot 2026-08-07 090226.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-07 090116.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-07 090226.png>)
 
 3.执行 pnpm build，然后 pnpm preview，打开 http://localhost:4173。
 
 4.预期结果：默认不显示 vConsole 按钮（因为生产环境，且 URL 中没有 debug=1）。
-![](<screenshots/Screenshot 2026-08-07 090818.png>) 因为判断为import.meta.env.MODE != 'development' 所以不执行下面的内容
+![未能加载成功](<screenshots/Screenshot 2026-08-07 090818.png>) 因为判断为import.meta.env.MODE != 'development' 所以不执行下面的内容
 
 5.在 URL 后加 ?debug=1（如 http://localhost:4173/?debug=1），刷新页面。
-![](<screenshots/Screenshot 2026-08-07 090959.png>) 因为判断为hasDebugParam = window.location.search.includes('debug=1'); 所以执行下面的内容
+![未能加载成功](<screenshots/Screenshot 2026-08-07 090959.png>) 因为判断为hasDebugParam = window.location.search.includes('debug=1'); 所以执行下面的内容
 
 6.预期结果：vConsole 按钮出现 ✅
 
@@ -3207,15 +3207,15 @@ import WebSocketDemo from "./components/WebSocketDemo.vue";
 点击 “连接” 按钮。
 
 预期结果：按钮上方显示“✅ 已连接”，消息框出现 [时间] 🔗 连接已建立。
-![](<screenshots/Screenshot 2026-08-07 170056.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-07 170056.png>)
 在输入框中输入任意文字（如 Hello），点击 “发送”。
 
 预期结果：消息框出现 [时间] ➡️ 发送 Hello，紧接着出现 [时间] ⬅️ 收到 Hello（回显）。
-![](<screenshots/Screenshot 2026-08-07 170130.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-07 170130.png>)
 点击 “断开” 按钮。
 
 预期结果：状态变为“❌ 未连接”，消息框出现 [时间] 🔌 连接已断开。
-![](<screenshots/Screenshot 2026-08-07 170220.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-07 170220.png>)
 
 ## 第四步：观察 WebSocket 长连接（对比 HTTP）
 
@@ -3226,11 +3226,11 @@ import WebSocketDemo from "./components/WebSocketDemo.vue";
 点击页面上的 “连接” 按钮。
 
 预期结果：Network 面板中出现一条 WebSocket 连接记录（wss://echo.websocket.org）。
-![](<screenshots/Screenshot 2026-08-07 170456.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-07 170456.png>)
 点击该记录，切换到 Messages 标签页。
 
 预期结果：你可以看到所有发送和接收的消息帧（Frame）。
-![](<screenshots/Screenshot 2026-08-07 171342.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-07 171342.png>)
 关键观察：连接建立后，即使不发送任何消息，连接也会一直保持（长连接），不会像 HTTP 那样每次请求都断开。
 
 ---
@@ -3711,9 +3711,9 @@ onMounted(() => {
 ```
 
 如图：
-![](<screenshots/Screenshot 2026-08-10 145709.png>)
-![](<screenshots/Screenshot 2026-08-10 145717.png>)
-![](<screenshots/Screenshot 2026-08-10 145721.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-10 145709.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-10 145717.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-10 145721.png>)
 
 ---
 
@@ -4084,9 +4084,9 @@ function onDebugLoadError(error: string): void {
 
 ### 2.pnpm dev 即可观察效果
 
-![](<screenshots/Screenshot 2026-08-10 164701.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-10 164701.png>)
 但是我们会发现这个vconsole按钮一直显示在右下角
-![](<screenshots/Screenshot 2026-08-10 170721.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-10 170721.png>)
 这是因为在demo16中我们也使用了vconsole 所以他一直在
 为了可以使我们更加直观的看见demo19的效果 我们可以选择
 
@@ -4096,8 +4096,8 @@ function onDebugLoadError(error: string): void {
 
 #### 也可以把demo16声明的按钮先注释掉（最快）（采用）
 
-![](<screenshots/Screenshot 2026-08-10 171743.png>)注释掉之后
-![](<screenshots/Screenshot 2026-08-10 171732.png>)效果成功展示
+![未能加载成功](<screenshots/Screenshot 2026-08-10 171743.png>)注释掉之后
+![未能加载成功](<screenshots/Screenshot 2026-08-10 171732.png>)效果成功展示
 
 #### 需要常显示的话记得把注释的Demo16代码在main.js中解除注释即可
 
@@ -4136,12 +4136,12 @@ npx ts-node scripts/build-graph.ts 执行生成图谱
 3.然后在vscode中用live server打开html文件 即可看到
 ```
 
-![](<screenshots/Screenshot 2026-08-11 094532.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-11 094532.png>)
 
 # DEMO21：CI/CD Github actions 大修改
 
 之前 CI/CD 一直存在着pnpm install&&pnpm lint&&pnpm test&&pnpm build之中一项不满足 一直未能触发或未能顺利通过CI检测 导致一直出现下图出现的状况
-![](<screenshots/Screenshot 2026-08-11 134537.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-11 134537.png>)
 这是因为CI/CD检查的类型强度过高
 所以我们可以从该角度出发来使我们的代码通过检测
 
@@ -4334,7 +4334,7 @@ const firstEntry = entries[0] as PerformanceEntry & {
 不要使用完全失去类型检查的 any。
 
 全部修改完毕后，再全部提交之后，发现Github Actions CI/CD跑通了
-![](<screenshots/Screenshot 2026-08-11 134542.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-11 134542.png>)
 
 # DEMO22: GitHub Pages 持续部署（CD）
 
@@ -4418,7 +4418,7 @@ jobs:
 
 当前项目已经新增 `.github/workflows/deploy.yml`，用于把 `Demo2/demo2-env` 构建出的 `dist` 自动发布到 GitHub Pages。
 但是提交后出现了这个：
-![](<screenshots/Screenshot 2026-08-11 152045.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-11 152045.png>)
 原因及操作如下：
 
 ## 触发方式：
@@ -4438,7 +4438,7 @@ jobs:
 Settings → Pages → Build and deployment → Source → GitHub Actions
 ```
 
-![](<screenshots/Screenshot 2026-08-11 152924.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-11 152924.png>)
 本仓库的 Pages 地址为：
 
 ```text
@@ -4489,12 +4489,12 @@ base: process.env.VITE_BASE_PATH || '/',
 
 ## 最终达成：
 
-![](<screenshots/Screenshot 2026-08-11 153250.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-11 153250.png>)
 
 # DEMO23 PlayWright E2E端到端测试可实现化大修改
 
 之前在终端运行e2e测试 得到的是不断报错
-![](<screenshots/Screenshot 2026-08-12 154200.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-12 154200.png>)
 
 ## 真正的原因是Playwright会全局扫描所有的.test.ts文件，以至于他一直在扫描utils/_test_/math.test.ts 但是这是一个Vitest文件 是不应该由playwrigth扫描的 所以需要加一个playwright配置 把测试范围锁定到 e2e，并让它自动启动 Vite 服务器
 
@@ -4598,7 +4598,7 @@ baseURL: 'http://127.0.0.1:5173'
 
 ### 此时是在 router/index.ts中引入router
 
-![](<screenshots/Screenshot 2026-08-24 094342.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-24 094342.png>)
 全部是懒加载写法
 然后再在App.vue中引入router
 
@@ -4618,13 +4618,13 @@ app.use(router);
 
 ### 在终端中再次检测e2e测试
 
-![](<screenshots/Screenshot 2026-08-13 100614.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-13 100614.png>)
 测试成功
 
 ## 但是呢 并没有在github actions中看到e2e测试的结果，为什么呢？
 
-![](<screenshots/Screenshot 2026-08-12 164109.png>)
-![](<screenshots/Screenshot 2026-08-12 164302.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-12 164109.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-12 164302.png>)
 
 ### 是因为.github/workflows/ci.yml中并未配置e2e测试相关代码
 
@@ -4642,11 +4642,11 @@ app.use(router);
 
 ### 此时github actions 中CI就可以看见e2e测试的迹象了
 
-![](<screenshots/Screenshot 2026-08-13 101437.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-13 101437.png>)
 
 ## 此时代码上线需要检测的顺序应该是：
 
-![](<screenshots/Screenshot 2026-08-12 164540.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-12 164540.png>)
 
 ### Action中的CI/CD变化不仅关联于：
 
@@ -4982,7 +4982,7 @@ resolve: {
 ```
 
 但是此时编译器里还是：
-![](screenshots/Image.png)
+![未能加载成功](screenshots/Image.png)
 
 ### 如果要彻底解决这个红底报错的话以及CI检测和ESLint检测，可以在.eslintrc.cjs里的ignorePatterns里加上下面的配置：
 
@@ -4991,7 +4991,7 @@ resolve: {
 
 ```
 
-![](<screenshots/Screenshot 2026-08-25 085640.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-25 085640.png>)
 即可解决以上问题
 
 ---
@@ -5327,7 +5327,7 @@ test:coverage 能正常跑：说明覆盖率链路打通了，后面可以逐步
 - 失败的测试列表
 ```
 
-![](<screenshots/Screenshot 2026-08-26 093354.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-26 093354.png>)
 
 #### 可以观察到 6个CI门禁全部跑通了
 
@@ -5533,8 +5533,8 @@ location;
 ```
 
 添加了三个具体测试后的截图 CI如下
-![](<screenshots/Screenshot 2026-08-26 084802.png>)
-![](<screenshots/Screenshot 2026-08-26 084807.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-26 084802.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-26 084807.png>)
 
 ```text
 现在覆盖率不再是空报表，当前覆盖率约：- Statements: 77.98%
@@ -6009,7 +6009,7 @@ jobs:
 ```
 
 **此时显示的就会是**：
-![alt text](<screenshots/Screenshot 2026-08-27 091613.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-27 091613.png>)
 
 ### 4.创建Pull Request（PR）
 
@@ -6023,19 +6023,19 @@ jobs:
 如果没有黄色提示条，点击 “Pull requests” 标签 → 点击 “New pull request” → 选择 feature/ai-review-test 分支 → 点击 “Create pull request”
 ```
 
-![alt text](<screenshots/Screenshot 2026-08-27 092433.png>) 点击右下角的Create Pull Request即可触发AI Review
+![未能加载成功](<screenshots/Screenshot 2026-08-27 092433.png>) 点击右下角的Create Pull Request即可触发AI Review
 
 ### 稍等待几分钟 此时会看到
 
-![alt text](<screenshots/Screenshot 2026-08-27 093243.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-27 093243.png>)
 发现报错了 可以看一下细节
 
-![alt text](<screenshots/Screenshot 2026-08-27 093238.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-27 093238.png>)
 原来是CI流水线报错了 原因是刚刚修改的utils/requestPool.ts中出现了错误 建议我们使用prettier run --write格式化一下
 但是这里我们在package.json中申明过"format": "prettier --write ." 所以直接到目标文件输入pnpm format:check 看一下是什么地方出了问题
 发现是我们刚刚添加的AI Review测试代码出错了 没有按照prettier的格式在每个文件最后留一行空行 我们可以在此时直接在目标文件终端中输入pnpm format就可以自动格式化了
 
-![alt text](<screenshots/Screenshot 2026-08-27 093630.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-27 093630.png>)
 AI Review流水线未能正常运行 原因报错是根目录下没有检测到pnpm-lock.yaml 这是因为此时的ai-review流水线是在全局运行的
 我们只想要检测Demo2文件夹，检测向master分支提交的，只针对 Demo2/demo2-env 目录下的改动触发，让run实际在Demo2/demo2-env目录下运行，以及cache-dependency-path正确的指向子目录的子文件，以及actions/github-script正确的指向子目录,且文件在子目录中生成
 且要求pnpm依赖必须都是一个版本
@@ -6164,7 +6164,7 @@ jobs:
 
 ### 再次提交，我们就会看见：
 
-![alt text](<screenshots/Screenshot 2026-08-27 114512.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-27 114512.png>)
 这次NODE.JS不报错了 说明问题已经解决 而在PR检查时报错 我们需要回到终端 输入pnpm ai-review --pr 就会看到AI Review结果 以及报错原因
 
 #### 发现是
@@ -6194,10 +6194,10 @@ jobs:
 
 然后再一次提交，或者直接在终端输入pnpm ai-review --pr就会看到
 通过了
-![alt text](<screenshots/Screenshot 2026-08-27 141805.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-27 141805.png>)
 
 并且在pull request页也出现了AI PR Review的报告
-![alt text](<screenshots/Screenshot 2026-08-27 141922.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-27 141922.png>)
 运行成功
 
 ### 但是要注意的是 我们要及时按照PR AI Review的报告进行修改，不然会导致PR无法合并，但注意的是“部分采纳 而非全部采纳”
@@ -6205,7 +6205,7 @@ jobs:
 由于我是作者，此处可以采纳的就是去除生成的一系列的： 500+ 个 pnpm 缓存文件（二进制内容、索引数据库、链接文件），这些文件属于本地包管理器的缓存产物，不应纳入版本控制 将他们处理掉
 而那些的截图增加等等 是不可以去掉的
 
-![alt text](<screenshots/Screenshot 2026-08-27 142301.png>)
+![未能加载成功](<screenshots/Screenshot 2026-08-27 142301.png>)
 采取AI PR review的建议
 
 ---
