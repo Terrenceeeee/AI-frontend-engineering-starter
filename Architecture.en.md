@@ -2257,6 +2257,328 @@ The AI‑generated review comment will appear on your Pull Request page:
 
 ---
 
+# Intelligent AI‑Assisted Development Supplement: Demo29: AI‑Enhanced D3.js Visualization — Major Expansion for Code‑File Import‑Relationship Knowledge‑Graph Functionality
+
+Our current knowledge graph is rather simplistic. It only contains basic invocation and import relationships between a small number of interfaces, with around 10 nodes and 5 edges. While this suffices for demonstration purposes in this sample project, it is far from adequate for real‑world code modifications.
+
+Many important files and folders within the project are missing from the knowledge graph. Therefore, we need an AI‑augmented knowledge graph to extend its capabilities.
+
+## Extensions for `build‑knowledge‑graph.ts`
+
+### 1. Extended Node Types
+
+Inside the `interface GraphNode` definition, new node types have been added:
+
+```
+// scripts/build-knowledge-graph.ts
+"file";
+"entry";
+"html";
+"config";
+"script";
+"test";
+"style";
+"asset";
+"workflow";
+```
+
+These types distinguish different categories of critical project files:
+
+```
+index.html               -> html
+src/main.ts              -> entry
+vite.config.ts           -> config
+scripts/deploy.ts        -> script
+e2e/homepage.spec.ts     -> test
+src/style.css            -> style
+public/sw.js             -> asset
+.github/workflows/ci.yml -> workflow
+```
+
+Pre‑existing component, page, store, composable and API nodes are preserved without modification.
+
+### 2. Extended Unified Scan Template
+
+The scan scope is defined in the newly‑added constant object `SCAN_TEMPLATE`:
+
+```
+// scripts/build-knowledge-graph.ts
+const SCAN_TEMPLATE = {
+  files: [
+    'index.html',
+    'package.json',
+    'tsconfig*.json',
+    'vite.config.*',
+    'vitest.config.*',
+    'playwright.config.*',
+    '.env*',
+    'src/**/*.{vue,ts,tsx,js,jsx,css,scss,less}',
+    'router/**/*.{ts,js}',
+    'scripts/**/*.{ts,js}',
+    'e2e/**/*.{ts,js}',
+    'tests/**/*.{ts,js}',
+    'public/**/*',
+    'src/assets/**/*',
+    '../../.github/workflows/**/*.{yml,yaml}',
+  ],
+  // ... remaining ignore configuration omitted
+};
+```
+
+When additional scan targets are required in the future, only the `SCAN_TEMPLATE` needs to be modified.
+
+### 3. Extended Scan‑Ignore Patterns
+
+Ignore rules are also defined within `SCAN_TEMPLATE` under the `ignored` field:
+
+```
+// scripts/build-knowledge-graph.ts
+ignored: [
+  '**/node_modules/**',
+  '**/dist/**',
+  '**/deploy/**',
+  '**/backups/**',
+  '**/coverage/**',
+  '**/test-results/**',
+  '**/playwright-report/**',
+  '**/*.map',
+  '**/*.min.js',
+  '**/*.lock',
+],
+```
+
+Purpose: Exclude dependencies, build artifacts, backup files, cache files and lock files from the graph to prevent graph bloat.
+
+### 4. Refactored `scanProjectFiles` Function
+
+Previously hard‑coded scanning rules now consume configurations from `SCAN_TEMPLATE` for easy future extension of scan scope.
+
+Behaviour:
+
+- Scan files matching template rules
+- Compute relative file paths automatically
+- Determine file type based on file path and extension
+- Generate uniformly‑formatted file nodes
+
+Returned structure:
+
+```
+return {
+  id: `file:${relativePath}`,
+  type,
+  name,
+  filePath: relativePath,
+};
+```
+
+### 5. Extended Import‑Path Resolution
+
+The `resolveImportPath` function has been updated to resolve paths automatically. Supported cases:
+
+- Relative paths
+
+```
+import App from "./App.vue";
+import router from "../router/index.ts";
+```
+
+- Path aliases
+
+```
+import { requestPool } from "@/utils/requestPool";
+```
+
+- Multiple file extensions
+
+```
+.ts
+.tsx
+.js
+.jsx
+.vue
+.css
+.scss
+.less
+```
+
+- Directory entry files
+
+```
+utils/index.ts
+components/index.vue
+```
+
+### 6. Added File‑Import Relationship Parsing
+
+New function `buildFileImportEdges`. It parses source‑code statements:
+
+```
+import ...
+import(...)
+```
+
+Generates import relationships with edge type `"imports"`.
+
+Examples:
+
+```
+main.ts -> App.vue
+main.ts -> router/index.ts
+api/product.ts -> utils/request.ts
+```
+
+Test‑file‑originated relationships are automatically marked with type `"test"`.
+
+### 7. Added HTML Reference‑Relationship Parsing
+
+New function `buildHtmlImportEdges`. It parses script tags inside HTML files:
+
+```
+<script type="module" src="./main.ts"></script>
+```
+
+Generates reference edges and fixes missing dependency‑chain linkage for project entry points.
+
+Example:
+
+```
+index.html -> main.ts
+```
+
+### 8. Added Edge Deduplication
+
+New helper `addEdge` eliminates duplicate edges and mitigates circular‑dependency noise.
+
+```
+function addEdge(edges: GraphEdge[], edge: GraphEdge): void {
+  const exists = edges.some(
+    (item) =>
+      item.from === edge.from && item.to === edge.to && item.type === edge.type,
+  );
+  if (!exists) edges.push(edge);
+}
+```
+
+### 9. Added Vue File‑Declaration Relationships
+
+New function `buildVueEdges`. Connects file nodes to their corresponding semantic component nodes.
+Relationship type: `"declares"`.
+
+> Source code omitted in this translation; behaviour described in original Chinese document.
+
+### 10. Added Vue Template‑Rendering Relationships
+
+`buildVueEdges` parses `<template>` sections of Vue SFCs and detects custom component tags such as:
+
+```
+<WebSocketDemo />
+<LogoDebugTrigger />
+```
+
+Relationship type: `"renders"`.
+
+### 11. Added package.json Relationships
+
+New function `buildProjectConfigurationEdges`. Parses `package.json` and interprets script commands.
+
+Sample `package.json` snippet:
+
+```
+{
+  "graph": "node scripts/build-graph.ts",
+  "deploy": "pnpm build && node scripts/deploy.ts"
+}
+```
+
+Edge type: `"runs"`.
+
+> Source code omitted in this translation.
+
+### 12. Added CI/CD Workflow Relationships
+
+Scans workflow files:
+
+```
+.github/workflows/ci.yml
+.github/workflows/deploy.yml
+.github/workflows/ai-review.yml
+```
+
+Edge type: `"triggers"`.
+If a workflow invokes a script file, additional `"runs"` edges are created.
+
+### 13. Expanded Edge‑Type Enumeration
+
+```
+interface GraphEdge {
+  from: string;
+  to: string;
+  type:
+    | 'renders'
+    | 'calls'
+    | 'subscribes'
+    | 'navigates-to'
+    | 'imports'
+    | 'injects'
+    // newly‑added types
+    | 'tests'
+    | 'configures'
+    | 'runs'
+    | 'references'
+    | 'triggers'
+    | 'declares';
+}
+```
+
+### 14. Unified Graph‑Generation Workflow
+
+`buildFullGraph` executes steps sequentially:
+
+```
+1. Scan core project files
+2. Scan Vue components
+3. Scan Pinia stores
+4. Scan composables
+5. Scan API modules
+6. Build file‑import edges
+7. Build Vue‑template‑render edges
+8. Build package‑json, configuration and CI/CD edges
+9. Build legacy store / composable / API relationships
+10. Build router relationships
+```
+
+### 15. Automatic Update for `package.json` and `visualize.html`
+
+Invoke via npm script defined inside `package.json`:
+
+```
+"graph": "node scripts/build-graph.ts"
+```
+
+Graph data is injected into the visualization page by calling `updateVisualization`.
+
+> Source code of `updateVisualization` omitted here.
+
+Full execution pipeline:
+
+```
+pnpm graph
+    ↓
+Scan project files and code relationships
+    ↓
+Produce graph object
+    ↓
+Write out knowledge‑graph.json
+    ↓
+Replace `const raw` data inside visualize.html
+    ↓
+Open visualize.html to inspect up‑to‑date graph
+```
+
+After these extensions, the visualization page renders many additional node types and relationship types: **64 nodes, 43 edges in total**.
+
+---
+
 # Appendix: .gitignore Syntax Reference
 
 ```
