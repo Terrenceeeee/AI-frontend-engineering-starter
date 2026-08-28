@@ -34,9 +34,9 @@
         width: 310px;
         flex-shrink: 0;
         padding: 20px;
-        background: #ffffff;
-        border-right: 1px solid #e5e7eb;
         overflow-y: auto;
+        background: #fff;
+        border-right: 1px solid #e5e7eb;
         z-index: 2;
       }
 
@@ -74,9 +74,9 @@
 
       .section-title {
         margin-bottom: 12px;
+        color: #374151;
         font-size: 14px;
         font-weight: 700;
-        color: #374151;
       }
 
       .stats {
@@ -93,15 +93,15 @@
       }
 
       .stat-value {
+        color: #111827;
         font-size: 22px;
         font-weight: 700;
-        color: #111827;
       }
 
       .stat-label {
         margin-top: 3px;
-        font-size: 12px;
         color: #6b7280;
+        font-size: 12px;
       }
 
       .legend-item {
@@ -109,15 +109,15 @@
         align-items: center;
         gap: 8px;
         margin: 10px 0;
-        font-size: 13px;
         color: #4b5563;
+        font-size: 13px;
       }
 
       .legend-color {
         width: 13px;
         height: 13px;
-        border-radius: 50%;
         border: 2px solid rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
         box-shadow: 0 0 0 1px #d1d5db;
       }
 
@@ -127,9 +127,9 @@
         background: #f9fafb;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
+        word-break: break-all;
         font-size: 13px;
         line-height: 1.7;
-        word-break: break-all;
       }
 
       .detail.show {
@@ -138,9 +138,9 @@
 
       .detail-name {
         margin-bottom: 4px;
+        color: #111827;
         font-size: 16px;
         font-weight: 700;
-        color: #111827;
       }
 
       .detail-row {
@@ -173,9 +173,9 @@
 
       .toolbar button {
         padding: 8px 12px;
+        background: #fff;
         border: 1px solid #d1d5db;
         border-radius: 7px;
-        background: #ffffff;
         color: #374151;
         cursor: pointer;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
@@ -213,14 +213,13 @@
       }
 
       .node circle {
-        stroke: #ffffff;
+        stroke: #fff;
         stroke-width: 2.5px;
-        transition: opacity 0.2s;
       }
 
       .node text {
-        font-size: 12px;
         fill: #374151;
+        font-size: 12px;
         pointer-events: none;
         user-select: none;
       }
@@ -243,7 +242,7 @@
         padding: 10px 12px;
         background: rgba(17, 24, 39, 0.95);
         border-radius: 7px;
-        color: #ffffff;
+        color: #fff;
         font-size: 12px;
         line-height: 1.6;
         pointer-events: none;
@@ -255,6 +254,7 @@
         position: absolute;
         top: 50%;
         left: 50%;
+        display: none;
         transform: translate(-50%, -50%);
         color: #9ca3af;
         font-size: 14px;
@@ -278,6 +278,7 @@
     <div class="app">
       <aside class="sidebar">
         <h1>📊 项目知识图谱</h1>
+
         <div class="subtitle">
           展示 Vue 组件、页面、Store、Composable、API 及路由关系。<br />
           可拖拽节点，滚轮缩放，点击节点查看详情。
@@ -292,11 +293,13 @@
 
         <div class="section">
           <div class="section-title">项目统计</div>
+
           <div class="stats">
             <div class="stat-card">
               <div id="node-count" class="stat-value">0</div>
               <div class="stat-label">节点数量</div>
             </div>
+
             <div class="stat-card">
               <div id="edge-count" class="stat-value">0</div>
               <div class="stat-label">关系数量</div>
@@ -311,22 +314,27 @@
             <span class="legend-color" style="background: #6366f1"></span>
             Component
           </div>
+
           <div class="legend-item">
             <span class="legend-color" style="background: #10b981"></span>
             Composable
           </div>
+
           <div class="legend-item">
             <span class="legend-color" style="background: #f59e0b"></span>
             API
           </div>
+
           <div class="legend-item">
             <span class="legend-color" style="background: #ef4444"></span>
             Page
           </div>
+
           <div class="legend-item">
             <span class="legend-color" style="background: #8b5cf6"></span>
             Store
           </div>
+
           <div class="legend-item">
             <span class="legend-color" style="background: #6b7280"></span>
             Route
@@ -335,20 +343,25 @@
 
         <div class="section">
           <div class="section-title">节点详情</div>
+
           <div id="detail" class="detail">
-            <div class="detail-name" id="detail-name">未选择节点</div>
+            <div id="detail-name" class="detail-name">未选择节点</div>
+
             <div class="detail-row">
               <strong>类型：</strong>
               <span id="detail-type">-</span>
             </div>
+
             <div class="detail-row">
               <strong>ID：</strong>
               <span id="detail-id">-</span>
             </div>
+
             <div class="detail-row">
               <strong>文件：</strong>
               <span id="detail-file">-</span>
             </div>
+
             <div id="detail-url-row" class="detail-row" style="display: none">
               <strong>URL：</strong>
               <span id="detail-url">-</span>
@@ -364,7 +377,7 @@
           <button id="zoom-out-btn">缩小</button>
         </div>
 
-        <div class="empty-tip" id="empty-tip" style="display: none">没有匹配的节点</div>
+        <div id="empty-tip" class="empty-tip">没有匹配的节点</div>
 
         <svg id="graph"></svg>
       </main>
@@ -373,11 +386,272 @@
     <div id="tooltip" class="tooltip"></div>
 
     <script>
-      // ============================================================
-      // 1. 原始数据（你提供的 JSON，并补全路由节点）
-      // ============================================================
       const raw = {
         nodes: [
+          { id: 'file:index.html', type: 'html', name: 'index.html', filePath: 'index.html' },
+          {
+            id: 'file:package.json',
+            type: 'config',
+            name: 'package.json',
+            filePath: 'package.json',
+          },
+          {
+            id: 'file:vite.config.ts',
+            type: 'config',
+            name: 'vite.config.ts',
+            filePath: 'vite.config.ts',
+          },
+          {
+            id: 'file:tsconfig.json',
+            type: 'config',
+            name: 'tsconfig.json',
+            filePath: 'tsconfig.json',
+          },
+          {
+            id: 'file:playwright.config.js',
+            type: 'config',
+            name: 'playwright.config.js',
+            filePath: 'playwright.config.js',
+          },
+          { id: 'file:.env.test', type: 'config', name: '.env.test', filePath: '.env.test' },
+          {
+            id: 'file:.env.staging',
+            type: 'config',
+            name: '.env.staging',
+            filePath: '.env.staging',
+          },
+          {
+            id: 'file:.env.production',
+            type: 'config',
+            name: '.env.production',
+            filePath: '.env.production',
+          },
+          {
+            id: 'file:.env.example',
+            type: 'config',
+            name: '.env.example',
+            filePath: '.env.example',
+          },
+          {
+            id: 'file:.env.development',
+            type: 'config',
+            name: '.env.development',
+            filePath: '.env.development',
+          },
+          { id: 'file:src/style.css', type: 'style', name: 'style.css', filePath: 'src/style.css' },
+          { id: 'file:src/main.ts', type: 'entry', name: 'main.ts', filePath: 'src/main.ts' },
+          { id: 'file:src/App.vue', type: 'file', name: 'App.vue', filePath: 'src/App.vue' },
+          {
+            id: 'file:src/views/User.vue',
+            type: 'file',
+            name: 'User.vue',
+            filePath: 'src/views/User.vue',
+          },
+          {
+            id: 'file:src/views/Home.vue',
+            type: 'file',
+            name: 'Home.vue',
+            filePath: 'src/views/Home.vue',
+          },
+          {
+            id: 'file:src/views/Admin.vue',
+            type: 'file',
+            name: 'Admin.vue',
+            filePath: 'src/views/Admin.vue',
+          },
+          {
+            id: 'file:src/views/product/index.vue',
+            type: 'file',
+            name: 'index.vue',
+            filePath: 'src/views/product/index.vue',
+          },
+          {
+            id: 'file:src/utils/retry.ts',
+            type: 'file',
+            name: 'retry.ts',
+            filePath: 'src/utils/retry.ts',
+          },
+          {
+            id: 'file:src/utils/requestPool.ts',
+            type: 'file',
+            name: 'requestPool.ts',
+            filePath: 'src/utils/requestPool.ts',
+          },
+          {
+            id: 'file:src/utils/request.ts',
+            type: 'file',
+            name: 'request.ts',
+            filePath: 'src/utils/request.ts',
+          },
+          {
+            id: 'file:src/utils/performanceReporter.ts',
+            type: 'file',
+            name: 'performanceReporter.ts',
+            filePath: 'src/utils/performanceReporter.ts',
+          },
+          {
+            id: 'file:src/utils/logger.ts',
+            type: 'file',
+            name: 'logger.ts',
+            filePath: 'src/utils/logger.ts',
+          },
+          {
+            id: 'file:src/utils/_tests_/retry.test.ts',
+            type: 'test',
+            name: 'retry.test.ts',
+            filePath: 'src/utils/_tests_/retry.test.ts',
+          },
+          {
+            id: 'file:src/utils/_tests_/requestPool.test.ts',
+            type: 'test',
+            name: 'requestPool.test.ts',
+            filePath: 'src/utils/_tests_/requestPool.test.ts',
+          },
+          {
+            id: 'file:src/utils/_tests_/math.test.ts',
+            type: 'test',
+            name: 'math.test.ts',
+            filePath: 'src/utils/_tests_/math.test.ts',
+          },
+          {
+            id: 'file:src/utils/_tests_/logger.test.ts',
+            type: 'test',
+            name: 'logger.test.ts',
+            filePath: 'src/utils/_tests_/logger.test.ts',
+          },
+          {
+            id: 'file:src/types/vue.d.ts',
+            type: 'file',
+            name: 'vue.d.ts',
+            filePath: 'src/types/vue.d.ts',
+          },
+          {
+            id: 'file:src/types/vconsole.d.ts',
+            type: 'file',
+            name: 'vconsole.d.ts',
+            filePath: 'src/types/vconsole.d.ts',
+          },
+          {
+            id: 'file:src/types/logger.d.ts',
+            type: 'file',
+            name: 'logger.d.ts',
+            filePath: 'src/types/logger.d.ts',
+          },
+          {
+            id: 'file:src/types/global.d.ts',
+            type: 'file',
+            name: 'global.d.ts',
+            filePath: 'src/types/global.d.ts',
+          },
+          {
+            id: 'file:src/stores/modules/product.ts',
+            type: 'file',
+            name: 'product.ts',
+            filePath: 'src/stores/modules/product.ts',
+          },
+          {
+            id: 'file:src/composables/useVConsole.ts',
+            type: 'file',
+            name: 'useVConsole.ts',
+            filePath: 'src/composables/useVConsole.ts',
+          },
+          {
+            id: 'file:src/components/WebSocketDemo.vue',
+            type: 'file',
+            name: 'WebSocketDemo.vue',
+            filePath: 'src/components/WebSocketDemo.vue',
+          },
+          {
+            id: 'file:src/components/LogoDebugTrigger.vue',
+            type: 'file',
+            name: 'LogoDebugTrigger.vue',
+            filePath: 'src/components/LogoDebugTrigger.vue',
+          },
+          {
+            id: 'file:src/api/testApi.ts',
+            type: 'file',
+            name: 'testApi.ts',
+            filePath: 'src/api/testApi.ts',
+          },
+          {
+            id: 'file:src/api/product.ts',
+            type: 'file',
+            name: 'product.ts',
+            filePath: 'src/api/product.ts',
+          },
+          {
+            id: 'file:router/index.ts',
+            type: 'file',
+            name: 'index.ts',
+            filePath: 'router/index.ts',
+          },
+          {
+            id: 'file:scripts/rollback.ts',
+            type: 'script',
+            name: 'rollback.ts',
+            filePath: 'scripts/rollback.ts',
+          },
+          {
+            id: 'file:scripts/generate.ts',
+            type: 'script',
+            name: 'generate.ts',
+            filePath: 'scripts/generate.ts',
+          },
+          {
+            id: 'file:scripts/deploy.ts',
+            type: 'script',
+            name: 'deploy.ts',
+            filePath: 'scripts/deploy.ts',
+          },
+          {
+            id: 'file:scripts/build-graph.ts',
+            type: 'script',
+            name: 'build-graph.ts',
+            filePath: 'scripts/build-graph.ts',
+          },
+          {
+            id: 'file:scripts/ai-review.ts',
+            type: 'script',
+            name: 'ai-review.ts',
+            filePath: 'scripts/ai-review.ts',
+          },
+          {
+            id: 'file:e2e/homepage.spec.ts',
+            type: 'test',
+            name: 'homepage.spec.ts',
+            filePath: 'e2e/homepage.spec.ts',
+          },
+          { id: 'file:public/sw.js', type: 'asset', name: 'sw.js', filePath: 'public/sw.js' },
+          {
+            id: 'file:public/icons.svg',
+            type: 'asset',
+            name: 'icons.svg',
+            filePath: 'public/icons.svg',
+          },
+          {
+            id: 'file:public/favicon.svg',
+            type: 'asset',
+            name: 'favicon.svg',
+            filePath: 'public/favicon.svg',
+          },
+          {
+            id: 'file:../../.github/workflows/deploy.yml',
+            type: 'workflow',
+            name: 'deploy.yml',
+            filePath: '../../.github/workflows/deploy.yml',
+          },
+          {
+            id: 'file:../../.github/workflows/ci.yml',
+            type: 'workflow',
+            name: 'ci.yml',
+            filePath: '../../.github/workflows/ci.yml',
+          },
+          {
+            id: 'file:../../.github/workflows/ai-review.yml',
+            type: 'workflow',
+            name: 'ai-review.yml',
+            filePath: '../../.github/workflows/ai-review.yml',
+          },
           { id: 'component:App', type: 'component', name: 'App', filePath: 'src\\App.vue' },
           { id: 'component:User', type: 'page', name: 'User', filePath: 'src\\views\\User.vue' },
           { id: 'component:Home', type: 'page', name: 'Home', filePath: 'src\\views\\Home.vue' },
@@ -399,12 +673,6 @@
             type: 'component',
             name: 'LogoDebugTrigger',
             filePath: 'src\\components\\LogoDebugTrigger.vue',
-          },
-          {
-            id: 'component:HelloWorld',
-            type: 'component',
-            name: 'HelloWorld',
-            filePath: 'src\\components\\HelloWorld.vue',
           },
           {
             id: 'store:product',
@@ -434,6 +702,88 @@
           },
         ],
         edges: [
+          { from: 'file:src/main.ts', to: 'file:src/App.vue', type: 'imports' },
+          { from: 'file:src/main.ts', to: 'file:router/index.ts', type: 'imports' },
+          {
+            from: 'file:src/main.ts',
+            to: 'file:src/utils/performanceReporter.ts',
+            type: 'imports',
+          },
+          { from: 'file:src/views/Home.vue', to: 'file:src/utils/requestPool.ts', type: 'imports' },
+          { from: 'file:src/views/Home.vue', to: 'file:src/api/testApi.ts', type: 'imports' },
+          {
+            from: 'file:src/views/Home.vue',
+            to: 'file:src/components/WebSocketDemo.vue',
+            type: 'imports',
+          },
+          {
+            from: 'file:src/views/Home.vue',
+            to: 'file:src/components/LogoDebugTrigger.vue',
+            type: 'imports',
+          },
+          { from: 'file:src/views/Home.vue', to: 'file:src/utils/logger.ts', type: 'imports' },
+          {
+            from: 'file:src/utils/_tests_/retry.test.ts',
+            to: 'file:src/utils/retry.ts',
+            type: 'tests',
+          },
+          {
+            from: 'file:src/utils/_tests_/requestPool.test.ts',
+            to: 'file:src/utils/requestPool.ts',
+            type: 'tests',
+          },
+          {
+            from: 'file:src/utils/_tests_/logger.test.ts',
+            to: 'file:src/utils/logger.ts',
+            type: 'tests',
+          },
+          {
+            from: 'file:src/stores/modules/product.ts',
+            to: 'file:src/api/product.ts',
+            type: 'imports',
+          },
+          {
+            from: 'file:src/components/LogoDebugTrigger.vue',
+            to: 'file:src/composables/useVConsole.ts',
+            type: 'imports',
+          },
+          { from: 'file:src/api/testApi.ts', to: 'file:src/utils/retry.ts', type: 'imports' },
+          { from: 'file:src/api/product.ts', to: 'file:src/utils/request.ts', type: 'imports' },
+          { from: 'file:router/index.ts', to: 'file:src/views/Home.vue', type: 'imports' },
+          { from: 'file:router/index.ts', to: 'file:src/views/User.vue', type: 'imports' },
+          { from: 'file:router/index.ts', to: 'file:src/views/Admin.vue', type: 'imports' },
+          { from: 'file:router/index.ts', to: 'file:src/views/product/index.vue', type: 'imports' },
+          { from: 'file:scripts/generate.ts', to: 'file:src/utils/request.ts', type: 'imports' },
+          { from: 'file:index.html', to: 'file:src/main.ts', type: 'imports' },
+          { from: 'file:src/views/Home.vue', to: 'component:WebSocketDemo', type: 'renders' },
+          { from: 'file:src/views/Home.vue', to: 'component:LogoDebugTrigger', type: 'renders' },
+          { from: 'file:package.json', to: 'file:scripts/generate.ts', type: 'runs' },
+          { from: 'file:package.json', to: 'file:scripts/build-graph.ts', type: 'runs' },
+          { from: 'file:package.json', to: 'file:scripts/deploy.ts', type: 'runs' },
+          { from: 'file:package.json', to: 'file:scripts/rollback.ts', type: 'runs' },
+          { from: 'file:package.json', to: 'file:scripts/ai-review.ts', type: 'runs' },
+          {
+            from: 'file:../../.github/workflows/deploy.yml',
+            to: 'file:package.json',
+            type: 'triggers',
+          },
+          {
+            from: 'file:../../.github/workflows/ci.yml',
+            to: 'file:package.json',
+            type: 'triggers',
+          },
+          {
+            from: 'file:../../.github/workflows/ai-review.yml',
+            to: 'file:package.json',
+            type: 'triggers',
+          },
+          { from: 'file:tsconfig.json', to: 'file:src/main.ts', type: 'configures' },
+          { from: 'file:.env.test', to: 'file:src/utils/request.ts', type: 'configures' },
+          { from: 'file:.env.staging', to: 'file:src/utils/request.ts', type: 'configures' },
+          { from: 'file:.env.production', to: 'file:src/utils/request.ts', type: 'configures' },
+          { from: 'file:.env.example', to: 'file:vite.config.ts', type: 'configures' },
+          { from: 'file:.env.example', to: 'file:src/utils/request.ts', type: 'configures' },
+          { from: 'file:.env.development', to: 'file:src/utils/request.ts', type: 'configures' },
           { from: 'component:LogoDebugTrigger', to: 'composable:useVConsole', type: 'calls' },
           { from: 'route:/', to: 'component:Home', type: 'navigates-to' },
           { from: 'route:/user', to: 'component:User', type: 'navigates-to' },
@@ -442,35 +792,6 @@
         ],
       };
 
-      // 补全 edges 中缺失的节点（路由）
-      const nodeMap = new Map();
-      raw.nodes.forEach((n) => nodeMap.set(n.id, n));
-
-      const missingIds = new Set();
-      raw.edges.forEach((e) => {
-        if (!nodeMap.has(e.from)) missingIds.add(e.from);
-        if (!nodeMap.has(e.to)) missingIds.add(e.to);
-      });
-
-      missingIds.forEach((id) => {
-        let type = 'route';
-        let name = id.startsWith('route:') ? id.substring(6) || '/' : id;
-        nodeMap.set(id, {
-          id: id,
-          type: type,
-          name: name,
-          filePath: '',
-        });
-      });
-
-      const graphData = {
-        nodes: Array.from(nodeMap.values()),
-        edges: raw.edges,
-      };
-
-      // ============================================================
-      // 2. 颜色映射 & 类型名称
-      // ============================================================
       const colorMap = {
         component: '#6366f1',
         page: '#ef4444',
@@ -478,6 +799,15 @@
         composable: '#10b981',
         api: '#f59e0b',
         route: '#6b7280',
+        file: '#64748b',
+        entry: '#0f766e',
+        html: '#ea580c',
+        config: '#0891b2',
+        script: '#7c3aed',
+        test: '#16a34a',
+        style: '#db2777',
+        asset: '#a16207',
+        workflow: '#475569',
       };
 
       const typeNameMap = {
@@ -487,31 +817,67 @@
         composable: 'Composable',
         api: 'API',
         route: 'Route',
+        file: 'File',
+        entry: 'Entry',
+        html: 'HTML',
+        config: 'Config',
+        script: 'Script',
+        test: 'Test',
+        style: 'Style',
+        asset: 'Asset',
+        workflow: 'Workflow',
       };
 
-      // ============================================================
-      // 3. D3 图表初始化
-      // ============================================================
-      const svg = d3.select('#graph');
-      const container = document.querySelector('.graph-container');
-      const tooltip = document.querySelector('#tooltip');
+      // 补全边关系中不存在的路由节点
+      const nodeMap = new Map(raw.nodes.map((node) => [node.id, node]));
 
-      const width = container.clientWidth;
-      const height = container.clientHeight;
+      raw.edges.forEach((edge) => {
+        if (!nodeMap.has(edge.from)) {
+          nodeMap.set(edge.from, {
+            id: edge.from,
+            type: 'route',
+            name: edge.from.replace(/^route:/, '') || '/',
+            filePath: '',
+          });
+        }
+
+        if (!nodeMap.has(edge.to)) {
+          nodeMap.set(edge.to, {
+            id: edge.to,
+            type: 'route',
+            name: edge.to.replace(/^route:/, '') || '/',
+            filePath: '',
+          });
+        }
+      });
+
+      const graphData = {
+        nodes: Array.from(nodeMap.values()),
+        edges: raw.edges,
+      };
+
+      const graphContainer = document.querySelector('.graph-container');
+      const svg = d3.select('#graph');
+      const tooltip = document.querySelector('#tooltip');
+      const searchInput = document.querySelector('#search');
+      const emptyTip = document.querySelector('#empty-tip');
+
+      const width = graphContainer.clientWidth;
+      const height = graphContainer.clientHeight;
+
       svg.attr('viewBox', `0 0 ${width} ${height}`);
 
       const root = svg.append('g');
 
-      // 缩放
       const zoom = d3
         .zoom()
         .scaleExtent([0.25, 4])
         .on('zoom', (event) => {
           root.attr('transform', event.transform);
         });
+
       svg.call(zoom);
 
-      // 箭头标记
       const marker = root
         .append('defs')
         .append('marker')
@@ -522,22 +888,25 @@
         .attr('markerWidth', 7)
         .attr('markerHeight', 7)
         .attr('orient', 'auto');
+
       marker.append('path').attr('d', 'M0,-5L10,0L0,5').attr('fill', '#9ca3af');
 
-      // 构建边（替换为实际对象引用）
-      const nodeMapForLinks = new Map(graphData.nodes.map((n) => [n.id, n]));
-      const links = graphData.edges.map((e) => ({
-        ...e,
-        source: nodeMapForLinks.get(e.from),
-        target: nodeMapForLinks.get(e.to),
-      }));
+      const nodeMapForLinks = new Map(graphData.nodes.map((node) => [node.id, node]));
 
-      // 更新统计
+      const links = graphData.edges
+        .map((edge) => ({
+          ...edge,
+          source: nodeMapForLinks.get(edge.from),
+          target: nodeMapForLinks.get(edge.to),
+        }))
+        .filter((edge) => edge.source && edge.target);
+
       document.querySelector('#node-count').textContent = graphData.nodes.length;
+
       document.querySelector('#edge-count').textContent = graphData.edges.length;
 
-      // --- 绘制连线 ---
       const linkGroup = root.append('g').attr('class', 'links');
+
       const link = linkGroup
         .selectAll('line')
         .data(links)
@@ -554,14 +923,9 @@
         .attr('class', 'link-label')
         .text((d) => d.type);
 
-      // --- 绘制节点 ---
       const nodeGroup = root.append('g').attr('class', 'nodes');
-      const node = nodeGroup
-        .selectAll('g')
-        .data(graphData.nodes)
-        .join('g')
-        .attr('class', 'node')
-        .call(d3.drag().on('start', dragstarted).on('drag', dragged).on('end', dragended));
+
+      const node = nodeGroup.selectAll('g').data(graphData.nodes).join('g').attr('class', 'node');
 
       node
         .append('circle')
@@ -578,33 +942,12 @@
         .attr('y', 5)
         .text((d) => d.name);
 
-      // 交互事件
-      node
-        .on('click', (event, d) => {
-          event.stopPropagation();
-          showDetail(d);
-          highlightNode(d);
-        })
-        .on('mouseenter', (event, d) => {
-          tooltip.style.display = 'block';
-          tooltip.innerHTML = `
-                <strong>${escapeHtml(d.name)}</strong><br>
-                类型：${escapeHtml(typeNameMap[d.type] || d.type)}<br>
-                文件：${escapeHtml(d.filePath || '—')}
-                ${d.props?.url ? `<br>URL：${escapeHtml(d.props.url)}` : ''}
-            `;
-          moveTooltip(event);
-        })
-        .on('mousemove', moveTooltip)
-        .on('mouseleave', () => {
-          tooltip.style.display = 'none';
-        });
+      function getNodeRadius(nodeData) {
+        if (nodeData.type === 'route') return 16;
+        if (nodeData.type === 'composable') return 20;
+        return 18;
+      }
 
-      svg.on('click', () => {
-        clearHighlight();
-      });
-
-      // --- 力导向模拟 ---
       const simulation = d3
         .forceSimulation(graphData.nodes)
         .force(
@@ -617,8 +960,40 @@
         )
         .force('charge', d3.forceManyBody().strength(-600))
         .force('center', d3.forceCenter(width / 2, height / 2))
-        .force('collision', d3.forceCollide().radius(55))
+        .force(
+          'collision',
+          d3.forceCollide().radius((d) => getNodeRadius(d) + 38)
+        )
         .on('tick', ticked);
+
+      node.call(d3.drag().on('start', dragstarted).on('drag', dragged).on('end', dragended));
+
+      node
+        .on('click', (event, d) => {
+          event.stopPropagation();
+          showDetail(d);
+          highlightNode(d);
+        })
+        .on('mouseenter', (event, d) => {
+          tooltip.style.display = 'block';
+
+          tooltip.innerHTML = `
+            <strong>${escapeHtml(d.name)}</strong><br>
+            类型：${escapeHtml(typeNameMap[d.type] || d.type)}<br>
+            文件：${escapeHtml(d.filePath || '—')}
+            ${d.props?.url ? `<br>URL：${escapeHtml(d.props.url)}` : ''}
+          `;
+
+          moveTooltip(event);
+        })
+        .on('mousemove', moveTooltip)
+        .on('mouseleave', () => {
+          tooltip.style.display = 'none';
+        });
+
+      svg.on('click', () => {
+        clearHighlight();
+      });
 
       function ticked() {
         link
@@ -631,11 +1006,14 @@
           .attr('x', (d) => (d.source.x + d.target.x) / 2)
           .attr('y', (d) => (d.source.y + d.target.y) / 2 - 5);
 
-        node.attr('transform', (d) => `translate(${d.x},${d.y})`);
+        node.attr('transform', (d) => `translate(${d.x}, ${d.y})`);
       }
 
       function dragstarted(event, d) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
+        if (!event.active) {
+          simulation.alphaTarget(0.3).restart();
+        }
+
         d.fx = d.x;
         d.fy = d.y;
       }
@@ -646,46 +1024,58 @@
       }
 
       function dragended(event, d) {
-        if (!event.active) simulation.alphaTarget(0);
+        if (!event.active) {
+          simulation.alphaTarget(0);
+        }
+
         d.fx = null;
         d.fy = null;
       }
 
-      // ============================================================
-      // 4. 交互功能：详情、高亮、搜索、重置等
-      // ============================================================
       function showDetail(d) {
         const detail = document.querySelector('#detail');
+
         detail.classList.add('show');
+
         document.querySelector('#detail-name').textContent = d.name;
         document.querySelector('#detail-type').textContent = typeNameMap[d.type] || d.type;
         document.querySelector('#detail-id').textContent = d.id;
         document.querySelector('#detail-file').textContent = d.filePath || '—';
 
         const urlRow = document.querySelector('#detail-url-row');
+        const urlElement = document.querySelector('#detail-url');
+
         if (d.props?.url) {
           urlRow.style.display = 'block';
-          document.querySelector('#detail-url').textContent = d.props.url;
+          urlElement.textContent = d.props.url;
         } else {
           urlRow.style.display = 'none';
+          urlElement.textContent = '-';
         }
       }
 
       function highlightNode(selectedNode) {
-        const related = new Set([selectedNode.id]);
+        const relatedIds = new Set([selectedNode.id]);
+
         links.forEach((edge) => {
-          if (edge.source.id === selectedNode.id) related.add(edge.target.id);
-          if (edge.target.id === selectedNode.id) related.add(edge.source.id);
+          if (edge.source.id === selectedNode.id) {
+            relatedIds.add(edge.target.id);
+          }
+
+          if (edge.target.id === selectedNode.id) {
+            relatedIds.add(edge.source.id);
+          }
         });
 
         node
-          .classed('dimmed', (d) => !related.has(d.id))
+          .classed('dimmed', (d) => !relatedIds.has(d.id))
           .classed('highlighted', (d) => d.id === selectedNode.id);
 
         link.classed(
           'dimmed',
           (d) => d.source.id !== selectedNode.id && d.target.id !== selectedNode.id
         );
+
         linkLabel.classed(
           'dimmed',
           (d) => d.source.id !== selectedNode.id && d.target.id !== selectedNode.id
@@ -698,76 +1088,83 @@
         linkLabel.classed('dimmed', false);
       }
 
-      // 搜索
-      const searchInput = document.querySelector('#search');
       searchInput.addEventListener('input', () => {
         const keyword = searchInput.value.trim().toLowerCase();
+
         if (!keyword) {
           clearHighlight();
-          document.querySelector('#empty-tip').style.display = 'none';
+          emptyTip.style.display = 'none';
           return;
         }
 
-        const matched = graphData.nodes.filter(
-          (d) =>
-            d.name.toLowerCase().includes(keyword) ||
-            d.id.toLowerCase().includes(keyword) ||
-            (d.filePath && d.filePath.toLowerCase().includes(keyword))
-        );
-        const matchedIds = new Set(matched.map((d) => d.id));
+        const matchedNodes = graphData.nodes.filter((nodeData) => {
+          return (
+            nodeData.name.toLowerCase().includes(keyword) ||
+            nodeData.id.toLowerCase().includes(keyword) ||
+            nodeData.filePath.toLowerCase().includes(keyword)
+          );
+        });
+
+        const matchedIds = new Set(matchedNodes.map((nodeData) => nodeData.id));
 
         node
           .classed('dimmed', (d) => !matchedIds.has(d.id))
           .classed('highlighted', (d) => matchedIds.has(d.id));
 
         link.classed('dimmed', (d) => !matchedIds.has(d.source.id) && !matchedIds.has(d.target.id));
+
         linkLabel.classed(
           'dimmed',
           (d) => !matchedIds.has(d.source.id) && !matchedIds.has(d.target.id)
         );
 
-        document.querySelector('#empty-tip').style.display =
-          matched.length === 0 ? 'block' : 'none';
+        emptyTip.style.display = matchedNodes.length === 0 ? 'block' : 'none';
       });
 
-      // 重置
       document.querySelector('#reset-btn').addEventListener('click', () => {
         searchInput.value = '';
         clearHighlight();
+        emptyTip.style.display = 'none';
+
         svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+
         simulation.alpha(0.8).restart();
       });
 
       document.querySelector('#zoom-in-btn').addEventListener('click', () => {
         svg.transition().duration(300).call(zoom.scaleBy, 1.25);
       });
+
       document.querySelector('#zoom-out-btn').addEventListener('click', () => {
         svg.transition().duration(300).call(zoom.scaleBy, 0.8);
       });
 
-      // 辅助函数
       function moveTooltip(event) {
         tooltip.style.left = `${event.clientX + 14}px`;
         tooltip.style.top = `${event.clientY + 14}px`;
       }
 
-      function escapeHtml(str) {
-        return String(str).replace(/[&<>"]/g, function (m) {
-          if (m === '&') return '&amp;';
-          if (m === '<') return '&lt;';
-          if (m === '>') return '&gt;';
-          if (m === '"') return '&quot;';
-          return m;
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"]/g, (char) => {
+          const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+          };
+
+          return map[char];
         });
       }
 
-      // 窗口尺寸自适应
       window.addEventListener('resize', () => {
-        const w = container.clientWidth;
-        const h = container.clientHeight;
-        svg.attr('viewBox', `0 0 ${w} ${h}`);
+        const newWidth = graphContainer.clientWidth;
+        const newHeight = graphContainer.clientHeight;
+
+        svg.attr('viewBox', `0 0 ${newWidth} ${newHeight}`);
+
         simulation
-          .force('center', d3.forceCenter(w / 2, h / 2))
+          .force('center', d3.forceCenter(newWidth / 2, newHeight / 2))
           .alpha(0.3)
           .restart();
       });

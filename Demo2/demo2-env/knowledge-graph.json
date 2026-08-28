@@ -1,6 +1,300 @@
 {
   "nodes": [
     {
+      "id": "file:index.html",
+      "type": "html",
+      "name": "index.html",
+      "filePath": "index.html"
+    },
+    {
+      "id": "file:package.json",
+      "type": "config",
+      "name": "package.json",
+      "filePath": "package.json"
+    },
+    {
+      "id": "file:vite.config.ts",
+      "type": "config",
+      "name": "vite.config.ts",
+      "filePath": "vite.config.ts"
+    },
+    {
+      "id": "file:tsconfig.json",
+      "type": "config",
+      "name": "tsconfig.json",
+      "filePath": "tsconfig.json"
+    },
+    {
+      "id": "file:playwright.config.js",
+      "type": "config",
+      "name": "playwright.config.js",
+      "filePath": "playwright.config.js"
+    },
+    {
+      "id": "file:.env.test",
+      "type": "config",
+      "name": ".env.test",
+      "filePath": ".env.test"
+    },
+    {
+      "id": "file:.env.staging",
+      "type": "config",
+      "name": ".env.staging",
+      "filePath": ".env.staging"
+    },
+    {
+      "id": "file:.env.production",
+      "type": "config",
+      "name": ".env.production",
+      "filePath": ".env.production"
+    },
+    {
+      "id": "file:.env.example",
+      "type": "config",
+      "name": ".env.example",
+      "filePath": ".env.example"
+    },
+    {
+      "id": "file:.env.development",
+      "type": "config",
+      "name": ".env.development",
+      "filePath": ".env.development"
+    },
+    {
+      "id": "file:src/style.css",
+      "type": "style",
+      "name": "style.css",
+      "filePath": "src/style.css"
+    },
+    {
+      "id": "file:src/main.ts",
+      "type": "entry",
+      "name": "main.ts",
+      "filePath": "src/main.ts"
+    },
+    {
+      "id": "file:src/App.vue",
+      "type": "file",
+      "name": "App.vue",
+      "filePath": "src/App.vue"
+    },
+    {
+      "id": "file:src/views/User.vue",
+      "type": "file",
+      "name": "User.vue",
+      "filePath": "src/views/User.vue"
+    },
+    {
+      "id": "file:src/views/Home.vue",
+      "type": "file",
+      "name": "Home.vue",
+      "filePath": "src/views/Home.vue"
+    },
+    {
+      "id": "file:src/views/Admin.vue",
+      "type": "file",
+      "name": "Admin.vue",
+      "filePath": "src/views/Admin.vue"
+    },
+    {
+      "id": "file:src/views/product/index.vue",
+      "type": "file",
+      "name": "index.vue",
+      "filePath": "src/views/product/index.vue"
+    },
+    {
+      "id": "file:src/utils/retry.ts",
+      "type": "file",
+      "name": "retry.ts",
+      "filePath": "src/utils/retry.ts"
+    },
+    {
+      "id": "file:src/utils/requestPool.ts",
+      "type": "file",
+      "name": "requestPool.ts",
+      "filePath": "src/utils/requestPool.ts"
+    },
+    {
+      "id": "file:src/utils/request.ts",
+      "type": "file",
+      "name": "request.ts",
+      "filePath": "src/utils/request.ts"
+    },
+    {
+      "id": "file:src/utils/performanceReporter.ts",
+      "type": "file",
+      "name": "performanceReporter.ts",
+      "filePath": "src/utils/performanceReporter.ts"
+    },
+    {
+      "id": "file:src/utils/logger.ts",
+      "type": "file",
+      "name": "logger.ts",
+      "filePath": "src/utils/logger.ts"
+    },
+    {
+      "id": "file:src/utils/_tests_/retry.test.ts",
+      "type": "test",
+      "name": "retry.test.ts",
+      "filePath": "src/utils/_tests_/retry.test.ts"
+    },
+    {
+      "id": "file:src/utils/_tests_/requestPool.test.ts",
+      "type": "test",
+      "name": "requestPool.test.ts",
+      "filePath": "src/utils/_tests_/requestPool.test.ts"
+    },
+    {
+      "id": "file:src/utils/_tests_/math.test.ts",
+      "type": "test",
+      "name": "math.test.ts",
+      "filePath": "src/utils/_tests_/math.test.ts"
+    },
+    {
+      "id": "file:src/utils/_tests_/logger.test.ts",
+      "type": "test",
+      "name": "logger.test.ts",
+      "filePath": "src/utils/_tests_/logger.test.ts"
+    },
+    {
+      "id": "file:src/types/vue.d.ts",
+      "type": "file",
+      "name": "vue.d.ts",
+      "filePath": "src/types/vue.d.ts"
+    },
+    {
+      "id": "file:src/types/vconsole.d.ts",
+      "type": "file",
+      "name": "vconsole.d.ts",
+      "filePath": "src/types/vconsole.d.ts"
+    },
+    {
+      "id": "file:src/types/logger.d.ts",
+      "type": "file",
+      "name": "logger.d.ts",
+      "filePath": "src/types/logger.d.ts"
+    },
+    {
+      "id": "file:src/types/global.d.ts",
+      "type": "file",
+      "name": "global.d.ts",
+      "filePath": "src/types/global.d.ts"
+    },
+    {
+      "id": "file:src/stores/modules/product.ts",
+      "type": "file",
+      "name": "product.ts",
+      "filePath": "src/stores/modules/product.ts"
+    },
+    {
+      "id": "file:src/composables/useVConsole.ts",
+      "type": "file",
+      "name": "useVConsole.ts",
+      "filePath": "src/composables/useVConsole.ts"
+    },
+    {
+      "id": "file:src/components/WebSocketDemo.vue",
+      "type": "file",
+      "name": "WebSocketDemo.vue",
+      "filePath": "src/components/WebSocketDemo.vue"
+    },
+    {
+      "id": "file:src/components/LogoDebugTrigger.vue",
+      "type": "file",
+      "name": "LogoDebugTrigger.vue",
+      "filePath": "src/components/LogoDebugTrigger.vue"
+    },
+    {
+      "id": "file:src/api/testApi.ts",
+      "type": "file",
+      "name": "testApi.ts",
+      "filePath": "src/api/testApi.ts"
+    },
+    {
+      "id": "file:src/api/product.ts",
+      "type": "file",
+      "name": "product.ts",
+      "filePath": "src/api/product.ts"
+    },
+    {
+      "id": "file:router/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "router/index.ts"
+    },
+    {
+      "id": "file:scripts/rollback.ts",
+      "type": "script",
+      "name": "rollback.ts",
+      "filePath": "scripts/rollback.ts"
+    },
+    {
+      "id": "file:scripts/generate.ts",
+      "type": "script",
+      "name": "generate.ts",
+      "filePath": "scripts/generate.ts"
+    },
+    {
+      "id": "file:scripts/deploy.ts",
+      "type": "script",
+      "name": "deploy.ts",
+      "filePath": "scripts/deploy.ts"
+    },
+    {
+      "id": "file:scripts/build-graph.ts",
+      "type": "script",
+      "name": "build-graph.ts",
+      "filePath": "scripts/build-graph.ts"
+    },
+    {
+      "id": "file:scripts/ai-review.ts",
+      "type": "script",
+      "name": "ai-review.ts",
+      "filePath": "scripts/ai-review.ts"
+    },
+    {
+      "id": "file:e2e/homepage.spec.ts",
+      "type": "test",
+      "name": "homepage.spec.ts",
+      "filePath": "e2e/homepage.spec.ts"
+    },
+    {
+      "id": "file:public/sw.js",
+      "type": "asset",
+      "name": "sw.js",
+      "filePath": "public/sw.js"
+    },
+    {
+      "id": "file:public/icons.svg",
+      "type": "asset",
+      "name": "icons.svg",
+      "filePath": "public/icons.svg"
+    },
+    {
+      "id": "file:public/favicon.svg",
+      "type": "asset",
+      "name": "favicon.svg",
+      "filePath": "public/favicon.svg"
+    },
+    {
+      "id": "file:../../.github/workflows/deploy.yml",
+      "type": "workflow",
+      "name": "deploy.yml",
+      "filePath": "../../.github/workflows/deploy.yml"
+    },
+    {
+      "id": "file:../../.github/workflows/ci.yml",
+      "type": "workflow",
+      "name": "ci.yml",
+      "filePath": "../../.github/workflows/ci.yml"
+    },
+    {
+      "id": "file:../../.github/workflows/ai-review.yml",
+      "type": "workflow",
+      "name": "ai-review.yml",
+      "filePath": "../../.github/workflows/ai-review.yml"
+    },
+    {
       "id": "component:App",
       "type": "component",
       "name": "App",
@@ -74,6 +368,196 @@
     }
   ],
   "edges": [
+    {
+      "from": "file:src/main.ts",
+      "to": "file:src/App.vue",
+      "type": "imports"
+    },
+    {
+      "from": "file:src/main.ts",
+      "to": "file:router/index.ts",
+      "type": "imports"
+    },
+    {
+      "from": "file:src/main.ts",
+      "to": "file:src/utils/performanceReporter.ts",
+      "type": "imports"
+    },
+    {
+      "from": "file:src/views/Home.vue",
+      "to": "file:src/utils/requestPool.ts",
+      "type": "imports"
+    },
+    {
+      "from": "file:src/views/Home.vue",
+      "to": "file:src/api/testApi.ts",
+      "type": "imports"
+    },
+    {
+      "from": "file:src/views/Home.vue",
+      "to": "file:src/components/WebSocketDemo.vue",
+      "type": "imports"
+    },
+    {
+      "from": "file:src/views/Home.vue",
+      "to": "file:src/components/LogoDebugTrigger.vue",
+      "type": "imports"
+    },
+    {
+      "from": "file:src/views/Home.vue",
+      "to": "file:src/utils/logger.ts",
+      "type": "imports"
+    },
+    {
+      "from": "file:src/utils/_tests_/retry.test.ts",
+      "to": "file:src/utils/retry.ts",
+      "type": "tests"
+    },
+    {
+      "from": "file:src/utils/_tests_/requestPool.test.ts",
+      "to": "file:src/utils/requestPool.ts",
+      "type": "tests"
+    },
+    {
+      "from": "file:src/utils/_tests_/logger.test.ts",
+      "to": "file:src/utils/logger.ts",
+      "type": "tests"
+    },
+    {
+      "from": "file:src/stores/modules/product.ts",
+      "to": "file:src/api/product.ts",
+      "type": "imports"
+    },
+    {
+      "from": "file:src/components/LogoDebugTrigger.vue",
+      "to": "file:src/composables/useVConsole.ts",
+      "type": "imports"
+    },
+    {
+      "from": "file:src/api/testApi.ts",
+      "to": "file:src/utils/retry.ts",
+      "type": "imports"
+    },
+    {
+      "from": "file:src/api/product.ts",
+      "to": "file:src/utils/request.ts",
+      "type": "imports"
+    },
+    {
+      "from": "file:router/index.ts",
+      "to": "file:src/views/Home.vue",
+      "type": "imports"
+    },
+    {
+      "from": "file:router/index.ts",
+      "to": "file:src/views/User.vue",
+      "type": "imports"
+    },
+    {
+      "from": "file:router/index.ts",
+      "to": "file:src/views/Admin.vue",
+      "type": "imports"
+    },
+    {
+      "from": "file:router/index.ts",
+      "to": "file:src/views/product/index.vue",
+      "type": "imports"
+    },
+    {
+      "from": "file:scripts/generate.ts",
+      "to": "file:src/utils/request.ts",
+      "type": "imports"
+    },
+    {
+      "from": "file:index.html",
+      "to": "file:src/main.ts",
+      "type": "imports"
+    },
+    {
+      "from": "file:src/views/Home.vue",
+      "to": "component:WebSocketDemo",
+      "type": "renders"
+    },
+    {
+      "from": "file:src/views/Home.vue",
+      "to": "component:LogoDebugTrigger",
+      "type": "renders"
+    },
+    {
+      "from": "file:package.json",
+      "to": "file:scripts/generate.ts",
+      "type": "runs"
+    },
+    {
+      "from": "file:package.json",
+      "to": "file:scripts/build-graph.ts",
+      "type": "runs"
+    },
+    {
+      "from": "file:package.json",
+      "to": "file:scripts/deploy.ts",
+      "type": "runs"
+    },
+    {
+      "from": "file:package.json",
+      "to": "file:scripts/rollback.ts",
+      "type": "runs"
+    },
+    {
+      "from": "file:package.json",
+      "to": "file:scripts/ai-review.ts",
+      "type": "runs"
+    },
+    {
+      "from": "file:../../.github/workflows/deploy.yml",
+      "to": "file:package.json",
+      "type": "triggers"
+    },
+    {
+      "from": "file:../../.github/workflows/ci.yml",
+      "to": "file:package.json",
+      "type": "triggers"
+    },
+    {
+      "from": "file:../../.github/workflows/ai-review.yml",
+      "to": "file:package.json",
+      "type": "triggers"
+    },
+    {
+      "from": "file:tsconfig.json",
+      "to": "file:src/main.ts",
+      "type": "configures"
+    },
+    {
+      "from": "file:.env.test",
+      "to": "file:src/utils/request.ts",
+      "type": "configures"
+    },
+    {
+      "from": "file:.env.staging",
+      "to": "file:src/utils/request.ts",
+      "type": "configures"
+    },
+    {
+      "from": "file:.env.production",
+      "to": "file:src/utils/request.ts",
+      "type": "configures"
+    },
+    {
+      "from": "file:.env.example",
+      "to": "file:vite.config.ts",
+      "type": "configures"
+    },
+    {
+      "from": "file:.env.example",
+      "to": "file:src/utils/request.ts",
+      "type": "configures"
+    },
+    {
+      "from": "file:.env.development",
+      "to": "file:src/utils/request.ts",
+      "type": "configures"
+    },
     {
       "from": "component:LogoDebugTrigger",
       "to": "composable:useVConsole",
