@@ -6212,10 +6212,577 @@ jobs:
 
 # 智能化AI辅助开发补充：Demo29:AI结合d3.js进行可视化，分析代码文件导入关系的知识图谱功能拓展
 
-我们现在的知识图谱太素了，只有简单的几个界面之间的调用导入关系，对于这个演示项目来说足够了，但这对于日常的代码改动是远远不够的
+我们现在的知识图谱太素了，只有简单的几个界面之间的调用导入关系，10 个节点和 5 条边。对于这个演示项目图谱来说足够了，但这对于日常的代码改动是远远不够的
 我们还有主要的一些文件和文件夹内的重要文件，但是这些文件在知识图谱里面是没有的，于是就需要AI辅助的知识图谱进行扩展
 
 ## build-knowledge-graph.ts扩展功能
+
+### 1. 扩展节点类型
+
+我们在相关文件中的**interface GraphNode**接口内新增了以下节点类型：
+
+```ts
+// scripts/build-knowledge-graph.ts
+"file";
+"entry";
+"html";
+"config";
+"script";
+"test";
+"style";
+"asset";
+"workflow";
+```
+
+作用是区分不同类型的重要文件，例如：
+
+```text
+index.html       -> html
+src/main.ts      -> entry
+vite.config.ts   -> config
+scripts/deploy.ts -> script
+e2e/homepage.spec.ts -> test
+src/style.css    -> style
+public/sw.js     -> asset
+.github/workflows/ci.yml -> workflow
+```
+
+**且原有的组件，页面，store,composable,API节点依旧保存不改变**
+
+### 2. 扩展统一扫描模板
+
+扫描模板配置是在新增的**const SCAN_TEMPLATE**对象中定义的
+
+```ts
+// scripts/build-knowledge-graph.ts
+const SCAN_TEMPLATE = {
+  files: [
+    'index.html',
+    'package.json',
+    'tsconfig*.json',
+    'vite.config.*',
+    'vitest.config.*',
+    'playwright.config.*',
+    '.env*',
+    'src/**/*.{vue,ts,tsx,js,jsx,css,scss,less}',
+    'router/**/*.{ts,js}',
+    'scripts/**/*.{ts,js}',
+    'e2e/**/*.{ts,js}',
+    'tests/**/*.{ts,js}',
+    'public/**/*',
+    'src/assets/**/*',
+    '../../.github/workflows/**/*.{yml,yaml}',
+  ],
+  ......//省略下面的忽略文件内容
+};
+```
+
+这样以后如果要增加扫描范围，只需要修改SCAN_TEMPLATE内的范围即可
+
+### 3. 扩展扫描忽略文件格式
+
+扫描忽略文件格式是在新增的**const SCAN_TEMPLATE**对象中定义的 只不过这里是**ignore**配置，上面是**files**配置
+
+```ts
+// scripts/build-knowledge-graph.ts
+ignored: [
+    '**/node_modules/**',
+    '**/dist/**',
+    '**/deploy/**',
+    '**/backups/**',
+    '**/coverage/**',
+    '**/test-results/**',
+    '**/playwright-report/**',
+    '**/*.map',
+    '**/*.min.js',
+    '**/*.lock',
+  ],
+```
+
+#### 作用是避免把依赖包、构建产物、备份文件、缓存文件和锁文件加入图谱，防止图谱膨胀。
+
+### 4. 改造scanProjectFiles函数
+
+原来的扫描规则是写死的 现在改为读取**SCAN_TEMPLATE**配置，这样以后可以很方便的扩展扫描范围
+
+```text
+它会：
+扫描配置模板中的文件
+自动计算相对路径
+根据路径和扩展名判断文件类型
+生成统一格式的文件节点
+```
+
+最终返回
+
+```ts
+return {
+  id: `file:${relativePath}`,
+  type,
+  name,
+  filePath: relativePath,
+};
+```
+
+### 5. 扩展导入路径解析
+
+修改了**resolveImportPath**函数，它会自动计算相对路径,目前支持：
+
+- 相对路径
+
+```ts
+import App from "./App.vue";
+import router from "../router/index.ts";
+```
+
+- 路径别名
+
+```ts
+import { requestPool } from "@/utils/requestPool";
+```
+
+- 多种文件扩展名
+
+```text
+.ts
+.tsx
+.js
+.jsx
+.vue
+.css
+.scss
+.less
+```
+
+- 目录入口
+
+```text
+utils/index.ts
+components/index.vue
+```
+
+### 6.增加文件导入关系
+
+增加了**buildFileImportEdges**函数，它会扫描源码中的：
+
+```ts
+import ...
+import(...)
+```
+
+然后生成文件之间的导入关系:
+
+```ts
+type: "imports";
+```
+
+比如：
+
+```
+main.ts -> App.vue
+main.ts -> router/index.ts
+api/product.ts -> utils/request.ts
+```
+
+如果是测试文件的话：会自动标记成'type: "test"'
+
+### 7.增加HTML引用关系
+
+增加了**buildHtmlImportEdges**函数，它会扫描HTML文件中的:
+
+```html
+<script type="module" src="./main.ts"></script>
+```
+
+然后生成文件之间的导入关系，解决了入口文件没有进入应用依赖链的问题，比如说：
+
+```text
+index.html -> main.ts
+```
+
+### 8.增加去重关系
+
+增加了**addEdge**函数，它会去重文件之间的导入关系，解决了循环依赖的问题，比如说：
+防止重复生成相同关系
+
+```ts
+function addEdge(edges: GraphEdge[], edge: GraphEdge): void {
+  const exists = edges.some(
+    (item) =>
+      item.from === edge.from && item.to === edge.to && item.type === edge.type,
+  );
+  if (!exists) edges.push(edge);
+}
+```
+
+### 9.增加Vue文件申明关系
+
+新建了**buildVueEdges**函数，它会扫描文件节点和组件语义节点，并连起来:
+
+```ts
+function buildVueEdges(projectRoot: string, nodes: GraphNode[]): GraphEdge[] {
+  // 存放所有图谱连线
+  const edges: GraphEdge[] = [];
+
+  // 1.glob 扫描项目 src 下全部 .vue 文件，拿到绝对路径
+  const vueFiles = globSync("src/**/*.vue", {
+    cwd: projectRoot,
+    absolute: true,
+  });
+
+  // 循环每一个vue单文件组件
+  for (const file of vueFiles) {
+    // 绝对路径转【项目相对路径】，windows反斜杠统一换成 /
+    const relativePath = path.relative(projectRoot, file).replace(/\\/g, "/");
+
+    // 在已经扫描好的nodes数组，找到这个vue文件对应的文件节点
+    // 节点id规则：`file:相对路径`，例 file:src/views/Home.vue
+    const fileNode = nodes.find((node) => node.id === `file:${relativePath}`);
+
+    // 获取文件名（不带后缀），Home.vue → Home
+    const componentName = path.basename(file, ".vue");
+
+    // 找对应的【组件逻辑节点】，id格式 `component:Home`
+    // 兼容兜底：如果找不到component节点，就复用file节点
+    const componentNode = nodes.find(
+      (node) =>
+        node.id === `component:${componentName}` ||
+        node.filePath === relativePath,
+    );
+
+    // ✅ 条件：文件节点 和 组件节点都存在，并且不是同一个对象
+    // 增加一条 declares（声明）连线：这个vue文件【定义/声明】了这个组件
+    if (fileNode && componentNode && componentNode.id !== fileNode.id) {
+      addEdge(edges, {
+        from: fileNode.id,
+        to: componentNode.id,
+        type: "declares",
+      });
+    }
+
+    // 2.读取vue文件完整源码字符串
+    const content = fs.readFileSync(file, "utf-8");
+    // parseVue：vue编译器提供的API，解析SFC单文件，拆出template、script、style
+    const { descriptor } = parseVue(content, { filename: file });
+    // 取出 <template> 里面的html内容，没有模板就为空字符串
+    const template = descriptor.template?.content || "";
+
+    // 正则匹配模板里面所有组件标签
+    // 匹配：<Hello />, <UserInfo></UserInfo> 这类自定义组件标签
+    // 原生html标签 div / span 不会进入后续逻辑（后面找不到对应component节点）
+    const tags = template.matchAll(
+      /<([A-Z][\w-]*|[a-z][\w-]*-[\w-]+)(?:\s|\/?>)/g,
+    );
+
+    // 遍历模板里面匹配到的每一个标签
+    for (const match of tags) {
+      const targetName = normalizeComponentName(match[1]);
+      // normalizeComponentName：组件名标准化，做驼峰 ↔ kebab‑case转换
+      // 例 <user-info /> → UserInfo，统一和component节点id匹配
+
+      // 根据标准化后的名字，找到被使用的子组件节点 component:UserInfo
+      const targetNode = nodes.find(
+        (node) => node.id === `component:${targetName}`,
+      );
+
+      // ✅ 当前组件、目标子组件都存在，不能自己连自己
+      // 添加 renders 连线：A组件【渲染】B子组件
+      if (componentNode && targetNode && targetNode.id !== componentNode.id) {
+        addEdge(edges, {
+          from: componentNode.id,
+          to: targetNode.id,
+          type: "renders",
+        });
+      }
+    }
+  }
+
+  // 返回全部连线，给上层图谱渲染
+  return edges;
+}
+```
+
+关系类型：`declares`（声明）
+
+### 10.增加 Vue 模板渲染关系
+
+**buildVueEdges**会读取Vue文件的<template>标签，识别组件标签，比如
+
+```vue
+<WebSocketDemo />
+<LogoDebugTrigger />
+```
+
+关系类型：`renders`（渲染）
+
+### 11.增加 package.json 关系
+
+新增**buildProjectConfigEdges**，读取package.json文件，识别依赖关系
+
+```ts
+function buildProjectConfigurationEdges(
+  projectRoot: string,
+  nodes: GraphNode[],
+): GraphEdge[] {
+  const edges: GraphEdge[] = [];
+
+  // 把节点数组转Map：key = filePath相对路径，value = node对象
+  // 目的：后面根据文件路径快速查找节点，不用反复 .find()，提升性能
+  const nodeByPath = new Map(nodes.map((node) => [node.filePath, node]));
+  // 获取 package.json 的节点
+  const packageNode = nodeByPath.get("package.json");
+
+  // -------------------------- 第一块：解析 package.json scripts --------------------------
+  if (packageNode) {
+    // 读取磁盘 package.json
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(projectRoot, "package.json"), "utf-8"),
+    ) as {
+      scripts?: Record<string, string>;
+    };
+
+    // 遍历 scripts 里面每一条命令，例如 "dev":"vite", "gen":"node scripts/generate.ts"
+    for (const command of Object.values(packageJson.scripts || {})) {
+      // 正则提取命令里面出现的 ts/js 文件路径
+      // 匹配类似：node scripts/generate.ts  提取出 scripts/generate.ts
+      for (const match of command.matchAll(
+        /(?:^|\s)([^\s;&|]+\.(?:ts|js))(?:\s|$)/g,
+      )) {
+        const scriptPath = match[1].replace(/\\/g, "/"); // windows路径统一转 /
+        const scriptNode = nodeByPath.get(scriptPath);
+        if (scriptNode) {
+          // 增加 runs 连线：package.json 运行这个脚本文件
+          // from:package.json → to:scripts/generate.ts  type:runs
+          addEdge(edges, {
+            from: packageNode.id,
+            to: scriptNode.id,
+            type: "runs",
+          });
+        }
+      }
+    }
+  }
+
+  // -------------------------- 第二块：解析 GitHub Actions workflow CI文件 --------------------------
+  // 取出全部 type = workflow 的节点，也就是 .github/workflows/**.yml
+  for (const node of nodes.filter((item) => item.type === "workflow")) {
+    // 读取CI yml配置文件内容
+    const workflow = fs.readFileSync(
+      path.join(projectRoot, node.filePath),
+      "utf-8",
+    );
+
+    // 如果CI文件里面出现 pnpm install / pnpm run 等命令
+    if (
+      packageNode &&
+      /pnpm\s+(?:install|run|exec|[a-z][\w:-]*)/.test(workflow)
+    ) {
+      // triggers：CI流水线 触发 package.json
+      addEdge(edges, { from: node.id, to: packageNode.id, type: "triggers" });
+    }
+
+    // 在CI文本里，如果写了某个脚本文件路径，就建立 runs 连线
+    // CI文件中出现 scripts/deploy.ts → CI runs 这个脚本
+    for (const scriptNode of nodes.filter((item) => item.type === "script")) {
+      if (workflow.includes(scriptNode.filePath)) {
+        addEdge(edges, { from: node.id, to: scriptNode.id, type: "runs" });
+      }
+    }
+  }
+
+  // -------------------------- 第三块：所有config配置文件简单文本匹配 --------------------------
+  // config包含 vite.config.ts、tsconfig.json、playwright.config.ts 等
+  for (const node of nodes.filter((item) => item.type === "config")) {
+    const configContent = fs.readFileSync(
+      path.join(projectRoot, node.filePath),
+      "utf-8",
+    );
+    // 遍历 src/ 下面所有源码文件
+    for (const target of nodes.filter((item) =>
+      item.id.startsWith("file:src/"),
+    )) {
+      const targetName = path.basename(target.filePath);
+      // 【简陋逻辑】配置文件文本中只要出现这个文件名，就认为这个配置 configures（配置）该源码
+      if (configContent.includes(targetName)) {
+        addEdge(edges, { from: node.id, to: target.id, type: "configures" });
+      }
+    }
+  }
+
+  // -------------------------- 第四块：.env 环境变量文件解析 --------------------------
+  // 筛选 .env .env.local 这类环境变量文件
+  const envNodes = nodes.filter(
+    (item) => item.type === "config" && item.filePath.startsWith(".env"),
+  );
+
+  for (const envNode of envNodes) {
+    const envContent = fs.readFileSync(
+      path.join(projectRoot, envNode.filePath),
+      "utf-8",
+    );
+    // CODE_EXTENSIONS：集合，例如 {'.ts','.js','.vue'}，所有业务代码文件
+    for (const target of nodes.filter((item) =>
+      CODE_EXTENSIONS.has(path.extname(item.filePath)),
+    )) {
+      // 读取源码文件内容
+      const targetContent = fs.readFileSync(
+        path.join(projectRoot, target.filePath),
+        "utf-8",
+      );
+      // 正则提取.env里面定义的环境变量名：VITE_API_URL=xxx → 捕获 VITE_API_URL
+      const variables = envContent.matchAll(/^([A-Z][A-Z0-9_]*)=/gm);
+
+      for (const variable of variables) {
+        const varName = variable[1];
+        // 如果源码里面出现这个环境变量名字，就建立 configures 连线
+        // .env → src/main.ts  type:configures
+        if (targetContent.includes(varName)) {
+          addEdge(edges, {
+            from: envNode.id,
+            to: target.id,
+            type: "configures",
+          });
+        }
+      }
+    }
+  }
+
+  return edges;
+}
+```
+
+读取例如：
+
+```json
+{
+  "graph": "node scripts/build-graph.ts",
+  "deploy": "pnpm build && node scripts/deploy.ts"
+}
+```
+
+类型为：`runs`
+
+### 12.增加CI/CD工作流关系
+
+会扫描
+
+```
+.github/workflows/ci.yml
+.github/workflows/deploy.yml
+.github/workflows/ai-review.yml
+```
+
+类型是：`triggers`
+
+如果其调用了某个脚本文件，就建立 runs 连线
+
+### 13.扩展了关系类型
+
+```ts
+nterface GraphEdge {
+  from: string;
+  to: string;
+  type:
+    | 'renders'
+    | 'calls'
+    | 'subscribes'
+    | 'navigates-to'
+    | 'imports'
+    | 'injects'
+    //以下是新增的2
+    | 'tests'
+    | 'configures'
+    | 'runs'
+    | 'references'
+    | 'triggers'
+    | 'declares';
+}
+```
+
+### 14.统一生成流程
+
+**buildFullGraph** 现在会依次执行：
+
+```text
+1. 扫描主要项目文件
+2. 扫描 Vue 组件
+3. 扫描 Pinia Store
+4. 扫描 Composable
+5. 扫描 API
+6. 建立文件导入关系
+7. 建立 Vue 模板关系
+8. 建立 package.json、配置和 CI/CD 关系
+9. 建立原有 Store、Composable、API 关系
+10. 建立路由关系
+```
+
+### 15.自动化更新package.json以及visualize.html图谱
+
+自动化更新package.json还是通过**pnpm graph**实现的，通过package.json的scripts字段实现
+
+```json
+"graph": "node scripts/build-graph.ts",
+```
+
+自动化更新visualize.html图谱是通过调用添加的新功能**updateVisualization**完成的
+
+```js
+function updateVisualization(projectRoot: string, graph: Graph): void {
+  // 拼接出可视化页面完整路径：项目根目录/visualize.html
+  const visualizationPath = path.join(projectRoot, "visualize.html");
+
+  // 如果这个html文件不存在，直接退出，什么都不做
+  if (!fs.existsSync(visualizationPath)) return;
+
+  // 读取整个html文件文本（这个html是浏览器端可视化页面，里面有绘图JS代码）
+  const content = fs.readFileSync(visualizationPath, "utf-8");
+
+  // 两个标记字符串，用来定位html里面的JS代码位置
+  const rawMarker = "const raw =";        // 图谱数据变量
+  const colorMapMarker = "const colorMap ="; // 颜色映射配置变量
+
+  // 找到两个标记在文本中的下标位置
+  const rawStart = content.indexOf(rawMarker);
+  const colorMapStart = content.indexOf(colorMapMarker, rawStart);
+
+  // 如果找不到标记，说明html模板被改坏了，直接return放弃更新
+  if (rawStart === -1 || colorMapStart === -1) return;
+
+  // 将整个Graph（nodes + edges）序列化为JSON字符串
+  const graphData = JSON.stringify(graph);
+
+  // 字符串切片拼接：
+  // 1. rawMarker前面的内容保留不变
+  // 2. 替换 `const raw = 旧数据;` → `const raw = 新的graphData;`
+  // 3. colorMap以及后面全部原有代码完全保留不动
+  const updatedContent =
+    content.slice(0, rawStart) +
+    `const raw = ${graphData};\n\n      ` +
+    content.slice(colorMapStart);
+
+  // 如果内容真的发生变化，才写磁盘，避免无意义的文件重写
+  if (updatedContent !== content) {
+    fs.writeFileSync(visualizationPath, updatedContent);
+    console.log(`🖥️ 可视化页面已同步: ${visualizationPath}`);
+  }
+}
+```
+
+完整链路是：
+
+```text
+pnpm graph
+    ↓
+扫描项目文件和代码关系
+    ↓
+生成 graph 对象
+    ↓
+写入 knowledge-graph.json
+    ↓
+替换 visualize.html 中的 const raw 数据
+    ↓
+打开 visualize.html 查看最新图谱
+```
 
 ---
 
@@ -6226,43 +6793,54 @@ jobs:
 ## 基础语法规则
 
 1. `#` 行首开头 = 注释，git会忽略这一行
-> ⚠️注意：不支持行尾注释；#不在行首，代表普通文件名字符
+   > ⚠️注意：不支持行尾注释；#不在行首，代表普通文件名字符
 
 # 这是一行注释
 
 2. 写文件夹名字：直接写文件夹名称，匹配**所有层级**该目录及其全部内容
+
 # 忽略所有层级 node_modules 文件夹
+
 node_modules
 
 # 忽略所有层级 dist
+
 dist
 
 3. `*` 通配符：匹配任意字符，**不匹配斜杠 /**
-*.log     # 所有 .log 后缀文件
-*.local   # 所有 .local 后缀文件
+   _.log # 所有 .log 后缀文件
+   _.local # 所有 .local 后缀文件
 
 4. `**` 递归通配符，匹配任意层级子目录
-**/temp   # 任意深度目录下面的 temp 文件夹
+   \*\*/temp # 任意深度目录下面的 temp 文件夹
 
 5. `/` 斜杠含义
+
 - 写在**开头**：代表项目根目录，只匹配根目录的文件/文件夹
-/dist     # 只忽略根目录dist，子文件夹里面的dist不会被忽略
+  /dist # 只忽略根目录dist，子文件夹里面的dist不会被忽略
 
 - 写在**末尾**：代表限定是文件夹，不会匹配同名文件
-logs/     # 只匹配文件夹logs，不会匹配叫logs的普通文件
+  logs/ # 只匹配文件夹logs，不会匹配叫logs的普通文件
 
 6. `!` 取反：取消忽略，强制交给git管理
-> 执行顺序：先生效忽略规则，再执行!取反；父目录被整体忽略时，!不会生效
+   > 执行顺序：先生效忽略规则，再执行!取反；父目录被整体忽略时，!不会生效
 
 # 忽略 .vscode 下全部文件
-.vscode/*
+
+.vscode/\*
+
 # 唯独 extensions.json 需要提交到仓库
+
 !.vscode/extensions.json
 
 # ❗错误示范（千万不要）
+
 # .vscode/
+
 # !.vscode/extensions.json
+
 # 上面写法无效：整个文件夹已经被忽略，取反不生效
+
 ```
 
 **`.gitignore` 已经写好，但是已经被 git 追踪的文件不会自动忽略，怎么办**
