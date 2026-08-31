@@ -116,6 +116,8 @@ demo/
 |    │   ├── build-graph.ts
 |    │   ├── deploy.ts
 |    │   ├── generate.ts
+|    │   ├── ai-review.ts
+|    │   ├── review-changes.ts
 |    │   └── rollback.ts
 |    │
 |    ├── e2e/
@@ -150,6 +152,7 @@ demo/
 |        ├── types/
 |        │   ├── global.d.ts
 |        │   ├── logger.d.ts
+|        │   ├── vue.d.ts   # 申明类型文件
 |        │   └── vconsole.d.ts
 |        │
 |        ├── utils/

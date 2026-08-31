@@ -111,6 +111,8 @@ demo/
 |       ├── scripts/
 |       │   ├── build-graph.ts
 |       │   ├── deploy.ts
+|       │   ├── ai-review.ts
+|       │   ├── review-changes.ts
 |       │   ├── generate.ts
 |       │   └── rollback.ts
 |       │
@@ -146,6 +148,7 @@ demo/
 |            ├── types/
 |            │   ├── global.d.ts
 |            │   ├── logger.d.ts
+|            │   ├── vue.d.ts   # declare types file
 |            │   └── vconsole.d.ts
 |            │
 |            ├── utils/

@@ -12,70 +12,70 @@
 
 ## I. Core Architecture & Package Management
 
-- [DEMO 1: Key Differences Between pnpm and npm (Hard Links & Inode Verification)](#demo1-pnpm和npm的不同点txt)
-- [DEMO 2: Vite Multi-Environment Configuration & Runtime Mode Validation](#demo2vite-多环境配置与-mode-运行时验证)
+- [DEMO 1: Key Differences Between pnpm and npm (Hard Links & Inode Verification)](#demo1-differences-between-pnpm-and-npm-hard-links-and-inode-verification)
+- [DEMO 2: Vite Multi-Environment Configuration & Runtime Mode Validation](#demo2-vite-multi-environment-configuration-and-mode-runtime-verification)
 
 ## II. Code Quality & Automated Standards
 
-- [DEMO 3: Full Workflow of ESLint + Prettier + Husky + lint-staged (with Pitfalls)](#demo3eslint--prettier--husky--lint-staged-全流程卡点实战-直接在demo2内操作)
-- [DEMO 24: Standardization Enhancements (.env Management, ESLint Ignores, .gitignore Improvements)](#彻底规范化补充demo24规范化eslint配置)
-- [DEMO 25: Open-Source Project Standards (Standardized README & LICENSE)](#规范化开源项目补充demo25规范化readmemd-以及规范化的license文件的创建)
-- [DEMO 26: Prettier Automation & CI Gate Enhancements](#规范化开源项目补充demo26规范化prettier运行以及cicd功能增加与修改的完善)
-- [DEMO 27: Root Directory Governance & Real-World Unit Test Coverage](#规范化开源项目补充demo27规范化根目录gitignore文件部署限制git跟踪修改prettier格式化范围以及补充真实的单元测试)
+- [DEMO 3: Full Workflow of ESLint + Prettier + Husky + lint-staged (with Pitfalls)](#demo3-eslint-prettier-husky-and-lint-staged-full-workflow-practice-directly-inside-demo2)
+- [DEMO 24: Standardization Enhancements (.env Management, ESLint Ignores, .gitignore Improvements)](#demo24-complete-standardization-supplement-eslint-configuration-governance)
+- [DEMO 25: Open-Source Project Standards (Standardized README & LICENSE)](#demo25-open-source-project-standardization-readme-and-license)
+- [DEMO 26: Prettier Automation & CI Gate Enhancements](#demo26-prettier-automation-and-ci-cd-improvements)
+- [DEMO 27: Root Directory Governance & Real-World Unit Test Coverage](#demo27-root-level-gitignore-deployment-restricting-git-tracking-prettier-scope-tuning-and-real-world-unit-tests)
 
 ## III. Build Optimization & Performance Strategies
 
-- [DEMO 4: Vite Code Splitting & Lazy Loading (Including Hash-Based Caching)](#demo4-vite-分包策略与路由懒加载效果验证)
-- [DEMO 11: CDN Acceleration Simulation (Base Path & http-server)](#demo11cdn-加速模拟)
+- [DEMO 4: Vite Code Splitting & Lazy Loading (Including Hash-Based Caching)](#demo4-vite-code-splitting-strategy-and-route-lazy-loading-verification)
+- [DEMO 11: CDN Acceleration Simulation (Base Path & http-server)](#demo11-cdn-acceleration-simulation)
 
 ## IV. Automation Scripts & Deployment Systems
 
-- [DEMO 5: Automated Code Generator Based on fs + inquirer](#demo5基于-fs--inquirer-的自动化代码生成器)
-- [DEMO 9: Automated Deployment Script (Backup + Simulated Nginx Reload)](#demo9自动化部署脚本)
-- [DEMO 10: Version Rollback Mechanism (Interactive Backup Selection & Restore)](#demo10版本回滚机制--写一个回滚脚本列出所有备份版本选择其中一个快速恢复模拟线上出问题后秒级回滚)
-- [DEMO 22: Continuous Deployment (CD) to GitHub Pages](#demo22-github-pages-持续部署cd)
+- [DEMO 5: Automated Code Generator Based on fs + inquirer](#demo5-automated-code-generator-based-on-fs--inquirer)
+- [DEMO 9: Automated Deployment Script (Backup + Simulated Nginx Reload)](#demo9-automated-deployment-script)
+- [DEMO 10: Version Rollback Mechanism (Interactive Backup Selection & Restore)](#demo10-version-rollback-mechanism)
+- [DEMO 22: Continuous Deployment (CD) to GitHub Pages](#demo22-github-pages-continuous-deployment-cd)
 
 ## V. CI/CD Pipelines (Continuous Integration & Delivery)
 
-- [DEMO 6: GitHub Actions CI Pipeline (Lint + Test + Build)](#demo-6-github-actions-ci-流水线)
-- [DEMO 21: Major CI/CD Overhaul (Type Hardening & Error Fixes)](#demo21cicd-github-actions-大修改)
-- [DEMO 23: Playwright E2E Configuration Overhaul (Specified Directories & Auto-Start)](#demo23-playwright-e2e端到端测试可实现化大修改)
+- [DEMO 6: GitHub Actions CI Pipeline (Lint + Test + Build)](#demo-6-github-actions-ci-pipeline)
+- [DEMO 21: Major CI/CD Overhaul (Type Hardening & Error Fixes)](#demo21-major-cicd-github-actions-modification)
+- [DEMO 23: Playwright E2E Configuration Overhaul (Specified Directories & Auto-Start)](#demo23-playwright-e2e-implementation-modification)
 
 ## VI. Testing Systems (Unit & E2E)
 
-- [DEMO 7: Playwright End-to-End (E2E) Testing](#demo-7playwright-端到端e2e测试对应导图中的-e2e-部分)
-- [DEMO 27 (Extended): Vitest Real-World Business Tests (RequestPool/Logger/Retry)](#规范化开源项目补充demo27规范化根目录gitignore文件部署限制git跟踪修改prettier格式化范围以及补充真实的单元测试)
+- [DEMO 7: Playwright End-to-End (E2E) Testing](#demo-7-playwright-end-to-end-e2e-testing)
+- [DEMO 27 (Extended): Vitest Real-World Business Tests (RequestPool/Logger/Retry)](#demo27-root-level-gitignore-deployment-restricting-git-tracking-prettier-scope-tuning-and-real-world-unit-tests)
 
 ## VII. Observability, Monitoring & Debugging
 
-- [DEMO 8: Performance Monitoring SDK (LCP/CLS/FID/TTFB)](#demo-8性能监控-sdk对应导图中的运行时监控层)
-- [DEMO 15: Local Packet Capture with Whistle & HTTPS Decryption (Including CORS Bypass)](#demo-15本地抓包环境配置--https-解密验证)
-- [DEMO 16: vConsole Debug Hook + SourceMap Configuration](#demo-16vconsole-调试钩子--sourcemap-配置)
-- [DEMO 18: Remote Log Retrieval System (localStorage Storage & Export)](#demo18远程日志回捞系统)
-- [DEMO 19: Hidden Debug Entry in Production (Tap Logo 5 Times to Load vConsole)](#demo19线上隐藏调试入口)
+- [DEMO 8: Performance Monitoring SDK (LCP/CLS/FID/TTFB)](#demo-8-performance-monitoring-sdk)
+- [DEMO 15: Local Packet Capture with Whistle & HTTPS Decryption (Including CORS Bypass)](#demo-15-local-packet-capture-environment-and-https-decryption)
+- [DEMO 16: vConsole Debug Hook + SourceMap Configuration](#demo-16-vconsole-debug-hook-and-sourcemap-configuration)
+- [DEMO 18: Remote Log Retrieval System (localStorage Storage & Export)](#demo18-remote-log-retrieval-system)
+- [DEMO 19: Hidden Debug Entry in Production (Tap Logo 5 Times to Load vConsole)](#demo19-hidden-online-debug-entry)
 
 ## VIII. Network Layer Deep Control
 
-- [DEMO 12: Request Pool & Concurrency Control (Limiting to 6 Concurrent Requests per Domain)](#demo12请求池与并发控制)
-- [DEMO 13: Exponential Backoff Retry Mechanism (Preventing Thundering Herd & Infinite Loops)](#demo13指数退避重试限制最大重试次数杜绝无限死循环)
-- [DEMO 17: WebSocket Bidirectional Communication (Full-Duplex & Persistent Connections)](#demo-17websocket-双向通信验证)
+- [DEMO 12: Request Pool & Concurrency Control (Limiting to 6 Concurrent Requests per Domain)](#demo12-request-pool-and-concurrency-control)
+- [DEMO 13: Exponential Backoff Retry Mechanism (Preventing Thundering Herd & Infinite Loops)](#demo13-exponential-backoff-retry)
+- [DEMO 17: WebSocket Bidirectional Communication (Full-Duplex & Persistent Connections)](#demo-17-websocket-two-way-communication)
 
 ## IX. Offline & Edge Caching
 
-- [DEMO 14: Service Worker Offline Caching (Accessible Even Without Network)](#demo-14service-worker-离线缓存断网依旧可以加载资源)
+- [DEMO 14: Service Worker Offline Caching (Accessible Even Without Network)](#demo-14-service-worker-offline-cache)
 
 ## X. AI-Assisted Intelligence & Visualization
 
-- [DEMO 20: Generating Project Knowledge Graphs with ChatGPT + d3.js](#demo20使用chatgpt和d3js美观的绘制项目关联知识图谱)
-- [DEMO 28: AI-Assisted PR Development (DeepSeek Code Review & Impact Analysis)](#智能化ai辅助开发补充demo28ai结合pr辅助开发分析代码改动风险等等)
+- [DEMO 20: Generating Project Knowledge Graphs with ChatGPT + d3.js](#demo20-use-chatgpt-and-d3js-to-draw-a-project-knowledge-graph)
+- [DEMO 28: AI-Assisted PR Development (DeepSeek Code Review & Impact Analysis)](#demo28-ai-assisted-pr-development)
 
 ---
 
 ## 📎 Appendices: Quick Reference for Engineering Standards
 
-- [Appendix 1: .gitignore File Syntax Rules](#附ignore文件内部书写格式)
-- [Appendix 2: Git Commit Message Specifications (feat/fix/docs/...)](#附git提交信息规范)
-- [Appendix 3: Quick Reference for Markdown Code Block Suffixes](#附md文档后缀类型)
+- [Appendix 1: .gitignore File Syntax Rules](#appendix-gitignore-syntax-reference)
+- [Appendix 2: Git Commit Message Specifications (feat/fix/docs/...)](#appendix-git-commit-message-specifications)
+- [Appendix 3: Quick Reference for Markdown Code Block Suffixes](#appendix-markdown-code-block-suffix-reference)
 
 ---
 
@@ -2576,6 +2576,235 @@ Open visualize.html to inspect up‑to‑date graph
 ```
 
 After these extensions, the visualization page renders many additional node types and relationship types: **64 nodes, 43 edges in total**.
+
+---
+
+# AI-Assisted Development Supplement: Demo30 — Extension of Demo29: AI-Powered Instant Feedback for Personal Development Environments
+
+Unlike Demo28, which checks PRs against the upstream repository, we can also bring the same concept into our personal development environment to improve local development accuracy and consistency.
+
+## Bind a shortcut key (Ctrl+Shift+P) to automatically review all modified files and display the results immediately so issues can be spotted quickly
+
+### 1. Create a new script: scripts/review-changes.ts
+
+```ts
+// scripts/review-changes.ts
+import { execSync } from "child_process";
+import fs from "fs";
+import { callAI } from "./ai-review.js"; // Reuse your existing AI call function
+
+// Three modes controlled by parameters
+const mode = process.argv[2] || "staged"; // staged | unstaged | all
+
+let diff = "";
+
+switch (mode) {
+  case "staged":
+    // Only review staged files (already added with git add)
+    diff = execSync("git diff --cached", { encoding: "utf-8" });
+    break;
+  case "unstaged":
+    // Only review unstaged files (modified but not yet added)
+    diff = execSync("git diff", { encoding: "utf-8" });
+    break;
+  case "all":
+  default:
+    // Review all changes, including both staged and unstaged files
+    diff = execSync("git diff HEAD", { encoding: "utf-8" });
+    break;
+}
+
+if (!diff.trim()) {
+  console.log("✅ No changes detected");
+  process.exit(0);
+}
+
+// Get the list of changed files for context
+const changedFiles = execSync("git diff --name-only HEAD", {
+  encoding: "utf-8",
+})
+  .split("\n")
+  .filter(Boolean);
+
+// Build the prompt
+const prompt = `
+【AI Code Review Request】
+
+## Files changed in this update
+${changedFiles.map((f) => `- ${f}`).join("\n")}
+
+## Full code diff
+\`\`\`diff
+${diff}
+\`\`\`
+
+Please assess the risk of all changes in this update and provide review feedback.
+`;
+
+const review = await callAI(prompt);
+console.log(review);
+```
+
+### 2. Configure a VS Code task
+
+Create the following in `.vscode/tasks.json`; it must be a valid `tasks` array, or it will not work.
+
+```json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "AI Review All Changes",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["ts-node", "scripts/review-changes.ts", "all"],
+      "options": {
+        "cwd": "${workspaceFolder}/Demo2/demo2-env"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "new"
+      }
+    },
+    {
+      "label": "AI Review Staged Changes",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["ts-node", "scripts/review-changes.ts", "staged"],
+      "options": {
+        "cwd": "${workspaceFolder}/Demo2/demo2-env"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "new"
+      }
+    }
+  ]
+}
+```
+
+### 3. Bind the shortcut key
+
+#### Ctrl + Alt + R → Tasks: Run Task
+
+Or:
+
+#### Open the command palette with Ctrl + Shift + P, then run the task and choose AI Review All Changes or AI Review Staged Changes
+
+We executed this step,
+but it did not work and produced a large number of errors.
+
+We traced the problem back and checked the terminal output.
+
+### Two clear root causes were identified:
+
+1. The task was executing `pnpm ts-node`; it should instead be `pnpm exec ts-node`.
+
+2. There was an error because the script referenced a non-existent file `scripts/ai-review.js`; it should be `scripts/ai-review.ts`.
+
+#### We also discovered that `ai-review.ts` executes its own `main()` as soon as it is imported. For this step, we can adopt the following changes:
+
+```text
+1. Export `callAI` and only run the main function when `ai-review.ts` is executed directly.
+2. Change the task command to: All -> `pnpm exec ts-node --esm ...`; Staged -> `pnpm exec ts-node --esm ...`
+3. Since the project uses ES modules, set `type: "module"` in the project configuration.
+```
+
+After the change:
+
+```json
+// tasks.json
+{
+  "label": "AI Review All Changes", // already existed
+  "args": ["exec", "ts-node", "--esm", "scripts/review-changes.ts", "all"] // added exec and --esm
+},
+{
+  "label": "AI Review Staged Changes", // already existed
+  "args": ["exec", "ts-node", "--esm", "scripts/review-changes.ts", "staged"] // added exec and --esm
+}
+```
+
+Update `scripts/review-changes.ts`:
+
+```ts
+import { callAI } from "./ai-review.ts"; // previously ai-review.js
+
+// const changedFiles = execSync("git diff --name-only HEAD", { encoding: "utf-8" })
+//   .split("\n")
+//   .filter(Boolean); // original version
+// changed to:
+const fileCommand =
+  mode === "staged"
+    ? "git diff --cached --name-only"
+    : mode === "unstaged"
+      ? "git diff --name-only"
+      : "git diff HEAD --name-only";
+const changedFiles = execSync(fileCommand, { encoding: "utf-8" })
+  .split("\n")
+  .filter(Boolean);
+```
+
+The old code hardcoded `git diff --name-only HEAD`, so regardless of whether the caller passed `staged` or any other value, it always retrieved all changed files. The `staged` argument passed from the task was effectively meaningless, because the script never actually distinguished the mode.
+
+After the fix, multiple modes are supported correctly, and the incoming `mode` value truly takes effect.
+
+- `.split('\n')`: splits a long string into an array by newline, producing values like `["src/foo.ts", "src/bar.ts", ""]`
+- `.filter(Boolean)`: removes the empty string created by the trailing newline and keeps only valid filenames. Together, these two operations clean the output.
+
+## Remember to export the `callAI` function in `ai-review.ts`; otherwise it will fail.
+
+```ts
+// ai-review.ts
+export async function callAI(prompt: string): Promise<string> {
+  // ...
+}
+```
+
+Also add a guard condition in `ai-review.ts`:
+
+```ts
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  main().catch((err) => {
+    const error = err as Error;
+    console.error("❌ Execution failed:", error.message);
+    process.exit(1);
+  });
+}
+```
+
+This `if` guard is new. In an ESM environment, it ensures that `main()` is only executed when the file is run directly by `ts-node`; if the file is imported by another module, it will not run automatically. It also catches async exceptions, prints the error, and exits with a failure code.
+
+After re-submitting the task, the issue still occurred. This time the cause was an ESLint error: the `switch/case` indentation conflicted with the project's ESLint rules and triggered a lint failure. The solution was to rewrite the equivalent logic using `if/else` statements instead of `switch/case`.
+
+![alt text](<screenshots/Screenshot 2026-08-31 103618.png>)
+
+At this point, the feature was working.
+
+However, the `DEEPSEEK_API_KEY` environment variable was still not set, so the DeepSeek API could not be called. We needed to configure it in the terminal first.
+
+We were given two options: run it in a terminal or in GitHub Actions.
+
+Since we had already configured GitHub Actions earlier and this was a local VS Code test, we chose the terminal route.
+
+In PowerShell, we executed:
+
+```powershell
+$env:DEEPSEEK_API_KEY="your API KEY"
+```
+
+But even after that, the shortcut-triggered run in VS Code still failed.
+
+### This happened because after setting the API key, we opened a new terminal, which caused the environment variable to be lost.
+
+So we had to re-run the same command in the original configured terminal.
+
+```powershell
+ts-node -esm scripts/review-changes.ts all
+```
+
+![alt text](<screenshots/Screenshot 2026-08-31 104916.png>)
+
+### At this point, the local PR-like code change risk review succeeded.
 
 ---
 
