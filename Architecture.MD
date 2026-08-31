@@ -7028,6 +7028,710 @@ ts-node -esm scripts/review-changes.ts all
 
 ---
 
+# 智能化AI辅助开发补充：Demo31:VSCODE 插件的创建与配置 使得知识图谱可以在侧栏显示 无需打开网页
+
+(不在本文件夹)
+
+## 1.检测Node.js版本 版本过低无法开发插件 需要Node版本18+ 且需要C++环境支持（有一大堆需要在C++环境下编译的插件）
+
+```bash
+node -v
+```
+
+## 2.全局创建VSCode插件生成器
+
+```bash
+pnpm install -g yo generator-code
+```
+
+## 3.运行yo创建VSCode插件
+
+```bash
+yo code
+```
+
+![未能成功加载](<screenshots/Screenshot 2026-08-31 155418.png>)
+![未能成功加载](<screenshots/Screenshot 2026-08-31 155425.png>)
+然后就创建成功了
+
+## 4.cd到该插件项目文件夹
+
+```bash
+cd my-plugin（插件名称）
+# 此处为cd kg-viewer
+```
+
+## 5.安装依赖
+
+```bash
+pnpm install
+```
+
+但是报错了
+![未能成功加载](<screenshots/Screenshot 2026-08-31 163740.png>)
+
+原因是：
+
+### pnpm 9+ 新增的**供应链安全保护**：
+
+> 部分包安装时会自动执行 `postinstall` /build 脚本，这类脚本有投毒风险。pnpm 默认**阻止第三方包的构建脚本执行**。
+
+### 解决方法
+
+在终端输入 **交互式批准(推荐本地开发)**
+
+```bash
+pnpm approve-builds
+```
+
+然后再重新执行安装命令：pnpm install
+
+## 6.配置package.json
+
+打开package.json完整替换为：
+
+```json
+{
+  "name": "kg-viewer",
+  "displayName": "Knowledge Graph Viewer",
+  "description": "Visualize project knowledge graph in VSCode",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onCommand:kg-viewer.showGraph",
+    "onView:kg-viewer.fileTree"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "kg-viewer.showGraph",
+        "title": "Show Knowledge Graph",
+        "category": "Knowledge Graph"
+      },
+      {
+        "command": "kg-viewer.refreshGraph",
+        "title": "Refresh Graph",
+        "category": "Knowledge Graph"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "kg-viewer-sidebar",
+          "title": "Knowledge Graph",
+          "icon": "$(graph)"
+        }
+      ]
+    },
+    "views": {
+      "kg-viewer-sidebar": [
+        {
+          "id": "kg-viewer.fileTree",
+          "name": "File Dependencies"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "kg-viewer.refreshGraph",
+          "when": "view == kg-viewer.fileTree",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "20.x",
+    "typescript": "^5.3.2",
+    "vsce": "^2.15.0"
+  }
+}
+```
+
+这个的作用：
+
+- activationEvents 插件什么时候激活（onCommand 和 onView 两种触发方式）
+- commands 定义了两个命令：显示图谱、刷新图谱
+- viewsContainers 在活动栏（左侧图标栏）添加一个“知识图谱”图标
+- views 在侧边栏中创建一个名为“File Dependencies”的树形视图
+- menus 在视图标题栏添加一个刷新按钮
+
+## 7.完全替换 src/extension.ts 的内容
+
+```js
+//src/extension.ts
+import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// ============================================================
+// 类型定义（匹配你的 knowledge-graph.json 结构）
+// ============================================================
+interface GraphNode {
+  id: string;
+  type: string;
+  name: string;
+  filePath?: string;
+}
+
+interface GraphEdge {
+  from: string;
+  to: string;
+  type: string;
+}
+
+interface KnowledgeGraph {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+// ============================================================
+// TreeDataProvider：在侧边栏显示文件依赖树
+// ============================================================
+class FileTreeProvider implements vscode.TreeDataProvider<FileTreeItem> {
+  private graph: KnowledgeGraph | null = null;
+  private _onDidChangeTreeData = new vscode.EventEmitter<FileTreeItem | undefined>();
+  readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+
+  constructor() {
+    this.loadGraph();
+  }
+
+  // 加载 knowledge-graph.json
+  private loadGraph() {
+    try {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (!workspaceFolders) {
+        this.graph = null;
+        return;
+      }
+
+      // 尝试在多个可能的位置查找 knowledge-graph.json
+      const possiblePaths = [
+        path.join(workspaceFolders[0].uri.fsPath, 'knowledge-graph.json'),
+        path.join(workspaceFolders[0].uri.fsPath, 'Demo2/demo2-env/knowledge-graph.json'),
+        path.join(workspaceFolders[0].uri.fsPath, '..', 'knowledge-graph.json'),
+      ];
+
+      let graphPath = null;
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          graphPath = p;
+          break;
+        }
+      }
+
+      if (!graphPath) {
+        this.graph = null;
+        return;
+      }
+
+      const content = fs.readFileSync(graphPath, 'utf-8');
+      this.graph = JSON.parse(content) as KnowledgeGraph;
+    } catch (error) {
+      this.graph = null;
+      console.error('Failed to load knowledge graph:', error);
+    }
+  }
+
+  // 刷新（重新加载）
+  refresh(): void {
+    this.loadGraph();
+    this._onDidChangeTreeData.fire(undefined);
+  }
+
+  // 获取树形结构的根节点
+  getChildren(element?: FileTreeItem): Thenable<FileTreeItem[]> {
+    if (!this.graph) {
+      return Promise.resolve([
+        new FileTreeItem(
+          '⚠️ 未找到 knowledge-graph.json',
+          '请确保项目根目录或 Demo2/demo2-env/ 下有该文件',
+          'warning'
+        )
+      ]);
+    }
+
+    if (!element) {
+      // 根节点：按类型分组显示
+      const typeMap = new Map<string, GraphNode[]>();
+      for (const node of this.graph.nodes) {
+        const type = node.type || 'unknown';
+        if (!typeMap.has(type)) {
+          typeMap.set(type, []);
+        }
+        typeMap.get(type)!.push(node);
+      }
+
+      const items: FileTreeItem[] = [];
+      for (const [type, nodes] of typeMap) {
+        items.push(new FileTreeItem(
+          `📁 ${type}s (${nodes.length})`,
+          '',
+          'folder',
+          undefined,
+          type
+        ));
+      }
+      return Promise.resolve(items);
+    }
+
+    // 子节点：显示该类型下的所有文件
+    const type = element.type;
+    if (!type) return Promise.resolve([]);
+
+    const nodes = this.graph.nodes.filter(n => (n.type || 'unknown') === type);
+    return Promise.resolve(
+      nodes.map(node => new FileTreeItem(
+        node.name || node.id,
+        node.filePath || '',
+        'file',
+        node
+      ))
+    );
+  }
+
+  getTreeItem(element: FileTreeItem): vscode.TreeItem {
+    return element;
+  }
+}
+
+// ============================================================
+// TreeItem：树形结构的每个节点
+// ============================================================
+class FileTreeItem extends vscode.TreeItem {
+  public readonly node?: GraphNode;
+  public readonly type?: string;
+
+  constructor(
+    label: string,
+    private filePath: string,
+    kind: 'folder' | 'file' | 'warning',
+    node?: GraphNode,
+    type?: string
+  ) {
+    super(label, kind === 'folder' ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None);
+    this.node = node;
+    this.type = type;
+
+    if (kind === 'file' && node) {
+      this.tooltip = `文件: ${node.filePath || node.id}`;
+      this.description = node.filePath || '';
+      this.contextValue = 'file';
+      this.command = {
+        command: 'kg-viewer.openFile',
+        title: 'Open File',
+        arguments: [node.filePath || node.id]
+      };
+    } else if (kind === 'warning') {
+      this.iconPath = new vscode.ThemeIcon('warning');
+      this.tooltip = filePath;
+    } else if (kind === 'folder') {
+      this.iconPath = new vscode.ThemeIcon('folder');
+    }
+  }
+}
+
+// ============================================================
+// Webview：显示交互式图谱（D3.js 可视化）
+// ============================================================
+function getGraphWebviewContent(
+  graph: KnowledgeGraph | null,
+  extensionPath: string
+): string {
+  if (!graph) {
+    return `
+      <html>
+      <body style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;color:#666;">
+        <div>
+          <h2>⚠️ 未找到 knowledge-graph.json</h2>
+          <p>请确保项目根目录下存在该文件。</p>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  // 将数据转换为 JavaScript 可用的格式
+  const dataJson = JSON.stringify(graph);
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Knowledge Graph</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1e1e1e; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        #graph-container { width: 100vw; height: 100vh; }
+        .node { cursor: pointer; transition: all 0.2s; }
+        .node:hover { filter: brightness(1.3); }
+        .node circle { stroke: #333; stroke-width: 2px; }
+        .link { stroke: #666; stroke-width: 1.5px; stroke-opacity: 0.6; }
+        .link:hover { stroke-opacity: 1; }
+        .label { fill: #ccc; font-size: 11px; font-weight: 500; }
+        .tooltip {
+          position: absolute;
+          background: #2d2d2d;
+          color: #ddd;
+          padding: 8px 14px;
+          border-radius: 6px;
+          border: 1px solid #555;
+          font-size: 13px;
+          pointer-events: none;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+          display: none;
+          z-index: 100;
+        }
+        .legend {
+          position: absolute;
+          bottom: 20px;
+          right: 20px;
+          background: rgba(30,30,30,0.9);
+          padding: 12px 16px;
+          border-radius: 8px;
+          border: 1px solid #444;
+          color: #ccc;
+          font-size: 12px;
+          font-family: 'Segoe UI', sans-serif;
+          max-width: 200px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+        .legend-color { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+        .legend-label { font-size: 12px; }
+        .stats {
+          position: absolute;
+          top: 20px;
+          left: 20px;
+          background: rgba(0,0,0,0.7);
+          padding: 10px 16px;
+          border-radius: 6px;
+          color: #aaa;
+          font-size: 13px;
+          font-family: 'Courier New', monospace;
+          border: 1px solid #333;
+        }
+        .stats strong { color: #fff; }
+        .zoom-hint {
+          position: absolute;
+          bottom: 20px;
+          left: 20px;
+          color: #666;
+          font-size: 12px;
+          font-family: 'Segoe UI', sans-serif;
+        }
+      </style>
+    </head>
+    <body>
+      <div id="graph-container"></div>
+      <div class="tooltip" id="tooltip"></div>
+      <div class="stats" id="stats"></div>
+      <div class="legend" id="legend"></div>
+      <div class="zoom-hint">🖱️ 滚轮缩放 · 拖拽平移</div>
+
+      <script src="https://d3js.org/d3.v7.min.js"><\/script>
+      <script>
+        const rawData = ${dataJson};
+
+        const nodes = rawData.nodes.map(n => ({ ...n }));
+        const edges = rawData.edges.map(e => ({ ...e }));
+
+        // 颜色映射
+        const colorMap = {
+          'component': '#4ec9b0',
+          'page': '#569cd6',
+          'store': '#c586c0',
+          'composable': '#dcdcaa',
+          'api': '#ce9178',
+          'file': '#808080',
+          'entry': '#6a9955',
+          'html': '#f48771',
+          'config': '#d4d4d4',
+          'script': '#b5cea8',
+          'test': '#f0a030',
+          'style': '#d16969',
+          'asset': '#a0a0a0',
+          'workflow': '#4fc1ff',
+          'unknown': '#888'
+        };
+
+        const typeColors = {};
+        for (const node of nodes) {
+          const type = node.type || 'unknown';
+          typeColors[type] = colorMap[type] || '#888';
+        }
+
+        // 显示统计信息
+        document.getElementById('stats').innerHTML =
+          '节点: <strong>' + nodes.length + '</strong> &nbsp;|&nbsp; 关系: <strong>' + edges.length + '</strong>';
+
+        // 图例
+        const legendHtml = Object.entries(typeColors)
+          .filter(([type]) => nodes.some(n => (n.type || 'unknown') === type))
+          .map(([type, color]) =>
+            '<div class="legend-item"><span class="legend-color" style="background:' + color + '"></span><span class="legend-label">' + type + '</span></div>'
+          ).join('');
+        document.getElementById('legend').innerHTML = legendHtml;
+
+        const container = document.getElementById('graph-container');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        // 创建 SVG
+        const svg = d3.select('#graph-container')
+          .append('svg')
+          .attr('width', width)
+          .attr('height', height);
+
+        const g = svg.append('g');
+
+        // 缩放
+        const zoom = d3.zoom()
+          .scaleExtent([0.1, 3])
+          .on('zoom', (event) => {
+            g.attr('transform', event.transform);
+          });
+        svg.call(zoom);
+
+        // 布局
+        const simulation = d3.forceSimulation(nodes)
+          .force('link', d3.forceLink(edges).id(d => d.id).distance(100))
+          .force('charge', d3.forceManyBody().strength(-300))
+          .force('center', d3.forceCenter(width / 2, height / 2));
+
+        // 绘制连线
+        const link = g.append('g')
+          .selectAll('line')
+          .data(edges)
+          .enter()
+          .append('line')
+          .attr('class', 'link')
+          .attr('stroke', '#666')
+          .attr('stroke-width', 1.5);
+
+        // 绘制节点
+        const node = g.append('g')
+          .selectAll('g')
+          .data(nodes)
+          .enter()
+          .append('g')
+          .attr('class', 'node')
+          .call(d3.drag()
+            .on('start', (event, d) => {
+              if (!event.active) simulation.alphaTarget(0.3).restart();
+              d.fx = d.x;
+              d.fy = d.y;
+            })
+            .on('drag', (event, d) => {
+              d.fx = event.x;
+              d.fy = event.y;
+            })
+            .on('end', (event, d) => {
+              if (!event.active) simulation.alphaTarget(0);
+              d.fx = null;
+              d.fy = null;
+            })
+          );
+
+        node.append('circle')
+          .attr('r', 8)
+          .attr('fill', d => typeColors[d.type || 'unknown'] || '#888')
+          .attr('stroke', '#333')
+          .attr('stroke-width', 2);
+
+        node.append('text')
+          .attr('class', 'label')
+          .attr('dx', 14)
+          .attr('dy', 4)
+          .text(d => d.name || d.id)
+          .style('font-size', '11px')
+          .style('fill', '#ccc')
+          .style('font-family', 'Segoe UI, sans-serif');
+
+        // Tooltip
+        const tooltip = d3.select('#tooltip');
+        node.on('mouseover', (event, d) => {
+          tooltip
+            .style('display', 'block')
+            .html(
+              '<strong>' + (d.name || d.id) + '</strong><br/>' +
+              '类型: ' + (d.type || 'unknown') + '<br/>' +
+              (d.filePath ? '路径: ' + d.filePath : '')
+            )
+            .style('left', (event.pageX + 12) + 'px')
+            .style('top', (event.pageY - 10) + 'px');
+        })
+        .on('mousemove', (event) => {
+          tooltip
+            .style('left', (event.pageX + 12) + 'px')
+            .style('top', (event.pageY - 10) + 'px');
+        })
+        .on('mouseout', () => {
+          tooltip.style('display', 'none');
+        });
+
+        // 双击打开文件
+        node.on('dblclick', (event, d) => {
+          if (d.filePath) {
+            vscode.postMessage({ command: 'openFile', filePath: d.filePath });
+          }
+        });
+
+        // 更新位置
+        simulation.on('tick', () => {
+          link
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
+
+          node.attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
+        });
+
+        // 窗口自适应
+        window.addEventListener('resize', () => {
+          const newWidth = container.clientWidth;
+          const newHeight = container.clientHeight;
+          svg.attr('width', newWidth).attr('height', newHeight);
+          simulation.force('center', d3.forceCenter(newWidth / 2, newHeight / 2));
+          simulation.alpha(0.3).restart();
+        });
+      <\/script>
+    </body>
+    </html>
+  `;
+}
+
+// ============================================================
+// 插件激活函数
+// ============================================================
+export function activate(context: vscode.ExtensionContext) {
+  console.log('Knowledge Graph Viewer 已激活');
+
+  // 创建 TreeDataProvider 实例
+  const fileTreeProvider = new FileTreeProvider();
+
+  // 注册文件树视图
+  const treeView = vscode.window.createTreeView('kg-viewer.fileTree', {
+    treeDataProvider: fileTreeProvider,
+    showCollapseAll: true
+  });
+
+  // 注册命令：显示图谱 Webview
+  const showGraphCommand = vscode.commands.registerCommand('kg-viewer.showGraph', () => {
+    const panel = vscode.window.createWebviewPanel(
+      'kg-viewer',
+      '知识图谱',
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+      }
+    );
+
+    // 加载图谱数据
+    let graph: KnowledgeGraph | null = null;
+    try {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (workspaceFolders) {
+        const possiblePaths = [
+          path.join(workspaceFolders[0].uri.fsPath, 'knowledge-graph.json'),
+          path.join(workspaceFolders[0].uri.fsPath, 'Demo2/demo2-env/knowledge-graph.json'),
+        ];
+        let graphPath = null;
+        for (const p of possiblePaths) {
+          if (fs.existsSync(p)) {
+            graphPath = p;
+            break;
+          }
+        }
+        if (graphPath) {
+          const content = fs.readFileSync(graphPath, 'utf-8');
+          graph = JSON.parse(content) as KnowledgeGraph;
+        }
+      }
+    } catch (error) {
+      console.error('加载知识图谱失败:', error);
+    }
+
+    panel.webview.html = getGraphWebviewContent(graph, context.extensionPath);
+
+    // 处理来自 Webview 的消息（双击打开文件）
+    panel.webview.onDidReceiveMessage(
+      async (message) => {
+        if (message.command === 'openFile') {
+          const workspaceFolders = vscode.workspace.workspaceFolders;
+          if (workspaceFolders) {
+            const filePath = path.join(workspaceFolders[0].uri.fsPath, message.filePath);
+            const document = await vscode.workspace.openTextDocument(filePath);
+            await vscode.window.showTextDocument(document);
+          }
+        }
+      },
+      undefined,
+      context.subscriptions
+    );
+  });
+
+  // 注册命令：刷新图谱
+  const refreshCommand = vscode.commands.registerCommand('kg-viewer.refreshGraph', () => {
+    fileTreeProvider.refresh();
+    vscode.window.showInformationMessage('知识图谱已刷新');
+  });
+
+  // 注册命令：打开文件（从侧边栏点击）
+  const openFileCommand = vscode.commands.registerCommand('kg-viewer.openFile', async (filePath: string) => {
+    if (!filePath) return;
+    try {
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (workspaceFolders) {
+        const fullPath = path.join(workspaceFolders[0].uri.fsPath, filePath);
+        if (fs.existsSync(fullPath)) {
+          const document = await vscode.workspace.openTextDocument(fullPath);
+          await vscode.window.showTextDocument(document);
+        } else {
+          vscode.window.showErrorMessage(`文件不存在: ${filePath}`);
+        }
+      }
+    } catch (error) {
+      vscode.window.showErrorMessage(`打开文件失败: ${error}`);
+    }
+  });
+
+  context.subscriptions.push(treeView, showGraphCommand, refreshCommand, openFileCommand);
+}
+
+// ============================================================
+// 插件停用函数
+// ============================================================
+export function deactivate() {
+  console.log('Knowledge Graph Viewer 已停用');
+}
+```
+
+## 如果没有C++环境 怎么办
+
+也可以选择便捷的现成插件 Live Preview
+在侧边栏下载即可
+之后右键点击 visualize.html show preview 即可观看
+![未能成功加载](<screenshots/Screenshot 2026-08-31 171650.png>)
+
+---
+
 # 附：ignore文件内部书写格式
 
 ```
@@ -7203,6 +7907,12 @@ BREAKING CHANGE: user接口返回结构发生变更，旧代码需要适配
 ```
 
 ---
+
+# 附: 重启终端指令
+
+```bash
+exit
+```
 
 # 附：md文档```后缀类型
 
