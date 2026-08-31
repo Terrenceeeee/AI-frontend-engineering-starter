@@ -6788,6 +6788,228 @@ pnpm graph
 
 ---
 
+# 智能化AI辅助开发补充：Demo30:Demo29的扩展：AI辅助接入个人开发环境的“即时反馈”
+
+不同于Demo28的提交给原仓库的PR检查，为了提高个人开发的准确度和一致性，我们可以将这种思想也介入我们个人开发环境中
+
+## 绑定一个快捷键 Ctrl+Shift+P 触发后自动对所有修改过的文件进行检查，同时显示检查结果，帮助快速定位问题
+
+### 1.创立一个新脚本 scripts/review-changes.ts
+
+```ts
+// scripts/review-changes.ts
+import { execSync } from "child_process";
+import fs from "fs";
+import { callAI } from "./ai-review.js"; // 复用你现有的 AI 调用函数
+
+// 三种模式，通过参数控制
+const mode = process.argv[2] || "staged"; // staged | unstaged | all
+
+let diff = "";
+
+switch (mode) {
+  case "staged":
+    // 只审查已暂存的文件（git add 过的）
+    diff = execSync("git diff --cached", { encoding: "utf-8" });
+    break;
+  case "unstaged":
+    // 只审查未暂存的文件（修改了但没 add）
+    diff = execSync("git diff", { encoding: "utf-8" });
+    break;
+  case "all":
+  default:
+    // 审查所有改动（包括已暂存和未暂存）
+    diff = execSync("git diff HEAD", { encoding: "utf-8" });
+    break;
+}
+
+if (!diff.trim()) {
+  console.log("✅ 没有检测到任何改动");
+  process.exit(0);
+}
+
+// 获取改动的文件列表（用于上下文中）
+const changedFiles = execSync("git diff --name-only HEAD", {
+  encoding: "utf-8",
+})
+  .split("\n")
+  .filter(Boolean);
+
+// 构建 Prompt
+const prompt = `
+【AI Code Review 请求】
+
+## 本次改动的文件
+${changedFiles.map((f) => `- ${f}`).join("\n")}
+
+## 全部代码 Diff
+\`\`\`diff
+${diff}
+\`\`\`
+
+请评估本次所有改动的风险，给出 Review 意见。
+`;
+
+const review = await callAI(prompt);
+console.log(review);
+```
+
+### 2.配置一个VSCODE任务
+
+创建一些代码在.vscode/tasks.json中**必须是tasks，其他的不生效**
+
+```json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "AI Review All Changes",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["ts-node", "scripts/review-changes.ts", "all"],
+      "options": {
+        "cwd": "${workspaceFolder}/Demo2/demo2-env"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "new"
+      }
+    },
+    {
+      "label": "AI Review Staged Changes",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["ts-node", "scripts/review-changes.ts", "staged"],
+      "options": {
+        "cwd": "${workspaceFolder}/Demo2/demo2-env"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "new"
+      }
+    }
+  ]
+}
+```
+
+### 第三步：绑定快捷键
+
+#### Ctrl + Alt + R → Tasks: Run Task
+
+或者是
+
+#### 在Ctrl + Shift + P中打开run task 后选择AI Review All Changes，或者是AI Review Staged Changes
+
+我们执行这一操作
+却发现并没有成功 而且还报了一大堆错
+
+仔细回溯 在终端检查报错问题
+
+### 已经出现两个明确的报错来源：
+
+1.任务执行的是 pnpm ts-node **应该改成 pnpm exec ts-node**
+
+2.在这个报错的文件中，有一个错误，是因为引用了不存在的文件scripts/ai-review.js，应该是 scripts/ai-review.ts
+
+#### 且还发现ai-review.ts 会在被导入时立即执行自己的main() 对于这一步修改 我们可以采用:
+
+```text
+1.导出 callAI 仅有在直接运行ai-review.ts时执行主函数
+2.并把任务命令改为All:pnpm exec ts-node 以及staged:pnpm exec ts-node
+3.同时注意到采用的是esmodule形式，所以需要改成type:module
+```
+
+更改后
+
+```json
+//tasks.json
+{
+  "label": "AI Review All Changes", //原本就有
+  "args": ["exec", "ts-node", "--esm", "scripts/review-changes.ts", "all"]//多了exec 和--esm
+},
+{
+  "label": "AI Review Staged Changes", //原本就有
+  "args": ["exec", "ts-node", "--esm", "scripts/review-changes.ts", "staged"]//多了exec 和--esm
+}
+```
+
+修改scripts/review-changes.ts
+
+```ts
+import { callAI } from "./ai-review.ts"; //原来是ai-review.js
+
+//const changeFiles = execSync("git diff --name-only HEAD", { encoding: "utf-8" })
+// .split("\n")
+//  .filter(Boolean);//原本
+//改为
+const fileCommand =
+  mode === "staged"
+    ? "git diff --cached --name-only"
+    : mode === "unstaged"
+      ? "git diff --name-only"
+      : "git diff HEAD --name-only";
+const changedFiles = execSync(fileCommand, { encoding: "utf-8" })
+  .split("\n")
+  .filter(Boolean);
+```
+
+旧代码硬编码执行 `git diff --name-only HEAD`，**不管外面传入 `staged` 还是别的参数，永远拿全部改动文件**。在 tasks 传的`staged`入参完全是摆设，脚本不会区分模式
+
+而修改过后 实现多模式切换，让外部传入的 `mode` 参数真正生效
+
+- `.split('\n')`：把长字符串按换行切割，变成数组 `["src/foo.ts","src/bar.ts",""]`
+- `.filter(Boolean)`：删掉末尾换行带来的空字符串`""`，得到干净的文件名数组。 两个起到一个清洗输出的作用
+
+## 同时要记得在ai-review.ts中导出callAI 函数，不然会报错
+
+```ts
+// ai-review.ts
+export async function callAI(prompt: string): Promise<string> {
+  // ...
+}
+```
+
+以及在ai-review.ts中加一个判断条件
+
+```ts
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  main().catch((err) => {
+    const error = err as Error;
+    console.error("❌ 执行失败:", error.message);
+    process.exit(1);
+  });
+}
+```
+
+此处的if判断条件是新加的 目的是ESM 环境下的 “main 入口守卫”：只有**本文件被 ts‑node 直接运行时，才调用 main 执行评审；被其他文件 import 导入时，不自动运行。**同时捕获异步函数异常，打印错误，返回失败退出码
+
+再次提交发现依旧报错 原因是ESLint报错 原因是Switch/case的缩进规则与项目配置冲突 导致ESLint报错 解决方案就是把Switch/case改成等价的if/else写法 避免报错
+![alt text](<screenshots/Screenshot 2026-08-31 103618.png>)
+目前发现功能已经可以运行了
+但是还是没有设置DEEPSEEK_API_KEY的环境变量，导致无法调用DeepSeek API，需要在终端中先设置环境变量
+他给出了我们两个选择 一个终端执行
+一个Github Action执行
+由于之前我们已经配置过了Github Action 且此处是在本地的VSCode内部测试，所以我们选择执行终端的命令
+在Powershell中执行
+
+```powershell
+$env:DEEPSEEK_API_KEY="你的 API KEY"
+```
+
+但是此时在VSCode选择快捷键运行中依旧报错
+
+### 这是因为在配置完成api key后 重新打开了一个新的终端 导致失效
+
+所以要在原来配置的终端中 重新执行一下命令就好了
+
+```powershell
+ts-node -esm scripts/review-changes.ts all
+```
+
+![alt text](<screenshots/Screenshot 2026-08-31 104916.png>)
+
+### 此时就发现我们本地配置类似PR的代码修改风险评审成功了
+
 # 附：ignore文件内部书写格式
 
 ```

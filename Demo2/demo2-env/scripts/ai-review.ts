@@ -196,7 +196,7 @@ function generatePrompt(
 // ============================================================
 // 6. 调用 AI API
 // ============================================================
-async function callAI(prompt: string): Promise<string> {
+export async function callAI(prompt: string): Promise<string> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
     console.error('❌ 请设置环境变量 DEEPSEEK_API_KEY');
@@ -316,8 +316,10 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err) => {
-  const error = err as Error;
-  console.error('❌ 执行失败:', error.message);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  main().catch((err) => {
+    const error = err as Error;
+    console.error('❌ 执行失败:', error.message);
+    process.exit(1);
+  });
+}

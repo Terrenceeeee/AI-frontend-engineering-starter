@@ -1,0 +1,37 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "AI Review All Changes",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["exec", "ts-node", "--esm", "scripts/review-changes.ts", "all"],
+      "options": {
+        "cwd": "${workspaceFolder}/Demo2/demo2-env"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "new"
+      }
+    },
+    {
+      "label": "AI Review Staged Changes",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "exec",
+        "ts-node",
+        "--esm",
+        "scripts/review-changes.ts",
+        "staged"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/Demo2/demo2-env"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "new"
+      }
+    }
+  ]
+}
