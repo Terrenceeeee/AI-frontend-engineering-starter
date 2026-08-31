@@ -2776,7 +2776,7 @@ This `if` guard is new. In an ESM environment, it ensures that `main()` is only 
 
 After re-submitting the task, the issue still occurred. This time the cause was an ESLint error: the `switch/case` indentation conflicted with the project's ESLint rules and triggered a lint failure. The solution was to rewrite the equivalent logic using `if/else` statements instead of `switch/case`.
 
-![alt text](<screenshots/Screenshot 2026-08-31 103618.png>)
+![fail to load successfully](<screenshots/Screenshot 2026-08-31 103618.png>)
 
 At this point, the feature was working.
 
@@ -2802,7 +2802,7 @@ So we had to re-run the same command in the original configured terminal.
 ts-node -esm scripts/review-changes.ts all
 ```
 
-![alt text](<screenshots/Screenshot 2026-08-31 104916.png>)
+![fail to load successfully](<screenshots/Screenshot 2026-08-31 104916.png>)
 
 ### At this point, the local PR-like code change risk review succeeded.
 

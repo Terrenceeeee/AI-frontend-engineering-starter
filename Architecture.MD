@@ -6984,7 +6984,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
 此处的if判断条件是新加的 目的是ESM 环境下的 “main 入口守卫”：只有**本文件被 ts‑node 直接运行时，才调用 main 执行评审；被其他文件 import 导入时，不自动运行。**同时捕获异步函数异常，打印错误，返回失败退出码
 
 再次提交发现依旧报错 原因是ESLint报错 原因是Switch/case的缩进规则与项目配置冲突 导致ESLint报错 解决方案就是把Switch/case改成等价的if/else写法 避免报错
-![alt text](<screenshots/Screenshot 2026-08-31 103618.png>)
+![未能成功加载](<screenshots/Screenshot 2026-08-31 103618.png>)
 目前发现功能已经可以运行了
 但是还是没有设置DEEPSEEK_API_KEY的环境变量，导致无法调用DeepSeek API，需要在终端中先设置环境变量
 他给出了我们两个选择 一个终端执行
@@ -7006,7 +7006,7 @@ $env:DEEPSEEK_API_KEY="你的 API KEY"
 ts-node -esm scripts/review-changes.ts all
 ```
 
-![alt text](<screenshots/Screenshot 2026-08-31 104916.png>)
+![未能成功加载](<screenshots/Screenshot 2026-08-31 104916.png>)
 
 ### 此时就发现我们本地配置类似PR的代码修改风险评审成功了
 
