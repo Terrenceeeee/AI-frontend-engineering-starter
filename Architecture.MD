@@ -6788,7 +6788,7 @@ pnpm graph
 
 ---
 
-# 智能化AI辅助开发补充：Demo30:Demo29的扩展：AI辅助接入个人开发环境的“即时反馈”
+# 智能化AI辅助开发补充：Demo30:Demo29的扩展：AI辅助接入个人开发环境的“即时反馈” 以及快捷键的触发
 
 不同于Demo28的提交给原仓库的PR检查，为了提高个人开发的准确度和一致性，我们可以将这种思想也介入我们个人开发环境中
 
@@ -6894,7 +6894,7 @@ console.log(review);
 
 ### 第三步：绑定快捷键
 
-#### Ctrl + Alt + R → Tasks: Run Task
+#### Ctrl + Alt + N → Tasks: Run Task
 
 或者是
 
@@ -7009,6 +7009,22 @@ ts-node -esm scripts/review-changes.ts all
 ![未能成功加载](<screenshots/Screenshot 2026-08-31 104916.png>)
 
 ### 此时就发现我们本地配置类似PR的代码修改风险评审成功了
+
+也有一个快捷方式 即触即发
+
+### 在.vscode/ 加一个文件 keybindings.json
+
+```json
+[
+  {
+    "key": "ctrl+alt+n",
+    "command": "workbench.action.tasks.runTask",
+    "args": "AI Review All Changes"
+  }
+]
+```
+
+这样就可以直接触发快捷键了
 
 ---
 

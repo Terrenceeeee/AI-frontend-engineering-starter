@@ -53,7 +53,9 @@ demo/
 │       ├── deploy.yml # CD pipeline
 │       └──ai-review.yml # AI Code Review
 ├── .vscode/
-│   └── setting.json # VS Code configuration, live server port configuration
+│   |—— setting.json # VS Code configuration, live server port configuration
+|   |—— tasks.json # Declare some speical new tasks in vscode which can be executed directly
+|   |__ keybindings.json # VS Code keyboard shortcuts configuration
 ├── Demo1 pnpm hard link and symbolic link mechanism verification/
 │   ├── npm/ # npm verification area
 │   └── pnpm/ # pnpm verification area

@@ -55,7 +55,9 @@ demo/
 │ ├── deploy.yml # CD 流水线
 │ └──ai-review.yml # AI Code Review
 ├── .vscode/
-│ └── setting.json # vscode 配置 此处是live server的端口配置 以及保存prettier自动化
+│ |—— setting.json # vscode 配置 此处是live server的端口配置 以及保存prettier自动化
+| |—— tasks.json # 定义申明一些开发者自己加入的新功能
+| └── keybindings.json # VS Code内部快捷键触发定义 点击即触发
 ├── Demo1 pnpm 硬链接与符号链接机制验证/
 │ ├── npm/ # npm 验证区
 │ └── pnpm/ # pnpm 验证区

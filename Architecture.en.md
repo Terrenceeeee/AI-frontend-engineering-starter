@@ -2579,7 +2579,7 @@ After these extensions, the visualization page renders many additional node type
 
 ---
 
-# AI-Assisted Development Supplement: Demo30 — Extension of Demo29: AI-Powered Instant Feedback for Personal Development Environments
+# AI-Assisted Development Supplement: Demo30 — Extension of Demo29: AI-Powered Instant Feedback for Personal Development Environments and Activate the Shortcut Key to Automatically Review All Modified Files
 
 Unlike Demo28, which checks PRs against the upstream repository, we can also bring the same concept into our personal development environment to improve local development accuracy and consistency.
 
@@ -2685,7 +2685,7 @@ Create the following in `.vscode/tasks.json`; it must be a valid `tasks` array, 
 
 ### 3. Bind the shortcut key
 
-#### Ctrl + Alt + R → Tasks: Run Task
+#### Ctrl + Alt + N → Tasks: Run Task
 
 Or:
 
@@ -2805,6 +2805,23 @@ ts-node -esm scripts/review-changes.ts all
 ![fail to load successfully](<screenshots/Screenshot 2026-08-31 104916.png>)
 
 ### At this point, the local PR-like code change risk review succeeded.
+
+But there was still a problem.:we can't activate thsi shortcut rapidly.
+so we can set up the shortcut in VS Code:
+add a file into the `.vscode` folder:
+
+```json
+// .vscode/keybindings.json
+[
+  {
+    "key": "ctrl+alt+n",
+    "command": "workbench.action.tasks.runTask",
+    "args": "AI Review All Changes"
+  }
+]
+```
+
+after that ,we can activate the shortcut very quickly.
 
 ---
 
