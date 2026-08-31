@@ -1,38 +1,67 @@
 # Usage Guide
 
-This guide applies to the runnable demo project in this repository: `Demo2/demo2-env`.
+This guide applies to the runnable project in this repository: `Demo2/demo2-env`. It is a Vue 3 + Vite + TypeScript + pnpm frontend engineering demo that includes more than just a basic app startup flow. It also covers:
 
-## 1. Install dependencies
+- page, API, and store scaffolding
+- unit and E2E testing
+- build, deployment, and rollback
+- AI code review
+- environment variable configuration
+- GitHub Actions automation
 
-Run the following in the project directory:
+If you only want the shortest path to running the app, start with “Quick Start.” For the full engineering workflow, read the rest.
+
+---
+
+## 1. Prerequisites
+
+Recommended environment:
+
+- Node.js 20+ / 22+
+- pnpm 10+
+- Git
+- Network access to the DeepSeek API
+
+### Install pnpm
+
+If pnpm is not installed:
+
+```bash
+npm install -g pnpm
+```
+
+### Install project dependencies
 
 ```bash
 cd Demo2/demo2-env
 pnpm install
 ```
 
-If pnpm is not installed on your machine, install it first:
+If installation fails, try a clean reinstall:
 
 ```bash
-npm install -g pnpm
+pnpm store prune
+pnpm install
 ```
 
 ---
 
-## 2. Start the development server
+## 2. Quick Start
+
+### Start the development server
 
 ```bash
 cd Demo2/demo2-env
 pnpm dev
 ```
 
-The default local address is usually:
+The default local URL is typically:
 
 ```text
 http://127.0.0.1:5173
 ```
 
-To preview a production build:
+### Preview a production build
 
 ```bash
 pnpm build
@@ -41,7 +70,33 @@ pnpm preview
 
 ---
 
-## 3. Run tests
+## 3. Main Scripts
+
+The project includes the following useful scripts in `Demo2/demo2-env/package.json`:
+
+```bash
+pnpm dev          # start dev server
+pnpm build        # build production bundle
+pnpm preview      # preview production build
+pnpm test         # run Vitest unit tests
+pnpm test:coverage # run coverage tests
+pnpm test:e2e     # run Playwright E2E tests
+pnpm test:e2e:ui  # run Playwright in UI mode
+pnpm type-check   # run TypeScript checks
+pnpm lint         # run ESLint with auto-fix
+pnpm format       # run Prettier formatting
+pnpm gen          # generate page/api/store template
+pnpm graph        # generate a project knowledge graph
+pnpm deploy       # build and copy app to deploy output
+pnpm rollback     # restore a previous build from backups
+pnpm ai-review    # run AI review
+```
+
+> This project follows ESM conventions, so TypeScript scripts are usually run via `ts-node --esm` instead of CommonJS patterns.
+
+---
+
+## 4. Run Tests
 
 ### Unit tests
 
@@ -62,67 +117,162 @@ pnpm test:coverage
 pnpm test:e2e
 ```
 
-Open the UI version:
+Open UI mode:
 
 ```bash
 pnpm test:e2e:ui
 ```
 
+### Type checking
+
+```bash
+pnpm type-check
+```
+
+### Linting and formatting
+
+```bash
+pnpm lint
+pnpm format
+```
+
 ---
 
-## 4. Trigger AI review
+## 5. Generate Project Templates
 
-The AI review scripts are located in `Demo2/demo2-env/scripts/ai-review.ts` and `scripts/review-changes.ts`.
+This project includes a generator to quickly scaffold pages, APIs, and stores.
 
-### 4.1 Local review
+```bash
+cd Demo2/demo2-env
+pnpm gen
+```
 
-Review unstaged changes:
+The script will ask for a module name such as:
+
+- user
+- product
+- order
+
+It typically creates:
+
+```text
+src/views/{name}/index.vue
+src/api/{name}.ts
+src/stores/modules/{name}.ts
+```
+
+To overwrite existing files:
+
+```bash
+pnpm gen -- --force
+```
+
+---
+
+## 6. Build, Deploy, and Rollback
+
+### Build production assets
+
+```bash
+cd Demo2/demo2-env
+pnpm build
+```
+
+### Preview the built result
+
+```bash
+pnpm preview
+```
+
+### Deploy
+
+```bash
+pnpm deploy
+```
+
+This script does the following:
+
+1. runs a production build
+2. copies the dist output to the `deploy/` folder
+3. creates a backup version
+4. simulates deployment completion
+
+### Rollback
+
+```bash
+pnpm rollback
+```
+
+This reads the files in `backups/` and lets you select a previous build to restore.
+
+---
+
+## 7. AI Code Review
+
+The AI review logic is defined in:
+
+- `Demo2/demo2-env/scripts/ai-review.ts`
+- `Demo2/demo2-env/scripts/review-changes.ts`
+- `.github/workflows/ai-review.yml`
+
+### Local review: unstaged changes
 
 ```bash
 cd Demo2/demo2-env
 pnpm exec ts-node --esm scripts/review-changes.ts unstaged
 ```
 
-Review staged changes:
+### Local review: staged changes
 
 ```bash
 pnpm exec ts-node --esm scripts/review-changes.ts staged
 ```
 
-Review all changes:
+### Local review: all changes
 
 ```bash
 pnpm exec ts-node --esm scripts/review-changes.ts all
 ```
 
-You can also run:
+### Run AI review directly
 
 ```bash
 pnpm ai-review
 ```
 
-> The script reads `git diff` and sends the change content to the DeepSeek API for code review.
+> These scripts read `git diff`, package the change set into a prompt, and send it to the DeepSeek API for review.
 
-### 4.2 PR-based review
+### PR review automation
 
-This repo includes a GitHub Actions workflow: `.github/workflows/ai-review.yml`.
+The repository includes a GitHub Actions workflow:
 
-Trigger conditions:
+```text
+.github/workflows/ai-review.yml
+```
 
-- Pull request opened or updated
-- Target branch is `master`
-- Changed files are under `Demo2/demo2-env/**`
-- Manual trigger via `workflow_dispatch` is also supported (shortcut: `ctrl + shift + n`)
+It triggers when:
 
-During execution, the workflow automatically reads `DEEPSEEK_API_KEY` from repository secrets and posts the AI review result as a PR comment.
+- a pull request is opened or updated
+- target branch is `master`
+- files under `Demo2/demo2-env/**` are changed
+- or it is manually triggered via `workflow_dispatch`
+
+During execution, the workflow:
+
+1. installs Node.js and pnpm
+2. installs dependencies
+3. generates a knowledge graph if missing
+4. reads `DEEPSEEK_API_KEY`
+5. runs `pnpm ai-review --pr`
+6. comments the review result on the PR
 
 ---
 
-## 5. Configure the API key
+## 8. Configure the API Key
 
-AI review requires the `DEEPSEEK_API_KEY` environment variable.
+AI review depends on the `DEEPSEEK_API_KEY` environment variable.
 
-### Local development
+### Local shell configuration
 
 Windows PowerShell:
 
@@ -139,6 +289,7 @@ export DEEPSEEK_API_KEY=sk-your-key
 Then run:
 
 ```bash
+cd Demo2/demo2-env
 pnpm ai-review
 ```
 
@@ -148,7 +299,7 @@ or:
 pnpm exec ts-node --esm scripts/review-changes.ts all
 ```
 
-### GitHub Actions / PR environment
+### GitHub repository configuration
 
 Go to:
 
@@ -156,27 +307,108 @@ Go to:
 Settings -> Secrets and variables -> Actions
 ```
 
-Create a new secret:
+Add a new secret:
 
 ```text
 Name: DEEPSEEK_API_KEY
 Value: sk-your-key
 ```
 
-Then the PR review workflow can use the key automatically.
+This allows the PR review workflow to use the key automatically.
+
+### Important note
+
+If you see an error like:
+
+```text
+❌ Please set the DEEPSEEK_API_KEY environment variable
+```
+
+It usually means one of these:
+
+1. the variable is not set in the current terminal
+2. your VS Code task or script is running in a different environment than the terminal that set the variable
+
+In practice, the fix is usually:
+
+- set the variable in the same shell before running the script
+- re-run the command in that same terminal session
+- if using VS Code tasks, confirm the task is inheriting the environment correctly
 
 ---
 
-## 6. Quick command reference
+## 9. Typical Development Workflow
+
+### Daily local workflow
 
 ```bash
 cd Demo2/demo2-env
 pnpm install
 pnpm dev
+```
+
+### Before submitting code
+
+```bash
+pnpm type-check
 pnpm test
-pnpm test:e2e
+pnpm lint
+```
+
+### Staged review before commit
+
+```bash
+pnpm exec ts-node --esm scripts/review-changes.ts staged （shortcut: Ctrl + Shift + P -> AI Review Staged Changes） or （shortcut: Ctrl + Alt + N -> AI Review All Changes）
+```
+
+### Regenerate knowledge graph
+
+```bash
+pnpm graph
+```
+
+---
+
+## 10. Quick Command Reference
+
+```bash
+cd Demo2/demo2-env
+
+pnpm install
+pnpm dev
 pnpm build
+pnpm preview
+pnpm test
+pnpm test:coverage
+pnpm test:e2e
+pnpm type-check
+pnpm lint
+pnpm format
+pnpm gen
+pnpm graph
+pnpm deploy
+pnpm rollback
 pnpm ai-review
 ```
 
-If you see a `DEEPSEEK_API_KEY` missing error locally, check whether the variable is defined in the same terminal session where the script is run, and confirm that VS Code tasks inherit the same environment.
+---
+
+## 11. Summary
+
+This project is more than a simple demo app. It is a practical frontend engineering exercise covering:
+
+- environment and tooling setup
+- project generation
+- testing
+- deployment and rollback
+- AI-assisted review
+- automation and CI/CD
+
+If you hit environment issues, always check these first:
+
+- `pnpm install` completed successfully
+- Node and pnpm versions are correct
+- `DEEPSEEK_API_KEY` is set in the same shell session
+- the command is being run from the right project directory
+
+That will resolve most of the confusion around local AI review and task execution.

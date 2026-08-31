@@ -177,6 +177,8 @@ demo/
 ├── Architecture.en.MD
 ├── .gitignore
 ├── LICENSE
+├── USAGE.md
+├── USAGE.en.md
 ├── README.en.md
 └── README.md
 省略:
