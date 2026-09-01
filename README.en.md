@@ -52,6 +52,10 @@ demo/
 │       ├── ci.yml # CI pipeline
 │       ├── deploy.yml # CD pipeline
 │       └──ai-review.yml # AI Code Review
+├── .husky
+│   ├── commit-msg.disabled # commit-msg  disabled by author
+│   ├── pre-commit # pre-commit
+│   └── pre-push # pre-push
 ├── .vscode/
 │   |—— setting.json # VS Code configuration, live server port configuration
 |   |—— tasks.json # Declare some speical new tasks in vscode which can be executed directly
@@ -70,6 +74,11 @@ demo/
 │       ├── vite.config.ts
 │       ├── playwright.config.js
 |       ├── public/
+|       ├── .env.development
+|       ├── .env.example
+|       ├── .env.production
+|       ├── .env.staging
+|       ├── .env.test
 |       ├── favicon.svg
 |       ├── icons.svg
 |       └── sw.js

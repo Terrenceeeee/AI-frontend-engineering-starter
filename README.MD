@@ -51,9 +51,13 @@
 demo/
 ├── .github/
 │ └── workflows/
-│ ├── ci.yml # CI 流水线
-│ ├── deploy.yml # CD 流水线
-│ └──ai-review.yml # AI Code Review
+│   ├── ci.yml # CI 流水线
+│   ├── deploy.yml # CD 流水线
+│   └──ai-review.yml # AI Code Review
+├── .husky
+│   ├── commit-msg.disabled # commit-msg 钩子 被作者自主失效了
+│   ├── pre-commit # pre-commit 钩子
+│   └── pre-push # pre-push 钩子
 ├── .vscode/
 │ |—— setting.json # vscode 配置 此处是live server的端口配置 以及保存prettier自动化
 | |—— tasks.json # 定义申明一些开发者自己加入的新功能
@@ -71,6 +75,11 @@ demo/
 |    ├── tsconfig.json
 |    ├── vite.config.ts
 |    ├── playwright.config.js
+|    ├── .env.development
+|    ├── .env.example
+|    ├── .env.production
+|    ├── .env.staging
+|    ├── .env.test
 |    │
 |    ├── public/
 |    │   ├── favicon.svg

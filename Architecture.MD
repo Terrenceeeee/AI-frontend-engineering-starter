@@ -5594,7 +5594,246 @@ coverage:{
 
 ---
 
-# 智能化AI辅助开发补充：Demo28:AI结合PR辅助开发，分析代码改动风险等等
+# 规范化开源项目补充：DEMO28：husky文件重配置 增加Husky文件作用域 husky文件规范要求
+
+```
+由于我们之前在Demo2/demo2-env 下创建过.husky/_ 以及类型文件pre-commit
+但是并未奏效 所以我们现在来纠错 使得husky文件生效
+```
+
+## 1.第一个错误 husky文件夹位置错误
+
+> 经过观察且过往提交的经验 我们可以看出来我们提交的一直是一整个大的文件夹demo 而不是单单的Demo2/denmo2-env
+> 所以我们需要把husky文件夹移动到Demo2/demo2-env下 并且修改.husky类型文件的内容
+> 但是发现在demo2下的.husky文件夹下中有一大堆的冗余文件 所以我们选择在总体文件夹根目录下重新重新创建.husky文件夹 并配置内部的husky文件 并且同时删除掉原来的.husky文件夹 防止后续提交时导致两个.husky文件夹冲突 无法提交
+
+## 2.创建.husky文件夹 并配置内部的husky文件
+
+常用的husky类型文件有：
+
+- pre-commit
+- commit-msg
+- pre-push
+
+- pre-commit:
+
+```shell
+#!/usr/bin/env sh
+set -eu
+
+REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+PROJECT_ROOT="$REPO_ROOT/Demo2/demo2-env"
+cd "$PROJECT_ROOT"
+
+echo "🔒 Running pre-commit checks in $PROJECT_ROOT..."
+pnpm exec lint-staged
+```
+
+作用：
+
+```text
+#!/usr/bin/env sh
+# 👉 脚本解释器声明：
+# 告诉系统，用环境里找到的 sh 解释器来执行这份脚本，跨平台兼容性好，不硬编码 /bin/sh
+
+set -eu
+# set -e：遇到任意命令执行失败（退出码非0），脚本立刻终止，不继续往下跑，防止错误扩散
+# set -u：脚本里使用未定义的变量，直接报错退出，避免空变量引发诡异bug
+# 工程shell脚本标配，严格模式
+
+REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+# $0：代表当前脚本文件本身的路径
+# dirname -- "$0"：拿到【当前脚本所在的文件夹】
+# cd -- ".../.."：脚本目录往上跳一级，到达仓库根目录
+# pwd：输出真实绝对路径
+# REPO_ROOT 变量 = 整个git仓库的根目录（绝对路径）
+
+PROJECT_ROOT="$REPO_ROOT/Demo2/demo2-env"
+# 拼接路径：仓库根目录下 Demo2/demo2‑env，这是我们要执行检查的项目文件夹
+
+cd "$PROJECT_ROOT"
+# 切换工作目录，进入demo2‑env项目目录
+
+echo "🔒 Running pre‑commit checks in $PROJECT_ROOT..."
+# 在终端打印提示文字，告诉用户正在哪个目录执行提交前校验
+
+pnpm exec lint-staged
+# pnpm exec：调用本项目本地安装的依赖，不去全局找
+# lint‑staged：只对git暂存区（git add）的文件执行代码校验格式化，pre‑commit钩子常用工具
+```
+
+```text
+在 git commit 之前执行
+运行 pnpm exec lint-staged
+作用是只检查当前暂存区里的文件
+通常会自动做 ESLint / Prettier 修复，不让低质量代码进入提交
+适用场景：
+
+提交前统一代码风格
+避免提交有格式问题或明显 lint 错误的代码
+```
+
+- commit-msg:
+
+```shell
+#!/usr/bin/env sh
+set -eu
+
+msg_file="$1"
+if [ ! -f "$msg_file" ]; then
+  echo "❌ Commit message file not found"
+  exit 1
+fi
+
+msg=$(head -n 1 "$msg_file" | sed '/^$/d')
+if [ -z "$msg" ]; then
+  echo "❌ Commit message cannot be empty"
+  exit 1
+fi
+
+# Very lightweight conventional-style check:
+# example: feat: add login page
+#          fix: resolve API timeout
+if ! printf '%s\n' "$msg" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\(.+\))?: .+'; then
+  echo "❌ Commit message must follow conventional commits format: <type>: <description>"
+  echo "Examples: feat: add login page | fix: resolve API timeout"
+  exit 1
+fi
+
+echo "✅ Commit message format looks valid"
+```
+
+```text
+#!/usr/bin/env sh
+# 指定脚本解释器，调用环境中的 sh，跨平台shell脚本标准开头
+
+set -eu
+# set -e：任意命令报错，脚本立刻终止退出
+# set -u：使用未定义变量直接报错，防止空变量引发问题
+
+msg_file="$1"
+# $1 代表脚本的**第一个传入参数**
+# git commit‑msg 钩子会自动把「提交信息临时文件路径」作为参数传给脚本
+
+if [ ! -f "$msg_file" ]; then
+  echo "❌ Commit message file not found"
+  exit 1
+fi
+# 判断：如果这个文件不存在 (! -f)
+# 打印错误，exit 1 返回异常退出码，阻断git提交
+
+msg=$(head -n 1 "$msg_file" | sed '/^$/d')
+# head -n 1：读取提交信息文件**第一行**（就是commit标题subject）
+# sed '/^$/d'：删掉空行，过滤开头空白行
+# msg 变量拿到 commit 的第一行标题文本
+
+if [ -z "$msg" ]; then
+  echo "❌ Commit message cannot be empty"
+  exit 1
+fi
+# -z 判断：字符串为空就报错退出，不允许提交空commit注释
+
+# Very lightweight conventional‑style check:
+# example: feat: add login page
+#          fix: resolve API timeout
+if ! printf '%s\n' "$msg" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\(.+\))?: .+'; then
+# grep -E 使用扩展正则表达式
+# 正则拆解：
+# ^ 行开头
+# (feat|fix|docs|style|refactor|perf|test|chore|build|ci) 匹配允许的type类型
+# (\(.+\))?  可选scope，例如 (auth)、(vite‑config)，? 代表可以没有
+# : 冒号
+# 空格 .+ 冒号后面必须有空格，并且要有描述文字
+# ! 取反：如果**不匹配正则，就进入if报错分支**
+
+  echo "❌ Commit message must follow conventional commits format: <type>: <description>"
+  echo "Examples: feat: add login page | fix: resolve API timeout"
+  exit 1
+fi
+# 格式不对，打印提示，exit 1，阻止git提交
+
+echo "✅ Commit message format looks valid"
+# 全部校验通过，输出成功，脚本正常结束，git commit 可以继续完成
+
+```
+
+```text
+功能：
+
+在提交信息生成后执行
+读取 commit message
+检查是否符合常见的提交规范，例如：
+feat: add login page
+fix: resolve API timeout
+docs: update usage guide
+如果不符合格式，就会直接拒绝提交，避免杂乱的 commit message。
+```
+
+- pre-push:
+
+```shell
+#!/usr/bin/env sh
+set -eu
+
+REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+PROJECT_ROOT="$REPO_ROOT/Demo2/demo2-env"
+cd "$PROJECT_ROOT"
+
+echo "🚀 Running pre-push checks in $PROJECT_ROOT..."
+pnpm test
+
+```
+
+```text
+#!/usr/bin/env sh
+# 脚本头：使用系统环境里的sh解释器执行脚本，跨平台通用写法
+
+set -eu
+# set -e：任意命令执行失败，脚本立刻终止退出，不继续往下跑
+# set -u：读取未定义的变量直接报错，避免空变量带来异常行为
+
+REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+# $0 当前脚本文件路径
+# dirname -- "$0" 获取脚本所在目录
+# cd -- ".../.." 从脚本目录向上跳两层，到达Git仓库根目录
+# pwd 获取真实绝对路径
+# REPO_ROOT：整个仓库的根目录绝对路径
+
+PROJECT_ROOT="$REPO_ROOT/Demo2/demo2-env"
+# 拼接得到子项目demo2‑env的完整路径
+
+cd "$PROJECT_ROOT"
+# 切换工作目录进入Demo2/demo2‑env项目文件夹
+
+echo "🚀 Running pre-push checks in $PROJECT_ROOT..."
+# 控制台打印提示，告知正在哪个目录执行推送前检查
+
+pnpm test
+# 执行package.json scripts里面的 test 脚本
+# 一般是 vitest / jest 单元测试
+```
+
+```text
+功能：
+
+在 git push 之前执行
+运行 pnpm test
+作用是阻止“测试未通过”的代码被推送到远端
+适用场景：
+
+保证推送前已经通过单元测试
+降低错误代码进入远端仓库的风险
+```
+
+## 3.提交发现错误
+
+当我们提交过后 会发现一些错误，vscode一直在报错 原因可以在**输出日志**中查看 是我们提交的信息遭到了**commit-msg**的拦截 且这个commit-msg是有点不足的 只适合当一个模板 所以我们**最优的选择**是把这个commit-msg的功能给关了 直接在commit-msg的文件名后缀加一个**disabled** 就好了
+
+> 再次提交 发现成功了
+
+---
+
+# 智能化AI辅助开发补充：Demo29:AI结合PR辅助开发，分析代码改动风险等等
 
 ## 开发前附加条件：
 
@@ -6210,7 +6449,7 @@ jobs:
 
 ---
 
-# 智能化AI辅助开发补充：Demo29:AI结合d3.js进行可视化，分析代码文件导入关系的知识图谱功能大拓展
+# 智能化AI辅助开发补充：Demo30:AI结合d3.js进行可视化，分析代码文件导入关系的知识图谱功能大拓展
 
 我们现在的知识图谱太素了，只有简单的几个界面之间的调用导入关系，10 个节点和 5 条边。对于这个演示项目图谱来说足够了，但这对于日常的代码改动是远远不够的
 我们还有主要的一些文件和文件夹内的重要文件，但是这些文件在知识图谱里面是没有的，于是就需要AI辅助的知识图谱进行扩展
@@ -6788,7 +7027,7 @@ pnpm graph
 
 ---
 
-# 智能化AI辅助开发补充：Demo30:Demo29的扩展：AI辅助接入个人开发环境的“即时反馈” 以及快捷键的触发
+# 智能化AI辅助开发补充：Demo31:Demo30的扩展：AI辅助接入个人开发环境的“即时反馈” 以及快捷键的触发
 
 不同于Demo28的提交给原仓库的PR检查，为了提高个人开发的准确度和一致性，我们可以将这种思想也介入我们个人开发环境中
 
@@ -7028,7 +7267,7 @@ ts-node -esm scripts/review-changes.ts all
 
 ---
 
-# 智能化AI辅助开发补充：Demo31:VSCODE 插件的创建与配置 使得知识图谱可以在侧栏显示 无需打开网页
+# 智能化AI辅助开发补充：Demo32:VSCODE 插件的创建与配置 使得知识图谱可以在侧栏显示 无需打开网页
 
 (不在本文件夹)
 
@@ -7924,7 +8163,7 @@ exit
 pnpm add -D husky
 ```
 
-## 二、初始化husky
+## 二、初始化husky（一定要在根目录 所指定的检查路径可以放在里面申明）
 
 ```bash
 pnpm exec husky init
@@ -7952,7 +8191,7 @@ pnpm run prepare
 
 ```
 #!/usr/bin/env sh
-npm test
+pnpm test
 ```
 
 老旧写法已废弃 不再使用：
@@ -7960,7 +8199,7 @@ npm test
 ```
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
-npm test
+pnpm test
 ```
 
 ## 四、创建不同的Git Hook

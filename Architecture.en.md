@@ -1754,7 +1754,251 @@ If actual coverage falls below configured thresholds, **CI fails directly and bl
 
 ---
 
-# Intelligent AI‑Assisted Development Supplement: Demo28: AI‑Assisted Development with PR, Analyzing Code Change Risks, and More
+# Standardized Open‑Source Project Supplement：DEMO28: Re‑configuring Husky Files — Enhancing Husky Scope and Specification Requirements
+
+```
+Previously, we created .husky/_ and hook files such as pre‑commit under Demo2/demo2‑env,
+but they did not take effect. We will troubleshoot and fix this to make Husky work properly.
+```
+
+## 1. First Issue: Incorrect Location of the husky Folder
+
+> 
+> Based on past commits and observations, our commits contain the entire demo folder instead of only Demo2/demo2‑env.
+> Therefore, we need to move the `.husky` folder into `Demo2/demo2‑env` and modify the content of hook files inside `.husky`.
+> However, we notice the existing `.husky` under demo2 contains many redundant files.
+> We choose to recreate the `.husky` folder at the repository root directory and configure its hook files.
+> Meanwhile, delete the original `.husky` folder to avoid conflicts between duplicate `.husky` directories which would break future commits.
+
+## 2. Create the .husky Folder and Configure Internal Hook Files
+
+Common Husky hook files include:
+
+- pre‑commit
+- commit‑msg
+- pre‑push
+
+### pre‑commit
+
+```
+#!/usr/bin/env sh
+set -eu
+
+REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+PROJECT_ROOT="$REPO_ROOT/Demo2/demo2-env"
+cd "$PROJECT_ROOT"
+
+echo "🔒 Running pre-commit checks in $PROJECT_ROOT..."
+pnpm exec lint-staged
+```
+
+**Function Explanation**
+
+```
+#!/usr/bin/env sh
+# Script interpreter declaration:
+# Tells the system to execute this script using sh found from environment, providing good cross‑platform compatibility instead of hard‑coding /bin/sh
+
+set -eu
+# set -e: Immediately terminate the script if any command fails (non‑zero exit code) to prevent error propagation
+# set -u: Throw an error when referencing undefined variables, avoiding strange bugs caused by empty variables
+# Strict‑mode baseline for engineering shell scripts
+
+REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+# $0: Path to the current script file
+# dirname -- "$0": Get directory containing the current script
+# cd -- ".../..": Navigate two levels upward from script directory to repository root
+# pwd: Print resolved absolute path
+# REPO_ROOT = absolute path to the Git repository root
+
+PROJECT_ROOT="$REPO_ROOT/Demo2/demo2‑env"
+# Assemble path pointing to our target sub‑project under repository root
+
+cd "$PROJECT_ROOT"
+# Change working directory into demo2‑env project folder
+
+echo "🔒 Running pre‑commit checks in $PROJECT_ROOT..."
+# Print console message indicating where pre‑commit checks are running
+
+pnpm exec lint‑staged
+# pnpm exec: Invoke locally installed dependencies inside project, skip global packages
+# lint‑staged: Run lint and format checks only on files added to Git staging area, widely‑used pre‑commit utility
+```
+
+```
+Executes before git commit runs
+Runs pnpm exec lint‑staged
+Only inspects files currently in Git staging area
+Normally auto‑runs ESLint / Prettier fixes, blocking commits with low‑quality code
+
+Use cases:
+Enforce consistent code style before commit
+Prevent committing code with formatting or lint errors
+```
+
+### commit‑msg
+
+```
+#!/usr/bin/env sh
+set -eu
+
+msg_file="$1"
+if [ ! -f "$msg_file" ]; then
+  echo "❌ Commit message file not found"
+  exit 1
+fi
+
+msg=$(head -n 1 "$msg_file" | sed '/^$/d')
+if [ -z "$msg" ]; then
+  echo "❌ Commit message cannot be empty"
+  exit 1
+fi
+
+# Very lightweight conventional‑style check:
+# example: feat: add login page
+#          fix: resolve API timeout
+if ! printf '%s\n' "$msg" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\(.+\))?: .+'; then
+  echo "❌ Commit message must follow conventional commits format: <type>: <description>"
+  echo "Examples: feat: add login page | fix: resolve API timeout"
+  exit 1
+fi
+
+echo "✅ Commit message format looks valid"
+```
+
+**Function Explanation**
+
+```
+#!/usr/bin/env sh
+# Specify script interpreter, use sh from system environment, standard cross‑platform shell header
+
+set -eu
+# set -e: Terminate script immediately upon any command failure
+# set -u: Error out when referencing undefined variables to avoid bugs
+
+msg_file="$1"
+# $1 represents the first argument passed to script
+# Git commit‑msg hook automatically passes path to temporary commit‑message file as this argument
+
+if [ ! -f "$msg_file" ]; then
+  echo "❌ Commit message file not found"
+  exit 1
+fi
+# Condition: If target file does not exist (! -f)
+# Print error and return non‑zero exit code to block Git commit
+
+msg=$(head -n 1 "$msg_file" | sed '/^$/d')
+# head -n 1: Read first line of commit‑message file (commit subject title)
+# sed '/^$/d': Remove blank lines, strip leading empty lines
+# msg variable stores first‑line title text of commit message
+
+if [ -z "$msg" ]; then
+  echo "❌ Commit message cannot be empty"
+  exit 1
+fi
+# -z judges empty string; reject commit if commit title is blank
+
+# Very lightweight conventional‑style check:
+# example: feat: add login page
+#          fix: resolve API timeout
+if ! printf '%s\n' "$msg" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\(.+\))?: .+'; then
+# grep -E enables extended regular‑expression mode
+# Regex breakdown:
+# ^ Start of line
+# (feat|fix|docs|style|refactor|perf|test|chore|build|ci) matches allowed commit types
+# (\(.+\))? Optional scope such as (auth), (vite‑config); ? means optional
+# : literal colon character
+# space .+ colon must be followed by whitespace and non‑empty description text
+# ! negation: enter error branch when input does NOT match pattern
+
+  echo "❌ Commit message must follow conventional commits format: <type>: <description>"
+  echo "Examples: feat: add login page | fix: resolve API timeout"
+  exit 1
+fi
+# Print hint and block commit when format validation fails
+
+echo "✅ Commit message format looks valid"
+# All checks pass; script exits normally and Git commit proceeds
+```
+
+```
+Features:
+Executes after commit message content is prepared
+Reads commit‑message text
+Validates compliance with conventional‑commits standards:
+feat: add login page
+fix: resolve API timeout
+docs: update usage guide
+Rejects commits with malformed messages to keep commit history clean.
+```
+
+### pre‑push
+
+```
+#!/usr/bin/env sh
+set -eu
+
+REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+PROJECT_ROOT="$REPO_ROOT/Demo2/demo2-env"
+cd "$PROJECT_ROOT"
+
+echo "🚀 Running pre-push checks in $PROJECT_ROOT..."
+pnpm test
+```
+
+**Function Explanation**
+
+```
+#!/usr/bin/env sh
+# Script header: execute script using system‑provided sh interpreter, cross‑platform standard
+
+set -eu
+# set -e: script aborts immediately whenever any command returns failure
+# set -u: error for undefined variables to prevent unexpected runtime behavior
+
+REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+# $0 path to current hook script
+# dirname -- "$0" get directory containing this script
+# cd -- ".../.." go two directories upwards to Git repository root
+# pwd output resolved absolute filesystem path
+# REPO_ROOT holds absolute path of repository root
+
+PROJECT_ROOT="$REPO_ROOT/Demo2/demo2‑env"
+# Assemble absolute path for sub‑project demo2‑env
+
+cd "$PROJECT_ROOT"
+# Switch working directory into demo2‑env project
+
+echo "🚀 Running pre‑push checks in $PROJECT_ROOT..."
+# Console prompt showing where pre‑push validation runs
+
+pnpm test
+# Run test script defined inside package.json scripts section
+# Typically invokes Vitest / Jest unit tests
+```
+
+```
+Features:
+Executes before git push uploads code to remote repository
+Runs pnpm test
+Prevents code with failing unit tests from being pushed to remote
+
+Use cases:
+Ensure unit‑test suite passes before code is pushed upstream
+Reduce risk of defective code entering remote repository
+```
+
+## 3. Errors Encountered During Commit
+
+After attempting to commit, errors occur and VS Code reports warnings. You may inspect details within **output logs**. The commit is intercepted by `commit‑msg`.
+This `commit‑msg` implementation is only suitable as a reference template and has limitations.
+The optimal workaround is to disable this `commit‑msg` hook. Append the suffix `.disabled` to the filename.
+
+> 
+> Attempt committing again; the commit succeeds.
+---
+
+# Intelligent AI‑Assisted Development Supplement: Demo29: AI‑Assisted Development with PR, Analyzing Code Change Risks, and More
 
 ## Pre‑requisites Before Development
 
@@ -2257,7 +2501,7 @@ The AI‑generated review comment will appear on your Pull Request page:
 
 ---
 
-# Intelligent AI‑Assisted Development Supplement: Demo29: AI‑Enhanced D3.js Visualization — Major Expansion for Code‑File Import‑Relationship Knowledge‑Graph Functionality
+# Intelligent AI‑Assisted Development Supplement: Demo30: AI‑Enhanced D3.js Visualization — Major Expansion for Code‑File Import‑Relationship Knowledge‑Graph Functionality
 
 Our current knowledge graph is rather simplistic. It only contains basic invocation and import relationships between a small number of interfaces, with around 10 nodes and 5 edges. While this suffices for demonstration purposes in this sample project, it is far from adequate for real‑world code modifications.
 
@@ -2579,9 +2823,9 @@ After these extensions, the visualization page renders many additional node type
 
 ---
 
-# AI-Assisted Development Supplement: Demo30 — Extension of Demo29: AI-Powered Instant Feedback for Personal Development Environments and Activate the Shortcut Key to Automatically Review All Modified Files
+# AI-Assisted Development Supplement: Demo31 — Extension of Demo29: AI-Powered Instant Feedback for Personal Development Environments and Activate the Shortcut Key to Automatically Review All Modified Files
 
-Unlike Demo28, which checks PRs against the upstream repository, we can also bring the same concept into our personal development environment to improve local development accuracy and consistency.
+Unlike Demo29, which checks PRs against the upstream repository, we can also bring the same concept into our personal development environment to improve local development accuracy and consistency.
 
 ## Bind a shortcut key (Ctrl+Shift+P) to automatically review all modified files and display the results immediately so issues can be spotted quickly
 
