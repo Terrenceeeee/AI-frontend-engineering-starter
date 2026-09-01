@@ -7,3 +7,4 @@ cd "$PROJECT_ROOT"
 
 echo "🔒 Running pre-commit checks in $PROJECT_ROOT..."
 pnpm exec lint-staged
+pnpm ai-review --staged

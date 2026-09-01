@@ -1763,7 +1763,6 @@ but they did not take effect. We will troubleshoot and fix this to make Husky wo
 
 ## 1. First Issue: Incorrect Location of the husky Folder
 
-> 
 > Based on past commits and observations, our commits contain the entire demo folder instead of only Demo2/demo2‑env.
 > Therefore, we need to move the `.husky` folder into `Demo2/demo2‑env` and modify the content of hook files inside `.husky`.
 > However, we notice the existing `.husky` under demo2 contains many redundant files.
@@ -1994,8 +1993,8 @@ After attempting to commit, errors occur and VS Code reports warnings. You may i
 This `commit‑msg` implementation is only suitable as a reference template and has limitations.
 The optimal workaround is to disable this `commit‑msg` hook. Append the suffix `.disabled` to the filename.
 
-> 
 > Attempt committing again; the commit succeeds.
+
 ---
 
 # Intelligent AI‑Assisted Development Supplement: Demo29: AI‑Assisted Development with PR, Analyzing Code Change Risks, and More
@@ -3231,6 +3230,253 @@ Mandatory when API / configuration changes break existing project compatibility:
 feat(user): modify return fields of user API
 
 BREAKING CHANGE: The return structure of user API has changed. Existing code requires adapt
+```
+
+---
+
+# Appendix: Common Issues with Husky Configuration
+
+## 1. Install Husky
+
+```
+pnpm add -D husky
+```
+
+## 2. Initialize Husky (Must run at repository root; inspection paths can be declared here)
+
+```
+pnpm exec husky init
+```
+
+Add the following entry to `package.json`:
+
+```
+{
+  "scripts": {
+    "prepare": "husky"
+  }
+}
+```
+
+Then run:
+
+```
+pnpm run prepare
+```
+
+## 3. Correct Hook Syntax for Husky 9
+
+`.husky/pre‑commit`:
+
+```
+#!/usr/bin/env sh
+pnpm test
+```
+
+Obsolete legacy syntax (no longer supported):
+
+```
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+pnpm test
+```
+
+## 4. Create Different Git Hooks
+
+Husky hook filenames **must exactly match Git hook names with no file extension**.
+
+Example structure:
+
+```
+.husky/
+├── pre‑commit
+├── commit‑msg
+├── pre‑push
+├── post‑checkout
+└── post‑merge
+```
+
+Manual creation workflow:
+
+```
+mkdir -p .husky
+touch .husky/pre‑commit
+```
+
+Write hook content:
+
+```
+npm run lint
+```
+
+> For Windows Git Bash: Grant execution permission for Husky hook scripts
+
+```
+chmod +x .husky/pre‑commit
+```
+
+## 5. Complete Practical Hook Examples
+
+### 1. pre‑commit
+
+Runs before commit, the most frequently‑used hook (mentioned in earlier sections).
+
+Install lint‑staged:
+
+```
+pnpm add -D lint‑staged
+```
+
+`.husky/pre‑commit`
+
+```
+#!/usr/bin/env sh
+
+pnpm exec lint‑staged
+```
+
+> When you run `git commit`, `pnpm exec lint‑staged` will execute automatically.
+
+### 2. commit‑msg
+
+#### Step 1: Create `commitlint.config.cjs` at project root
+
+```
+module.exports = {
+  extends: ["@commitlint/config‑conventional"]
+};
+```
+
+#### Step 2: Create the hook file
+
+Create `.husky/commit‑msg`
+
+```
+#!/usr/bin/env sh
+
+pnpm exec commitlint --edit "$1"
+```
+
+Set execution permission:
+
+```
+chmod +x .husky/commit‑msg
+```
+
+### 3. Configure pre‑push
+
+Write content to `.husky/pre‑push`:
+
+```
+#!/usr/bin/env sh
+
+pnpm run lint
+pnpm run type‑check
+pnpm test
+```
+
+Set execution permission:
+
+```
+chmod +x .husky/pre‑push
+```
+
+## 6. package.json Full Configuration Example
+
+```
+{
+  "name": "my‑project",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "prepare": "husky",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "prettier --check .",
+    "type‑check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "lint‑staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md,css,scss,vue}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config‑conventional": "^19.0.0",
+    "husky": "^9.0.0",
+    "lint‑staged": "^15.0.0",
+    "prettier": "^3.0.0"
+  }
+}
+```
+
+> If your project already uses ESLint, TypeScript or custom test commands, adjust scripts accordingly:
+
+```
+{
+  "scripts": {
+    "lint": "eslint .",
+    "type‑check": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}
+```
+
+## 7. Full Sequence of Setup Commands
+
+For an existing project, execute commands in this order:
+
+```
+pnpm add -D husky lint‑staged @commitlint/cli @commitlint/config‑conventional prettier
+```
+
+Initialize Husky:
+
+```
+pnpm exec husky init
+```
+
+Trigger prepare lifecycle script:
+
+```
+pnpm run prepare
+```
+
+Create Commitlint configuration file:
+
+```
+touch commitlint.config.cjs
+```
+
+Create additional hook files:
+
+```
+touch .husky/commit‑msg
+touch .husky/pre‑push
+```
+
+Grant execution permissions:
+
+```
+chmod +x .husky/pre‑commit
+chmod +x .husky/commit‑msg
+chmod +x .husky/pre‑push
+```
+
+Verify Git hook directory path:
+
+```
+git config core.hooksPath
+```
+
+Expected output:
+
+```
+.husky/_
 ```
 
 ---
