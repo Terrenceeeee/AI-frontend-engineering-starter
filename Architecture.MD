@@ -8155,7 +8155,9 @@ git config core.hooksPath
 
 正常情况下应该类似：
 
-.husky/\_
+```text
+.husky/_
+```
 
 ---
 
