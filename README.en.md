@@ -180,6 +180,8 @@ demo/
 ├── screenshots/
 ├── Architecture.MD
 ├── Architecture.en.MD
+├── CONTRIBUTING.MD
+├── CONTRIBUTING.en.MD
 ├── LICENSE
 ├── .gitignore
 ├── README.en.md

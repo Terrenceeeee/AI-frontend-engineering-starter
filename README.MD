@@ -184,6 +184,8 @@ demo/
 ├── screenshots/
 ├── Architecture.MD
 ├── Architecture.en.MD
+├── CONTRIBUTING.MD
+├── CONTRIBUTING.en.MD
 ├── .gitignore
 ├── LICENSE
 ├── USAGE.md
