@@ -9,3 +9,4 @@ backups/
 deploy/
 # .prettierignore末尾追加
 knowledge-graph.json
+visualize.html
