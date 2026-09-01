@@ -7914,6 +7914,251 @@ BREAKING CHANGE: user接口返回结构发生变更，旧代码需要适配
 exit
 ```
 
+---
+
+# 附：husky配置的相关问题
+
+## 一、安装husky
+
+```bash
+pnpm add -D husky
+```
+
+## 二、初始化husky
+
+```bash
+pnpm exec husky init
+```
+
+并在package.json中添加:
+
+```json
+{
+  "scripts": {
+    "prepare": "husky"
+  }
+}
+```
+
+而后执行
+
+```bash
+pnpm run prepare
+```
+
+## 三、Husky 9的正确钩子写法
+
+.husky/pre-commit:
+
+```
+#!/usr/bin/env sh
+npm test
+```
+
+老旧写法已废弃 不再使用：
+
+```
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+npm test
+```
+
+## 四、创建不同的Git Hook
+
+Husky 的钩子文件名必须和Git Hook名称完全一致 且不可以有拓展名
+例如
+
+```text
+.husky/
+├── pre-commit
+├── commit-msg
+├── pre-push
+├── post-checkout
+└── post-merge
+```
+
+也可以手动创建：
+
+```bash
+mkdir -p .husky
+touch .husky/pre-commit
+```
+
+写入内容：
+
+```bash
+npm run lint
+```
+
+```bash
+> Winodws Git Bash 下 建议执行：（给予husky的pre-commit钩子的执行权限）
+chmod +x .husky/pre-commit
+```
+
+## 五、常用Hook完整实例
+
+### 1.pre-commit
+
+提交前执行，最常用的钩子：就在上面写过了
+//安装lint-staged
+
+```bash
+pnpm add -D lint-staged
+```
+
+```
+//.husky/pre-commit
+#!/usr/bin/env sh
+
+pnpm exex lint-staged
+```
+
+> 此时执行提交指令，就会执行 pnpm exec lint-staged
+
+### 2.commit-msg
+
+#### 1.在项目根目录创建commit.config.cjs
+
+写入：
+
+```cjs
+module.exports = {
+  extends: ["@commitlint/config-conventional"],
+};
+```
+
+#### 2.创建Hook文件
+
+创建 .husky/commit-msg
+写入
+
+```
+#!/usr/bin/env sh
+
+pnpm exec commitlint --edit "$1"
+```
+
+添加执行权限：
+
+```bash
+chmod +x .husky/commit-msg
+```
+
+### 3.配置pre-push
+
+写入
+
+```
+#!/usr/bin/env sh
+
+pnpm run lint
+pnpm run type-check
+pnpm test
+```
+
+添加执行权限:
+
+```bash
+chmod +x .husky/pre-push
+```
+
+## 六、配置package.json
+
+```json
+下面是一份完整示例：
+
+{
+  "name": "my-project",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "prepare": "husky",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "prettier --check .",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md,css,scss,vue}": [
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.0.0"
+  }
+}
+> 如果项目已经有自己的 ESLint、TypeScript 或测试命令，可以按照项目实际情况修改：
+
+{
+  "scripts": {
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}
+```
+
+## 七、完整的执行命令汇总
+
+如果是一个已有项目，可以按下面顺序执行：
+
+```bash
+pnpm add -D husky lint-staged @commitlint/cli @commitlint/config-conventional prettier
+```
+
+初始化 Husky：
+
+```bash
+pnpm exec husky init
+```
+
+执行初始化脚本：
+
+```bash
+pnpm run prepare
+```
+
+创建 Commitlint 配置：
+
+```bash
+touch commitlint.config.cjs
+```
+
+创建 Hook：
+
+```bash
+touch .husky/commit-msg
+touch .husky/pre-push
+```
+
+添加执行权限：
+
+```bash
+chmod +x .husky/pre-commit
+chmod +x .husky/commit-msg
+chmod +x .husky/pre-push
+```
+
+检查 Git Hook 路径：
+
+```bash
+git config core.hooksPath
+```
+
+正常情况下应该类似：
+
+.husky/\_
+
+---
+
 # 附：md文档```后缀类型
 
 ````text

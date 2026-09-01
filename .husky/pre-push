@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+set -eu
+
+PROJECT_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../Demo2/demo2-env" && pwd)"
+cd "$PROJECT_ROOT"
+
+echo "🚀 Running pre-push checks..."
+
+pnpm test

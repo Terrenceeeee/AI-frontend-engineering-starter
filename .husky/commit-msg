@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+set -eu
+
+msg_file="$1"
+if [ ! -f "$msg_file" ]; then
+  echo "❌ Commit message file not found"
+  exit 1
+fi
+
+msg=$(head -n 1 "$msg_file" | sed '/^$/d')
+if [ -z "$msg" ]; then
+  echo "❌ Commit message cannot be empty"
+  exit 1
+fi
+
+# Very lightweight conventional-style check:
+# example: feat: add login page
+#          fix: resolve API timeout
+if ! printf '%s\n' "$msg" | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\(.+\))?: .+'; then
+  echo "❌ Commit message must follow conventional commits format: <type>: <description>"
+  echo "Examples: feat: add login page | fix: resolve API timeout"
+  exit 1
+fi
+
+echo "✅ Commit message format looks valid"
