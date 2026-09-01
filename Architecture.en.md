@@ -6,7 +6,7 @@
 
 # 📚 Frontend Engineering Architecture in Practice — Table of Contents
 
-> Covers 28 core demos + 3 specification appendices, spanning the entire engineering toolchain from local development to AI-assisted workflows.
+> Covers 32 core demos + 3 specification appendices, spanning the entire engineering toolchain from local development to AI-assisted workflows.
 
 ---
 
@@ -18,6 +18,7 @@
 ## II. Code Quality & Automated Standards
 
 - [DEMO 3: Full Workflow of ESLint + Prettier + Husky + lint-staged (with Pitfalls)](#demo3-eslint-prettier-husky-and-lint-staged-full-workflow-practice-directly-inside-demo2)
+- [DEMO 28: Re-configuring Husky Files (Root .husky & Hook Standards)](#demo28-re-configuring-husky-files-enhancing-husky-scope-and-specification-requirements)
 - [DEMO 24: Standardization Enhancements (.env Management, ESLint Ignores, .gitignore Improvements)](#demo24-complete-standardization-supplement-eslint-configuration-governance)
 - [DEMO 25: Open-Source Project Standards (Standardized README & LICENSE)](#demo25-open-source-project-standardization-readme-and-license)
 - [DEMO 26: Prettier Automation & CI Gate Enhancements](#demo26-prettier-automation-and-ci-cd-improvements)
@@ -67,7 +68,10 @@
 ## X. AI-Assisted Intelligence & Visualization
 
 - [DEMO 20: Generating Project Knowledge Graphs with ChatGPT + d3.js](#demo20-use-chatgpt-and-d3js-to-draw-a-project-knowledge-graph)
-- [DEMO 28: AI-Assisted PR Development (DeepSeek Code Review & Impact Analysis)](#demo28-ai-assisted-pr-development)
+- [DEMO 29: AI-Assisted PR Development (DeepSeek Code Review & Impact Analysis)](#demo29-ai-assisted-development-with-pr-analyzing-code-change-risk-and-more)
+- [DEMO 30: AI-Enhanced D3.js Visualization for File Import Relationship Graphs](#intelligent-ai-assisted-development-supplement-demo30-ai-enhanced-d3js-visualization--major-expansion-for-code-file-import-relationship-knowledge-graph-functionality)
+- [DEMO 31: AI Instant Feedback in Personal Development Environments and Shortcut Review](#ai-assisted-development-supplement-demo31--extension-of-demo29-ai-powered-instant-feedback-for-personal-development-environments-and-activate-the-shortcut-key-to-automatically-review-all-modified-files)
+- [DEMO 32: VS Code Extension for Knowledge Graph Sidebar Display](#ai-assisted-development-supplement-demo32-vscode-插件的创建与配置-使得知识图谱可以在侧栏显示-无需打开网页)
 
 ---
 

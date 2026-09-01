@@ -6,7 +6,7 @@
 
 # 📚 前端工程化架构实战 —— 目录索引
 
-> 共 28 个核心 Demo + 3 个规范附录，覆盖从本地开发到 AI 辅助的全链路工程化能力。
+> 共 32 个核心 Demo + 3 个规范附录，覆盖从本地开发到 AI 辅助的全链路工程化能力。
 
 ---
 
@@ -18,6 +18,7 @@
 ## 二、代码质量与自动化规范
 
 - [DEMO 3：ESLint + Prettier + Husky + lint-staged 全流程卡点实战](#demo3eslint--prettier--husky--lint-staged-全流程卡点实战-直接在demo2内操作)
+- [DEMO 28：Husky 文件重配置（根目录 .husky 与 Hook 规范）](#规范化开源项目补充demo28husky文件重配置-增加husky文件作用域-husky文件规范要求)
 - [DEMO 24：规范化补充（.env 治理、ESLint 忽略、Gitignore 完善）](#彻底规范化补充demo24规范化eslint配置)
 - [DEMO 25：开源项目规范（README 与 LICENSE 标准化）](#规范化开源项目补充demo25规范化readmemd-以及规范化的license文件的创建)
 - [DEMO 26：Prettier 自动化与 CI 门禁增强](#规范化开源项目补充demo26规范化prettier运行以及cicd功能增加与修改的完善)
@@ -67,7 +68,10 @@
 ## 十、智能化辅助（AI + 可视化）
 
 - [DEMO 20：ChatGPT + d3.js 生成项目知识图谱](#demo20使用chatgpt和d3js美观的绘制项目关联知识图谱)
-- [DEMO 28：AI 辅助 PR 开发（DeepSeek 代码审查与影响范围分析）](#智能化ai辅助开发补充demo28ai结合pr辅助开发分析代码改动风险等等)
+- [DEMO 29：AI 辅助 PR 开发（DeepSeek 代码审查与影响范围分析）](#智能化ai辅助开发补充demo29ai结合pr辅助开发分析代码改动风险等等)
+- [DEMO 30：AI 结合 d3.js 可视化（扩展代码文件导入关系知识图谱）](#智能化ai辅助开发补充demo30ai结合d3js进行可视化分析代码文件导入关系的知识图谱功能大拓展)
+- [DEMO 31：AI 个人开发环境即时反馈与快捷键审查](#智能化ai辅助开发补充demo31demo30的扩展ai辅助接入个人开发环境的即时反馈-以及快捷键的触发)
+- [DEMO 32：VS Code 插件创建与知识图谱侧栏展示](#智能化ai辅助开发补充demo32vscode-插件的创建与配置-使得知识图谱可以在侧栏显示-无需打开网页)
 
 ---
 
