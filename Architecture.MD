@@ -7265,6 +7265,18 @@ ts-node -esm scripts/review-changes.ts all
 
 这样就可以直接触发快捷键了
 
+## 以及在提交环节时 也可以直接触发ai-review 分析风险后阻止代码提交
+
+在.husky/pre-commit文件中加入
+
+```shell
+pnpm ai-review --staged
+```
+
+可将预提交区的代码进行风险评审，阻止提交
+![alt text](<screenshots/Screenshot 2026-09-01 164726.png>)
+但是平时这样有点过火了 可以把它关掉 严格时再打开
+
 ---
 
 # 智能化AI辅助开发补充：Demo32:VSCODE 插件的创建与配置 使得知识图谱可以在侧栏显示 无需打开网页
