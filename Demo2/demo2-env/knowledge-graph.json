@@ -229,6 +229,12 @@
       "filePath": "scripts/rollback.ts"
     },
     {
+      "id": "file:scripts/review-changes.ts",
+      "type": "script",
+      "name": "review-changes.ts",
+      "filePath": "scripts/review-changes.ts"
+    },
+    {
       "id": "file:scripts/generate.ts",
       "type": "script",
       "name": "generate.ts",
@@ -461,6 +467,11 @@
     {
       "from": "file:router/index.ts",
       "to": "file:src/views/product/index.vue",
+      "type": "imports"
+    },
+    {
+      "from": "file:scripts/review-changes.ts",
+      "to": "file:scripts/ai-review.ts",
       "type": "imports"
     },
     {
