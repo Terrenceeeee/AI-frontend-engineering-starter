@@ -4,7 +4,7 @@
 [![Deploy](https://img.shields.io/badge/GitHub%20Pages-online-blueviolet)](https://terrenceeeee.github.io/AI-frontend-engineering-starter/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter/pulls)
 
-# “从零到一，亲手搭建一套生产级前端工程化体系。28 个实战 Demo，打通编码、测试、部署、监控全链路。”
+# “从零到一，亲手搭建一套生产级前端工程化体系。32 个实战 Demo，打通编码、测试、部署、监控全链路。”
 
 # 🚀 前端工程化实战项目集
 

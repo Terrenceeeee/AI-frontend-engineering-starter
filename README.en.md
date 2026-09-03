@@ -4,7 +4,7 @@
 [![Deploy](https://img.shields.io/badge/GitHub%20Pages-online-blueviolet)](https://terrenceeeee.github.io/AI-frontend-engineering-starter/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)](https://github.com/Terrenceeeee/AI-frontend-engineering-starter/pulls)
 
-# “Build a production‑ready frontend engineering system from scratch. 28 hands‑on demos covering the entire lifecycle – from code to monitoring.”
+# “Build a production‑ready frontend engineering system from scratch. 32 hands‑on demos covering the entire lifecycle – from code to monitoring.”
 
 # 🚀 Front-End Engineering Practice Project Collection
 
