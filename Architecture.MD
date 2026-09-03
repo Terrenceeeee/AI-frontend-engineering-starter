@@ -8418,6 +8418,10 @@ git config core.hooksPath
 
 ---
 
+# 附：ESModule和Commonjs两种依赖的不同与具体写法
+
+---
+
 # 附：md文档```后缀类型
 
 ````text
