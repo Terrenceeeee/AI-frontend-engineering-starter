@@ -61,6 +61,7 @@ export default defineConfig(({ command, mode }) => {
       sourcemap: true,
       // ✅ 新增：Rollup 打包配置
       rollupOptions: {
+        treeshake: true,
         output: {
           manualChunks(id) {
             if (id.includes('vue') || id.includes('vue-router')) {
