@@ -2,8 +2,8 @@ import { resolve } from 'node:path';
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 // 增加强制的严格隔离模式 后该大段全部注释掉 否则报错
-import fs = require('fs');
-import path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 // ============================================================
 // 这部分 console.log 全部保留，不动
 // ============================================================

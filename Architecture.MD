@@ -8418,6 +8418,10 @@ git config core.hooksPath
 
 ---
 
+# ESModule 和 CommomJS的使用区别以及为什么
+
+---
+
 # 附：ESModule和Commonjs两种依赖的不同与具体写法
 
 ---
