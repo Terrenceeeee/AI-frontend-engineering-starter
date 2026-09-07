@@ -7176,6 +7176,10 @@ console.log(review);
 }
 ```
 
+- 此处多了--esm的原因是
+
+#### scripts/ai-review.ts 里需要 import OpenAI from 'openai'。如果 openai 包是 ESM-only（强制 ESM），而脚本配置是 CommonJS，就无法导入——— Demo 31 修改脚本时遇到了 import 语法报错，并被迫加上了 --esm 参数 这是由于混合使用ESM 和 CJS在同一个项目中导致的
+
 修改scripts/review-changes.ts
 
 ```ts
