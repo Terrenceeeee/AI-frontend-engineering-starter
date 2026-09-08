@@ -3072,6 +3072,283 @@ after that ,we can activate the shortcut very quickly.
 
 ---
 
+# AI-Assisted Development Supplement: Demo32 — Create and Configure a VS Code Extension so the Knowledge Graph Can Be Displayed in the Sidebar Without Opening a Browser
+
+> This feature is not in the current project folder itself.
+
+## Note: Development requires a C++ build environment.
+
+## 1. Check the Node.js version
+
+A low Node.js version cannot build VS Code extensions. You need Node.js 18+ and a C++ toolchain because many extension dependencies need to compile native modules.
+
+```bash
+node -v
+```
+
+## 2. Install the VS Code extension generator globally
+
+```bash
+pnpm install -g yo generator-code
+```
+
+## 3. Run the generator
+
+```bash
+yo code
+```
+
+After the generator finishes, the extension project is created successfully.
+
+## 4. Enter the extension project folder
+
+```bash
+cd my-plugin
+# In this case: cd kg-viewer
+```
+
+## 5. Install dependencies
+
+```bash
+pnpm install
+```
+
+This may fail with a pnpm security prompt.
+
+### Reason
+
+pnpm 9+ includes a supply-chain protection feature:
+
+> Some packages automatically run `postinstall` or build scripts. These scripts may carry security risks. pnpm blocks third-party build scripts by default.
+
+### Solution
+
+Run an interactive approval:
+
+```bash
+pnpm approve-builds
+```
+
+Then reinstall:
+
+```bash
+pnpm install
+```
+
+## 6. Configure `package.json`
+
+Replace the full `package.json` with:
+
+```json
+{
+  "name": "kg-viewer",
+  "displayName": "Knowledge Graph Viewer",
+  "description": "Visualize project knowledge graph in VSCode",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "onCommand:kg-viewer.showGraph",
+    "onView:kg-viewer.fileTree"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "kg-viewer.showGraph",
+        "title": "Show Knowledge Graph",
+        "category": "Knowledge Graph"
+      },
+      {
+        "command": "kg-viewer.refreshGraph",
+        "title": "Refresh Graph",
+        "category": "Knowledge Graph"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "kg-viewer-sidebar",
+          "title": "Knowledge Graph",
+          "icon": "$(graph)"
+        }
+      ]
+    },
+    "views": {
+      "kg-viewer-sidebar": [
+        {
+          "id": "kg-viewer.fileTree",
+          "name": "File Dependencies"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "kg-viewer.refreshGraph",
+          "when": "view == kg-viewer.fileTree",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "20.x",
+    "typescript": "^5.3.2",
+    "vsce": "^2.15.0"
+  }
+}
+```
+
+Purpose:
+
+- `activationEvents`: when the extension becomes active (`onCommand` and `onView`)
+- `commands`: adds Show Graph / Refresh Graph commands
+- `viewsContainers`: adds a Knowledge Graph icon to the activity bar
+- `views`: creates a sidebar panel named `File Dependencies`
+- `menus`: adds a refresh button in the sidebar header
+
+## 7. Replace the content of `src/extension.ts`
+
+This is the core logic for reading the graph JSON and rendering a tree view and visual graph in the sidebar.
+
+We will not reproduce the entire long code sample here, but the main flow is:
+
+- load `knowledge-graph.json`
+- build a `TreeDataProvider`
+- render a D3 graph inside a WebView
+- support open file and refresh actions
+
+The essence is:
+
+1. Find the graph file in the workspace
+2. Parse `nodes` and `edges`
+3. Display nodes grouped by type in the sidebar
+4. Render the graph inside a VS Code WebView using D3
+5. Click a node to open the file or open the graph panel
+
+This delivers the visual knowledge graph without needing to open the browser manually.
+
+## If there is no C++ environment available
+
+A simpler alternative is to install the existing VS Code extension `Live Preview` in the sidebar and preview `visualize.html` directly.
+
+This avoids building a custom extension with native dependencies.
+
+---
+
+## ESM vs CommonJS in This Project, and Why Tree Shaking Matters
+
+### ESM (ECMAScript Modules)
+
+- Import / export syntax using `import` and `export`
+- natively supported by browsers and modern build tools
+- supports static analysis before runtime
+- ideal for Tree Shaking
+- no need for `require()` in top-level logic
+- `.mjs` or `"type": "module"` in `package.json`
+- suitable for modern engineering and browser ecosystems
+
+```js
+// use.js
+import user from "./user.js";
+console.log(user.name);
+```
+
+```text
+Supports browser-native runtime
+Can be statically analyzed before execution
+Works well with async loading
+Supports static analysis
+Very friendly to Tree Shaking
+Import statements are usually top-level and fixed
+Strict mode by default
+`this` at top-level is `undefined`
+`__dirname` and `__filename` are not built in
+File extension is `.mjs` or `.js` under `type: module`
+Suitable for: new projects, browser apps, modern toolchains
+```
+
+### CommonJS
+
+- Use `require()` and `module.exports`
+- original Node.js module system
+- widely used in older backend projects
+- often less suitable for static analysis
+- harder to support Tree Shaking in bundlers
+- `__dirname` and `__filename` are built-in
+- file extension is `.cjs`
+
+```js
+const fs = require("fs");
+const path = require("path");
+```
+
+```js
+module.exports = function logger(message) {
+  console.log(message);
+};
+const logger = require("./logger");
+logger("hello");
+```
+
+```text
+Designed for early Node.js module reuse
+Not browser-native
+Usually analyzed at runtime
+Mainly synchronous loading in Node.js
+Weak static analysis support
+Tree Shaking is much harder
+`require()` can appear in conditionals or functions
+Not a strict module-level environment
+Top-level `this` usually points to `module.exports`
+Built-in `__dirname` and `__filename`
+File extension is usually `.cjs`
+Suitable for: legacy Node.js projects, old dependency chains
+```
+
+## Why this matters for the current project
+
+### Build tool and bundling strategy
+
+```text
+- Tree Shaking: Vite (which uses Rollup under the hood) relies on ESM's static structure to determine which code is actually used.
+  If the project uses CommonJS, Vite cannot remove unused code effectively, and the final bundle becomes much larger.
+```
+
+```text
+- Code Splitting: route-level lazy loading like () => import('@/views/Home.vue') is an ESM feature.
+  Vite identifies this syntax and packages the page into a separate chunk.
+```
+
+```text
+- Dev Server / HMR: Vite uses ESM-based module loading (`<script type="module">`) so browsers can load individual files directly and apply hot updates with WebSocket-based patching.
+  Without ESM, the dev server would need to do a traditional bundle-based workflow and would be slower.
+```
+
+### Code quality and standardization
+
+```text
+The module system directly affects whether linting and formatting tools can correctly identify and process the code.
+
+The most direct example in this project is the `.eslintrc.cjs` file.
+Because the project declares `"type": "module"`, Node treats `.js` as ESM by default.
+But ESLint 8.x config historically used CommonJS syntax (`module.exports`), so the config must be renamed as `.cjs` to force Node to treat it as CommonJS.
+```
+
+This is the same reason many engineering tools still keep a few CommonJS compatibility files even in an ESM-first project.
+
+---
+
 # Appendix: .gitignore Syntax Reference
 
 ```
