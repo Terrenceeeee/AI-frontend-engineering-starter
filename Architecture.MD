@@ -7984,6 +7984,8 @@ export function deactivate() {
 }
 ```
 
+......
+
 ## 如果没有C++环境 怎么办
 
 也可以选择便捷的现成插件 Live Preview
@@ -8422,11 +8424,211 @@ git config core.hooksPath
 
 ---
 
-# ESModule 和 CommomJS的使用区别以及为什么
-
----
-
 # 附：ESModule和Commonjs两种依赖的不同与具体写法
+
+## 是什么
+
+- 模块系统是工程化的“第一块积木”。选择的模块规范（ESM 或 CJS），决定了上面所有工具链的配置写法、报错原因和性能优化路径。 是两套不同的“文件之间共享代码的规则”。选择 ESM 为主、CJS 为辅的混合策略——这正是现代前端工程化应对复杂生态的务实折中方案。
+  > 现在的整体趋势是
+  > **前端源码：ESM 为主**
+- Vite/Rollup/Webpack 等工程化工具：以 ESM 分析能力为核心
+- Node.js 新项目：ESM 越来越多
+- Node.js 老项目：CommonJS 仍大量存在
+- npm 生态：ESM 和 CommonJS 长期共存
+  > 所以可以简单理解为
+- ESM：JavaScript 官方制定的模块标准
+- CommonJS：Node.js 早期设计的一套模块方案
+
+## 解决的问题
+
+- 1.如何把代码拆分到多个文件？
+- 2.文件之间如何导入和导出代码？
+- 3.模块如何加载、执行和缓存？
+- 4.如何避免所有变量都污染全局作用域？
+
+## ESModule 和 CommomJS的使用区别以及为什么
+
+### ESM:
+
+- 导入导出：import / export
+  **JavaScript 官方标准**
+  **现代前端主流**
+  **现代 Node.js 推荐**
+  **约束后缀名为 .mjs**
+
+```js
+import 'fs' from ’ node:fs '
+import 'path' from ' node:path'
+```
+
+```js
+//导出
+// user.js
+export default {
+  name: "Tom",
+  age: 18,
+};
+//导入
+//use.js
+import user from "./user.js";
+
+console.log(user.name);
+```
+
+```text
+支持浏览器原生支持
+运行前可分析
+异步加载模型
+支持静态分析
+十分利于Tree Shaking
+导入位置一般是在顶层的import
+是默认的严格模式
+顶层this指向undefined
+__dirname没有内置
+__filename没有内置
+文件扩展名是：.mjs
+在package.json中的声明是type:"module"
+适合于：新项目，浏览器，现代工程化
+正在成为主流
+```
+
+### CommonJS:
+
+- 导入导出：require / module.exports
+  **Node.js 原生支持**
+  **Node.js 早期推荐**
+  **约束后缀名为 .cjs**
+- require / module.exports
+  **Node.js 早期模块方案**
+  **老 Node.js 项目中很多**
+- 前端源码中较少直接使用
+
+```js
+const fs = require("fs");
+const path = requier("path");
+```
+
+```js
+//写法（单个函数的写法）
+//导出
+// logger.js
+module.exports = function logger(message) {
+  console.log(message);
+};
+//导入
+const logger = require("./logger");
+
+logger("hello");
+```
+
+```
+主要是为了在早期 Node.js 环境中解决
+服务端 JavaScript 如何拆分文件和复用代码？
+不支持浏览器原生支持
+通常是在运行时分析
+Node.js中主要是同步加载
+对静态分析的支持较弱
+较困难的利于Tree shaking
+导入位置随意的用require放在条件与函数中
+不是模块级别的严格模式
+顶层this通常指向module.exports
+有内置的__dirname和filename
+文件扩展名就是标准的cjs
+适合于：老Node.js项目 旧依赖版本
+兼容了大量的旧生态
+```
+
+## 对应项目内的其他部分
+
+### 对应”构建工具与打包策略“
+
+**这是最直接、最核心的对应关系**
+
+```text
+- Tree Shaking(摇树优化）：Vite(底层用Rollup)在打包时 需要依赖ESM的静态结构（比如说import/export写在顶层，不可以动态变化）来判断哪些代码被使用了.
+如果项目使用cjs的话，vite就无法做到”删除未使用代码“ 打包体积会大得多
+```
+
+```text
+- 代码拆分（code splitting)
+项目中写的路由懒加载()=> import('@/view/Home.vue)
+是ESM标准的一部分 Vite再看到这个语法后 才会在构建时吧Home.vue单独打包成一个chunk，实现路由懒加载
+```
+
+```text
+- 开发服务器（HMR）
+vite使用ESM的<script type='module'> 让浏览器直接加载单个文件 配合Websocket实现局部热更新 如果不用ESM的话 就只能走传统的Bundle方式（如Webpack） 开启服务器会慢很多
+```
+
+### 对应“代码质量与规范化”
+
+**模块系统直接决定了你的 Lint/Format 工具能否正确识别代码**
+
+#### 配置文件格式之争
+
+```text
+- 文档中遇到的核心痛点——.eslintrc.cjs 必须用 .cjs 后缀。这就是模块系统在工程化里的直接体现
+项目设了 "type": "module"（ESM 项目）。
+Node.js 默认把 .js 文件当 ESM 解析。
+但 ESLint 8.x 的配置只支持 CommonJS 语法（module.exports）。
+
+- 解决方案：必须改名 .cjs，强制 Node 把它当 CommonJS 处理
+如果Eslint的版本高的话 可以不使用cjs 改用ESM适配的mjs后缀写法
+```
+
+```text
+- Typescript类型校验
+tsc --noEmit会检查import/export路径是否正确
+若果写import{foo} from './utils' 而没有./utils.ts文件 或者模块解析的策略（moduleResolution)配置不对，类型检查就会报错——这直接卡住了CI流水线
+```
+
+### 对应“依赖包管理与安装”
+
+```text
+- pnpm npm 等包管理器，本质上是把第三方模块下载到本地，并让你的代码通过模块系统引入他们
+```
+
+```text
+- 包的入口解析
+每个NPM包的package.json里都有main(CommonJS入口），Module（esm入口），exports(条件导出)，模块系统决定了Node.js和vite分别读取哪一个字符
+pnpm的硬链接和严格隔离
+我们在Demo1中深刻验证了pnpm节省了磁盘空间 是通过硬链接直接到达该路径下的文件后使用 而非复制粘贴 更深层的看 pnpm利用符号链接 把node_modules组织成为树形结构 这直接影响到了模块系统在运行时是否可以找到node_modules/.pnpm/下的包 我之前验证了“未申明的依赖（lodash)无法使用” 本质上因为pnpm把lodash放在了.pnpm目录下，而代码通过import去找时 Node的模块解析算法在顶层node_modules找不到，所以报错
+```
+
+### 对应“自动化脚本和Node生态工具”
+
+```text
+- 写的所有 Node.js 脚本（scripts/deploy.ts、scripts/rollback.ts、scripts/build-graph.ts）都运行在 Node 环境，而 Node 目前同时支持两种模块系统，但互操作有坑。
+ts-node执行脚本
+- 在package.json写的“graph":"node scripts/build-graph.ts",实际执行时依赖ts-node ts-node严格遵循项目默认的"type":"module"模式。但如果脚本里写了import fs from"fs" 但是ts-node被配置成Cjs模式 就会报告Cannot use import statement outside a module
+- Whistle
+Whistle是基于node的代理工具 他的插件系统比如：resBody:// resDelay:// 同样依赖Node的模块加载机制来动态读取规则文件
+- AI辅助开发工具
+scripts/ai-review.ts中需要import OpenAi from 'openai' 如果openai是ESM-only，而脚本配置是Cjs 就无法导入了 这就是为什么在之前修改脚本时遇到了Import语法报错 被迫加上了--esm参数 这是因为cjs脚本无法直接运行esm-only的文件/配置
+```
+
+### 对应CI/CD流水线和环境隔离
+
+```text
+- CI服务器（GithHub Actions）是无头环境 模块系统影响流水线中每一步命令的执行方式
+- pnpm exec vs 直接调用
+项目中的pnpm exec lint-staged和pnpm teest:e2e 背后 模块系统决定了mode_modules/.bin下的可执行文件如何被加载
+环境变量与构建方式
+构建时注入了VITE_BASE_PATH这个值。Vite在构建时通过import.meta..env（esm的专属全局变量） 读取这个值 如果项目用的是cjs 则需要通过process.env 读取——两种模块系统 读取环境变量的方式也不同
+- Node 版本兼容
+Github actions 中我指定的是node-version:'22',因为Node22对ESM的支持更为完善（--experimental-strip-types等）。如果Node版本低于12，esm的import语法则默认不可以使用 CI会在pnpm buid pnpm构建这一步直接报错 CI爆红 无法运行 导致CD继而也报错
+```
+
+### 对应 测试体系（Vitest/Playwright）
+
+```text
+- 测试框架本身也是在Node环境下运行的工具 但需要模拟浏览器环境(jsdom)或控制真实浏览器playwright
+- VItest和ESM的天然亲和
+vitest原生支持ESM 无需额外配置Babel/webpack就可以直接解析import/export
+而我在vitest.config.ts中配置了environment：'jsdom' 模块系统决定了测试文件中的Import{describe,it} from 'vitest'能否正确加载
+- Playwrigth配置文件的模块选择
+我写的是playwright.config.js(cjs风格) 还是playwright.config.ts(esm风格），决定了pnpm test:e2e 命令如何解析配置文件 我在项目中修改了playwwright.config.js 用export default defineConfig(ESM导出）这要求Node要在加载这个文件的时候以ESM模式运行 否则报错Unexpected token 'export'
+```
 
 ---
 
