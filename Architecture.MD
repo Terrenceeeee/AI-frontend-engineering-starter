@@ -8632,6 +8632,168 @@ vitest原生支持ESM 无需额外配置Babel/webpack就可以直接解析import
 
 ---
 
+# 附：yml的写法
+
+## yml基本语法
+
+```yml
+# 注释用 #
+name: my-app   #键值对，冒号后必须有空格
+version:"1.0.0"   #版本号建议加引号，否则可能被解析成Number类型
+
+# 对象（嵌套用缩进，只能用空格，不可以Tab）
+server:
+  host: localhost
+  port: 8080
+
+# 数组,两种写法
+dependencies:
+  - vue
+  - react
+deps_inline:[vue,react]
+
+# 对象数组
+jobs:
+  - name: build
+    script:npm run build
+  - name: test
+    script:npm run test
+
+# 布尔与空值
+enabled: true
+disabled: false
+empty: null
+
+# 多行字符串:| 保留换行，> 折叠成一行，加 - 去掉末尾换行
+script_literal: |
+  npm install
+  npm run build
+script_folded: >
+  npm install &&
+  npm run build
+
+# 锚点与复用（避免重复配置）：
+# 【1】定义一个节点叫defaults，&defaults 是YAML锚点：给下面这整块配置打上名字叫defaults
+defaults: &defaults
+  # 【2】公共配置：使用node20镜像，CI容器环境用Node20
+  image: node:20
+  # 【3】公共配置：开启pnpm缓存，缓存依赖包，加速CI下次运行
+  cache: pnpm
+
+# 【4】定义build任务（CI打包任务）
+build:
+  # 【5】<<: 合并语法；*defaults 引用上面名为defaults的锚点
+  # 含义：把defaults里面所有键值对，合并进当前build节点
+  <<: *defaults
+  # 【6】build任务独有的配置：执行脚本 pnpm build
+  script: pnpm build
+
+# 【7】定义test任务（CI测试任务）
+test:
+  # 【8】再次复用defaults这套公共配置：image和cache自动带过来
+  <<: *defaults
+  # 【9】test任务独有的配置：执行脚本 pnpm test
+  script: pnpm test
+```
+
+## GitHub Actions 的写法
+
+```yml
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+# 权限最小化
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建
+        run: pnpm build
+        env:
+          NODE_ENV: production
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
+```
+
+## GitLab CI 的写法
+
+```yml
+stages:
+  - install
+  - build
+  - deploy
+
+variables:
+  NODE_VERSION: "20"
+
+default:
+  image: node:20
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store/
+
+install:
+  stage: install
+  script:
+    - corepack enable
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 hour
+
+build:
+  stage: build
+  needs: [install]
+  script:
+    - pnpm build
+  artifacts:
+    paths:
+      - dist/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+deploy:
+  stage: deploy
+  needs: [build]
+  script:
+    - ./deploy.sh
+  environment:
+    name: production
+    url: https://example.com
+  when: manual
+```
+
+---
+
 # 附：md文档```后缀类型
 
 ````text
