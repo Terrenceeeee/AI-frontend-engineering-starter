@@ -22,6 +22,7 @@ The stack is centered on:
 - Husky + lint-staged
 - GitHub Actions
 - AI code review
+- DeepSeek AI auto-fix Agent
 - project knowledge graph generation
 
 ## 2. Prerequisites
@@ -54,9 +55,9 @@ cd Demo2/demo2-env
 pnpm install
 ```
 
-### 2.3 Set API Key for AI Review
+### 2.3 Set API Key for AI Review or Agent
 
-If you use AI review features locally, set the DeepSeek API key in your current terminal session:
+If you use AI review or the auto-fix Agent locally, set the DeepSeek API key in your current terminal session:
 
 ```powershell
 $env:DEEPSEEK_API_KEY="your_api_key_here"
@@ -97,6 +98,8 @@ pnpm lint:check
 pnpm format:check
 pnpm graph
 pnpm ai-review
+pnpm agent
+pnpm agent:fix
 ```
 
 For local review of current changes:
@@ -104,6 +107,23 @@ For local review of current changes:
 ```bash
 pnpm exec ts-node --esm scripts/review-changes.ts all
 ```
+
+The Agent uses `tsx` to run TypeScript in the ESM project. Its workflow is bounded and explicit: inspect changes, read files, run checks, apply a fix, and verify again.
+
+```powershell
+$env:DEEPSEEK_API_KEY="your_api_key_here"
+pnpm agent "check current changes and fix ESLint issues"
+```
+
+Available Agent tools include:
+
+- `read_file` / `write_file`: read and modify files under `src/` and `scripts/`
+- `run_lint` / `fix_lint`: check or automatically fix ESLint issues
+- `run_test`: run Vitest
+- `query_impact`: inspect knowledge-graph impact
+- `git_diff`: read-only Git change inspection
+
+Never write `DEEPSEEK_API_KEY` into source files, committed environment files, or logs.
 
 ## 4. Commit Standards
 
@@ -138,6 +158,7 @@ Please ensure your changes do not introduce obvious lint or format issues.
 Run:
 
 ```bash
+pnpm type-check
 pnpm lint:check
 pnpm format:check
 ```
@@ -172,6 +193,13 @@ This repository is configured with Husky and lint-staged. Typical hooks include:
 - pre-commit: checks staged files
 - pre-push: runs test validation
 - commit-msg: validates commit message format
+
+The root `.husky/pre-commit` enters `Demo2/demo2-env` and runs `pnpm exec lint-staged`. Since `lint-staged` runs ESLint auto-fix and Prettier on staged files, re-stage a file after fixing it:
+
+```bash
+git add path/to/changed-file
+git diff --cached --check
+```
 
 If hook checks block your commit, verify:
 
@@ -242,6 +270,8 @@ If you run into problems, check first:
 - whether the terminal session lost the environment variable
 - whether Git hooks are configured correctly
 - whether the project is being run in ESM-compatible mode
+- whether `DEEPSEEK_API_KEY` is set in the same terminal when using the Agent
+- whether fixed ESLint files were staged again with `git add`
 
 Relevant references:
 

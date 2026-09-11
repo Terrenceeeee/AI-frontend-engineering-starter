@@ -18,6 +18,7 @@
 - GitHub Actions
 - GitHub Pages
 - AI Review
+- DeepSeek AI 自动修复 Agent
 - 知识图谱构建与可视化
 
 ## 2. 贡献前准备
@@ -54,7 +55,7 @@ pnpm install
 
 ### 2.3 API Key 配置
 
-如果你要执行 AI 代码评审相关脚本，需要在当前终端中设置 DeepSeek API Key：
+如果你要执行 AI 代码评审或自动修复 Agent，需要在当前终端中设置 DeepSeek API Key：
 
 ```powershell
 $env:DEEPSEEK_API_KEY="your_api_key_here"
@@ -99,6 +100,8 @@ pnpm lint:check
 pnpm format:check
 pnpm graph
 pnpm ai-review
+pnpm agent
+pnpm agent:fix
 ```
 
 如需本地审查当前改动：
@@ -106,6 +109,23 @@ pnpm ai-review
 ```bash
 pnpm exec ts-node --esm scripts/review-changes.ts all
 ```
+
+Agent 使用 `tsx` 运行 TypeScript，适配当前 ESM 配置。它会按“检查改动、读取文件、运行检查、修复、再次验证”的流程工作：
+
+```powershell
+$env:DEEPSEEK_API_KEY="your_api_key_here"
+pnpm agent "检查当前改动并修复 ESLint 问题"
+```
+
+Agent 可调用的工具包括：
+
+- `read_file` / `write_file`：读取和修改 `src/`、`scripts/` 下的文件
+- `run_lint` / `fix_lint`：检查或自动修复 ESLint 问题
+- `run_test`：运行 Vitest
+- `query_impact`：查询知识图谱影响范围
+- `git_diff`：只读查看 Git 改动
+
+不要把 `DEEPSEEK_API_KEY` 写入源码、`.env` 提交文件或日志。
 
 ## 4. 提交规范
 
@@ -147,6 +167,7 @@ git commit -m "refactor: simplify deployment scripts"
 可执行检查：
 
 ```bash
+pnpm type-check
 pnpm lint:check
 pnpm format:check
 ```
@@ -189,6 +210,13 @@ pnpm test:e2e
 - pre-commit：检查暂存区文件
 - pre-push：执行测试校验
 - commit-msg：校验提交信息格式
+
+当前根目录的 `.husky/pre-commit` 会进入 `Demo2/demo2-env` 并执行 `pnpm exec lint-staged`。`lint-staged` 针对暂存文件运行 ESLint 自动修复和 Prettier，因此修改被检查文件后需要重新加入暂存区：
+
+```bash
+git add path/to/changed-file
+git diff --cached --check
+```
 
 如果本地提交被 hook 拦住，优先检查：
 
@@ -263,6 +291,8 @@ AI 审查是辅助工具，不是最终决策依据。请根据实际代码语�
 - 是否是终端切换导致环境变量失效
 - 是否存在 Husky / Git hooks 配置错误
 - 是否符合当前 ESM 项目运行方式
+- Agent 使用时是否已在同一个终端设置 `DEEPSEEK_API_KEY`
+- ESLint 报错修复后是否重新执行了 `git add`
 
 相关参考文档：
 
