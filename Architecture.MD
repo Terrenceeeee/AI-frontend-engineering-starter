@@ -7283,7 +7283,7 @@ pnpm ai-review --staged
 ```
 
 可将预提交区的代码进行风险评审，阻止提交
-![alt text](<screenshots/Screenshot 2026-09-01 164726.png>)
+![未能加载成功](<screenshots/Screenshot 2026-09-01 164726.png>)
 但是平时这样有点过火了 可以把它关掉 严格时再打开
 
 ---
@@ -8849,7 +8849,7 @@ pnpm agent
 ```
 ````
 
-![alt text](<screenshots/Screenshot 2026-09-11 153452.png>)
+![未能加载成功](<screenshots/Screenshot 2026-09-11 153452.png>)
 发现报错
 
 # 修复
@@ -8901,10 +8901,10 @@ const __dirname = path.dirname(__filename);
 "agent": "tsx scripts/agent/main.ts",
 ```
 
-![alt text](<screenshots/Screenshot 2026-09-11 155657.png>)
+![未能加载成功](<screenshots/Screenshot 2026-09-11 155657.png>)
 发现成功运行
 
-![alt text](<screenshots/Screenshot 2026-09-11 161033.png>)
+![未能加载成功](<screenshots/Screenshot 2026-09-11 161033.png>)
 在提交时又出现了这样的情况 触发了eslint的警告 阻止提交
 可以把tools的声明改成
 
