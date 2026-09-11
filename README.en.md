@@ -124,6 +124,12 @@ demo/
 |       │   ├── deploy.ts
 |       │   ├── ai-review.ts
 |       │   ├── review-changes.ts
+|       │   ├── agent/                    # Tool-enabled automatic repair Agent
+|       │   │   ├── main.ts
+|       │   │   ├── agent.ts
+|       │   │   ├── executor.ts
+|       │   │   ├── tools.ts
+|       │   │   └── types.ts
 |       │   ├── generate.ts
 |       │   └── rollback.ts
 |       │
@@ -216,6 +222,7 @@ Cumulative Layout Shift (page layout stability)
 Interaction to Next Paint (interaction response)
 - | Code Review | AI Code Review |
 - | AI-Assisted Review | Knowledge graph generation + AI Code Review |
+- | AI Auto-Fix | DeepSeek Agent + ESLint/Test/Git tool calling |
 ```
 
 ---
@@ -226,6 +233,7 @@ Interaction to Next Paint (interaction response)
 
 ```text
 - ESLint + Prettier + Husky enforce code standards; invalid code cannot be committed.
+- `pnpm agent` starts an AI auto-fix Agent that can read, write, lint, test, and inspect Git changes through tools.
 - Multi-environment configuration (.env.production/.env.staging/.env.development): one codebase supports three environments.
 - Automated code generator (`pnpm gen`): one command generates page, API, and Store skeletons.
 ```
@@ -275,6 +283,7 @@ Interaction to Next Paint (interaction response)
   - Method 1: manually copy the prompt to AI (lowest cost).
   - Method 2: run `pnpm graph`, then use the generated graph as AI review context.
   - Method 3: configure an API key and fully automatically call AI to generate the report.
+- `pnpm agent:fix` checks current changes, attempts to fix ESLint issues, and verifies the result.
 ```
 
 ---

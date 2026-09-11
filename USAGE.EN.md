@@ -90,9 +90,11 @@ pnpm graph        # generate a project knowledge graph
 pnpm deploy       # build and copy app to deploy output
 pnpm rollback     # restore a previous build from backups
 pnpm ai-review    # run AI review
+pnpm agent        # start the AI auto-fix Agent
+pnpm agent:fix    # check current changes and fix ESLint issues
 ```
 
-> This project follows ESM conventions, so TypeScript scripts are usually run via `ts-node --esm` instead of CommonJS patterns.
+> The project follows ESM conventions. The Agent uses `tsx` to run TypeScript directly; other scripts that use `ts-node --esm` keep their existing commands.
 
 ---
 
@@ -242,6 +244,24 @@ pnpm ai-review
 
 > These scripts read `git diff`, package the change set into a prompt, and send it to the DeepSeek API for review.
 
+### Run the AI auto-fix Agent
+
+The Agent is located in `scripts/agent/`. It can call file, ESLint, Vitest, knowledge-graph, and Git Diff tools, following a check, fix, and verify workflow.
+
+```powershell
+$env:DEEPSEEK_API_KEY="sk-your-key"
+pnpm agent
+```
+
+You can provide a task or run the preset repair task:
+
+```bash
+pnpm agent "check current changes and fix ESLint issues"
+pnpm agent:fix
+```
+
+The Agent uses `tsx` because it runs TypeScript directly in this ESM project. Never commit the API key.
+
 ### PR review automation
 
 The repository includes a GitHub Actions workflow:
@@ -291,6 +311,8 @@ Then run:
 ```bash
 cd Demo2/demo2-env
 pnpm ai-review
+pnpm agent
+pnpm agent:fix
 ```
 
 or:

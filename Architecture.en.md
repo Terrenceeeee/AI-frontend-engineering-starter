@@ -6,7 +6,7 @@
 
 # 📚 Frontend Engineering Architecture in Practice — Table of Contents
 
-> Covers 32 core demos + 3 specification appendices, spanning the entire engineering toolchain from local development to AI-assisted workflows.
+> Covers 33 core demos + 3 specification appendices, spanning the entire engineering toolchain from local development to AI-assisted workflows.
 
 ---
 
@@ -72,6 +72,7 @@
 - [DEMO 30: AI-Enhanced D3.js Visualization for File Import Relationship Graphs](#intelligent-ai-assisted-development-supplement-demo30-ai-enhanced-d3js-visualization--major-expansion-for-code-file-import-relationship-knowledge-graph-functionality)
 - [DEMO 31: AI Instant Feedback in Personal Development Environments and Shortcut Review](#ai-assisted-development-supplement-demo31--extension-of-demo29-ai-powered-instant-feedback-for-personal-development-environments-and-activate-the-shortcut-key-to-automatically-review-all-modified-files)
 - [DEMO 32: VS Code Extension for Knowledge Graph Sidebar Display](#ai-assisted-development-supplement-demo32-vscode-插件的创建与配置-使得知识图谱可以在侧栏显示-无需打开网页)
+- [DEMO 33: DeepSeek AI Auto-Fix Agent](#ai-assisted-development-supplement-demo33-deepseek-ai-auto-fix-agent)
 
 ---
 
@@ -3069,6 +3070,36 @@ add a file into the `.vscode` folder:
 ```
 
 after that ,we can activate the shortcut very quickly.
+
+---
+
+# AI-Assisted Development Supplement: Demo33 — DeepSeek AI Auto-Fix Agent
+
+The runnable Agent is located at `Demo2/demo2-env/scripts/agent/` and is exposed through the following package scripts:
+
+```bash
+pnpm agent
+pnpm agent:fix
+```
+
+The Agent uses the DeepSeek chat API with function tools. Its workflow is intentionally bounded: inspect the current Git changes, read relevant files, run checks, apply a repair when needed, and verify the result again. It stops after a fixed number of steps and reports failures instead of retrying indefinitely.
+
+The available tools are:
+
+- `read_file` and `write_file` for files under `src/` and `scripts/`
+- `run_lint` and `fix_lint` for ESLint validation and repair
+- `run_test` for Vitest checks
+- `query_impact` for knowledge-graph dependency impact
+- `git_diff` for read-only Git change inspection
+
+The Agent is started with `tsx` rather than `ts-node --esm` because this repository is ESM-based and `tsx` resolves TypeScript source files with ESM imports directly. Set the API key in the current shell before running it:
+
+```powershell
+$env:DEEPSEEK_API_KEY="sk-your-key"
+pnpm agent "check current changes and fix ESLint issues"
+```
+
+The key must remain outside source files and should be stored as a GitHub Actions secret in CI.
 
 ---
 

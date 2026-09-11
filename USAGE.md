@@ -94,9 +94,11 @@ pnpm graph        # 生成项目知识图谱
 pnpm deploy       # 构建并复制到 deploy 目录
 pnpm rollback     # 从备份中回滚构建产物
 pnpm ai-review    # 执行 AI 代码审查
+pnpm agent        # 启动 AI 自动修复 Agent
+pnpm agent:fix    # 检查当前改动并修复 ESLint 问题
 ```
 
-> 这个项目本身是 ESM 语法风格，因此直接运行 TypeScript 脚本时，通常使用 `ts-node --esm`，而不是 CommonJS 方式。
+> 项目使用 ESM 语法。Agent 使用 `tsx` 直接运行 TypeScript，其他仍使用 `ts-node --esm` 的脚本保持原有启动方式。
 
 ---
 
@@ -246,6 +248,24 @@ pnpm ai-review
 
 > 这类脚本会读取 `git diff`，把代码差异整理成 Prompt，然后调用 DeepSeek API 进行代码审查。
 
+### 7.5 运行 AI 自动修复 Agent
+
+Agent 位于 `scripts/agent/`，可以调用文件读写、ESLint、Vitest、知识图谱和 Git Diff 工具，按“检查、修复、再次验证”的流程处理任务。
+
+```powershell
+$env:DEEPSEEK_API_KEY="sk-your-key"
+pnpm agent
+```
+
+也可以传入任务，或使用预设任务：
+
+```bash
+pnpm agent "检查当前改动并修复 ESLint 问题"
+pnpm agent:fix
+```
+
+Agent 使用 `tsx`，因为它能在当前 ESM 项目中直接运行 TypeScript。API Key 不要写入代码或提交到仓库。
+
 ### 7.5 PR 自动审查
 
 仓库中已声明自动化工作流：
@@ -295,6 +315,8 @@ export DEEPSEEK_API_KEY=sk-your-key
 ```bash
 cd Demo2/demo2-env
 pnpm ai-review
+pnpm agent
+pnpm agent:fix
 ```
 
 或者：

@@ -129,6 +129,12 @@ demo/
 |    │   ├── generate.ts
 |    │   ├── ai-review.ts
 |    │   ├── review-changes.ts
+|    │   ├── agent/                    # 可调用工具的自动修复 Agent
+|    │   │   ├── main.ts
+|    │   │   ├── agent.ts
+|    │   │   ├── executor.ts
+|    │   │   ├── tools.ts
+|    │   │   └── types.ts
 |    │   └── rollback.ts
 |    │
 |    ├── e2e/
@@ -221,6 +227,7 @@ Cumulative Layout Shift (累积布局偏移【页面会不会乱跳】)
 Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 - | 代码审查 | AI Code Review |
 - | AI辅助审查 | 知识图谱生成 + AI Code Review |
+- | AI自动修复 | DeepSeek Agent + ESLint/Test/Git 工具调用 |
 ```
 
 ---
@@ -235,6 +242,7 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 - 自动化代码生成器(`pnpm gen`)，一键生成界面/ API / Store骨架
 - 路径别名 `@` 指向 `src`，统一源码导入方式
 - `pnpm type-check`、`pnpm lint:check`、`pnpm format:check` 分别校验类型、代码规范和格式
+- `pnpm agent` 启动 AI 自动修复 Agent，按任务调用读取、写入、Lint、测试和 Git Diff 工具
 ```
 
 ### 2.构建与性能优化
@@ -285,6 +293,7 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
    - 方式二：基于 `pnpm graph` 生成知识图谱后半自动整理 Prompt
    - 方式三：配置 API Key 全自动调用 AI 生成报告
 - `pnpm ai-review` 会读取 Git Diff 和 `knowledge-graph.json`，结合 `DEEPSEEK_API_KEY` 生成影响范围与合并建议
+- `pnpm agent:fix` 会检查当前改动，发现 ESLint 问题后尝试修复并再次验证
 
 ```
 
@@ -361,6 +370,14 @@ pnpm graph # 生成 knowledge-graph.json 和 visualize.html
 
 pnpm ai-review
 
+# 配置 DEEPSEEK_API_KEY 后启动 Agent
+
+pnpm agent
+
+# 执行预设的 ESLint 修复任务
+
+pnpm agent:fix
+
 # 9. 代码生成
 
 pnpm gen # 交互式生成 view + api + store
@@ -389,6 +406,7 @@ pnpm graph
 
 # 配置密钥后自动生成 Review
 # PowerShell：$env:DEEPSEEK_API_KEY="sk-xxx"; pnpm ai-review
+# PowerShell：$env:DEEPSEEK_API_KEY="sk-xxx"; pnpm agent "检查当前改动并修复 ESLint 问题"
 ```
 
 ## 六、项目亮点
