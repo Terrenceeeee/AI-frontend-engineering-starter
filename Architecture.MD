@@ -7995,6 +7995,952 @@ export function deactivate() {
 
 ---
 
+# 智能化AI辅助开发补充：Demo33:相关简易AI Agent的配置
+
+> Agent的标准是什么？
+> Agent = LLM（大脑）+ Tools（手）+ Loop（循环）+ Memory（记忆）
+
+> 目前的AI流程是什么？
+> 读取 Git Diff → 查询知识图谱 → 拼接 Prompt → 调用 AI → 输出文本
+> 这是一个固定管道。每次执行，走的路线完全一样。AI 只负责“生成文本”，不负责“决定下一步”。
+
+## Agent 的核心能力是“闭环”：发现问题 → 修复 → 验证 → 如果失败再来一遍。
+
+## 架构设计（需要什么）
+
+### 目录结构
+
+```text
+scripts/
+├── ai-review.ts          # 现有的 Review 脚本（保留，作为工具库）
+├── agent/
+│   ├── types.ts          # 类型定义
+│   ├── tools.ts          # 工具注册中心
+│   ├── executor.ts       # 工具执行器
+│   ├── agent.ts          # Agent 核心循环
+│   └── main.ts           # 入口文件
+└── knowledge-graph.json  # 知识图谱（已有）
+```
+
+### 数据流
+
+```text
+main.ts
+  ↓
+创建 Agent（注入工具 + System Prompt）
+  ↓
+while (未完成) {
+  ┌─────────────────────────────────┐
+  │ 1. 把当前状态 + 历史步骤发给 LLM  │
+  │ 2. LLM 返回：调用工具 / 输出结果   │
+  │ 3. 如果是工具调用 → 执行工具       │
+  │ 4. 把工具执行结果追加到历史        │
+  │ 5. 判断是否结束                   │
+  └─────────────────────────────────┘
+}
+  ↓
+输出最终结果
+```
+
+## 真实功能实现
+
+### 1.安装依赖
+
+```bash
+cd Demo2/demo2-env
+pnpm add -D openai
+```
+
+为什么：openai 提供了Function Calling的标准接口。Deepseek兼容OpenAI的API格式，可以直接调用
+
+### 2.创建类型定义scripts/agent/types.ts
+
+```ts
+// scripts/agent/types.ts
+// scripts/agent/types.ts
+// 导入OpenAI类型定义，只引入类型，不引入运行时代码
+import type OpenAI from "openai";
+
+/**
+ * 工具的定义
+ */
+export interface AgentTool {
+  /** 工具名称，必须是英文，AI 会用它来调用 */
+  name: string;
+
+  /** 工具描述，AI 根据这个决定什么时候用这个工具 */
+  description: string;
+
+  /** 参数定义，使用 JSON Schema 格式 */
+  parameters: {
+    // JSON Schema 根固定为object，代表参数是一个对象
+    type: "object";
+    // properties：描述每个参数字段
+    // Record<string, {...}> 键是参数名字，值是该参数的schema描述
+    properties: Record<
+      string,
+      {
+        type: string; // 参数类型 string / number / boolean
+        description: string; // 参数含义，给LLM看
+        enum?: string[]; // 可选：枚举，限定只能取数组内的值
+      }
+    >;
+    // required：必填参数名称数组，告诉大模型哪些参数不能省略
+    required: string[];
+  };
+
+  /** 实际执行函数：当AI选择调用这个工具时，就执行这个函数 */
+  // args：AI生成的入参对象；返回可以是同步string，或者Promise<string>异步结果
+  execute: (args: Record<string, unknown>) => Promise<string> | string;
+}
+
+/**
+ * Agent 的每一步记录
+ * 用来保存Agent循环中每一轮的完整信息，对应截图里的AgentStep
+ */
+export interface AgentStep {
+  /** 第几步，从1开始计数 */
+  step: number;
+
+  /** AI 的思考过程（文本），可选。记录模型的内部想法 */
+  thought?: string;
+
+  /** AI 决定调用的工具，可选；当模型决定调用工具时才有这个字段 */
+  toolCall?: {
+    name: string; // 要调用的工具名字，匹配AgentTool.name
+    args: Record<string, unknown>; // AI生成的工具入参
+  };
+
+  /** 工具执行完成后的返回结果，可选；调用完工具才会填充 */
+  toolResult?: string;
+
+  /** 是否是最终回答，可选。true代表Agent结束循环，不再调用工具 */
+  isFinal?: boolean;
+
+  /** 最终回答内容，可选；当isFinal=true时，存放给用户的答案 */
+  finalAnswer?: string;
+}
+
+/**
+ * Agent 配置
+ * 初始化智能体时传入的全部配置项
+ */
+export interface AgentConfig {
+  /** 系统提示词，给LLM设定角色、规则、任务 */
+  systemPrompt: string;
+
+  /** 可用工具列表，存放所有AgentTool */
+  tools: AgentTool[];
+
+  /** 最大循环步数（防止无限循环），兜底保护，可选，默认可以设置一个数字比如10 */
+  maxSteps?: number;
+
+  /** 模型名称，例如 gpt-4o，可选 */
+  model?: string;
+
+  /** 温度参数，控制模型随机性 0~2；越低越严谨，越高越有创造性，可选 */
+  temperature?: number;
+}
+
+/** OpenAI 消息类型别名（方便使用） */
+// 直接复用OpenAI SDK自带的消息类型，ChatCompletionMessageParam就是对话消息（用户消息/AI消息）
+export type ChatMessage = OpenAI.Chat.ChatCompletionMessageParam;
+```
+
+> 为什么这么设计
+
+```text
+- AgentTool 接口：每个工具必须自描述（name + description + parameters），这是 Function Calling 的硬性要求。
+
+- parameters 用 JSON Schema：LLM 需要知道每个参数的类型和含义，才能正确调用。
+
+- AgentStep 记录历史：Agent 循环中，每一步的结果都要反馈给 LLM，让它知道“之前做了什么”。
+
+- maxSteps 兜底：防止 AI 陷入死循环，最多跑 N 步就强制结束。
+```
+
+### 3.创建工具注册中心scripts/agent/tools.ts
+
+> 这个是整个Agent最核心的部分 是Agent的手
+
+```ts
+//scripts/agent/tools.ts
+import fs from "fs";
+import path from "path";
+import { execSync } from "child_process";
+import type { AgentTool } from "./types";
+
+// 项目根目录（根据实际情况调整）
+const PROJECT_ROOT = path.resolve(__dirname, "../..");
+
+// 允许 Agent 操作的目录白名单
+const ALLOWED_DIRS = [
+  path.join(PROJECT_ROOT, "src"),
+  path.join(PROJECT_ROOT, "scripts"),
+];
+
+/**
+ * 安全检查：确保文件路径在白名单内
+ * 防止AI误操作项目外的文件
+ */
+function isPathAllow(filePath: string): boolean {
+  const absolutePath = path.resolve(PROJECT_ROOT, filePath);
+  return ALLOWED_DIRS.some((dir) => absolutePath.startsWith(dir));
+}
+// ============================================================
+// 工具1：读取文件
+// ============================================================
+export const readFileTool: AgentTool = {
+  name: "read file",
+  description: "读取项目中的文件内容。当需要查看某个文件的完整代码时使用。",
+  parameters: {
+    type: "object",
+    properties: {
+      filePath: {
+        type: "string",
+        description: "文件路径，相对于项目根目录",
+      },
+    },
+    required: ["filePath"],
+  },
+  execute: async (args) => {
+    const filePath = args.filePath as string;
+    if (!isPathAllowed(filePath)) {
+      return `❌ 安全限制：不允许访问 ${filePath}（只允许访问 src/ 和 scripts/ 目录）`;
+    }
+
+    const absolutePath = path.resolve(PROJECT_ROOT, filePath);
+    if (!fs.existsSync(absolutePath)) {
+      return `❌ 文件不存在: ${filePath}`;
+    }
+
+    const content = fs.readFileSync(absolutePath, "utf-8");
+    // 限制返回长度，防止撑爆 context
+    const maxLength = 5000;
+    if (content.length > maxLength) {
+      return (
+        content.slice(0, maxLength) +
+        `\n...（内容过长，已截断，共 ${content.length} 字符）`
+      );
+    }
+    return content;
+  },
+};
+// ============================================================
+// 工具 2：写入文件
+// ============================================================
+export const writeFileTool: AgentTool = {
+  name: "write_file",
+  description: "将内容写入项目中的文件。用于修复代码。会覆盖原文件内容。",
+  parameters: {
+    type: "object",
+    properties: {
+      filePath: {
+        type: "string",
+        description: "相对于项目根目录的文件路径",
+      },
+      content: {
+        type: "string",
+        description: "要写入的完整文件内容",
+      },
+    },
+    required: ["filePath", "content"],
+  },
+  execute: async (args) => {
+    const filePath = args.filePath as string;
+    const content = args.content as string;
+
+    if (!isPathAllowed(filePath)) {
+      return `❌ 安全限制：不允许修改 ${filePath}`;
+    }
+
+    const absolutePath = path.resolve(PROJECT_ROOT, filePath);
+    fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+    fs.writeFileSync(absolutePath, content, "utf-8");
+    return `✅ 已写入文件: ${filePath}（${content.length} 字符）`;
+  },
+};
+
+// ============================================================
+// 工具 3：运行 ESLint
+// ============================================================
+export const runLintTool: AgentTool = {
+  name: "run_lint",
+  description:
+    "对指定文件运行 ESLint 检查。返回检查结果（如果有错误会显示错误详情）。",
+  parameters: {
+    type: "object",
+    properties: {
+      filePath: {
+        type: "string",
+        description: "要检查的文件路径。不传则检查整个 src 目录。",
+      },
+    },
+    required: [],
+  },
+  execute: async (args) => {
+    const filePath = args.filePath as string | undefined;
+    const target = filePath || "src";
+    try {
+      const result = execSync(`pnpm exec eslint ${target} --ext .vue,.js,.ts`, {
+        cwd: PROJECT_ROOT,
+        encoding: "utf-8",
+        timeout: 60000,
+      });
+      return result || "✅ ESLint 检查通过，没有发现问题";
+    } catch (error) {
+      // ESLint 有错误时会抛异常，错误信息在 stdout/stderr 中
+      const err = error as { stdout?: string; stderr?: string };
+      return `❌ ESLint 发现问题：\n${err.stdout || err.stderr || "未知错误"}`;
+    }
+  },
+};
+
+// ============================================================
+// 工具 4：自动修复 ESLint
+// ============================================================
+export const fixLintTool: AgentTool = {
+  name: "fix_lint",
+  description:
+    "对指定文件运行 ESLint 自动修复（--fix）。能修复格式问题（缩进、引号、分号等）。",
+  parameters: {
+    type: "object",
+    properties: {
+      filePath: {
+        type: "string",
+        description: "要修复的文件路径",
+      },
+    },
+    required: ["filePath"],
+  },
+  execute: async (args) => {
+    const filePath = args.filePath as string;
+    try {
+      execSync(`pnpm exec eslint ${filePath} --fix`, {
+        cwd: PROJECT_ROOT,
+        encoding: "utf-8",
+        timeout: 60000,
+      });
+      return `✅ 已自动修复: ${filePath}`;
+    } catch (error) {
+      const err = error as { stdout?: string; stderr?: string };
+      return `⚠️ 自动修复后仍存在问题：\n${err.stdout || err.stderr || "未知错误"}`;
+    }
+  },
+};
+
+// ============================================================
+// 工具 5：运行测试
+// ============================================================
+export const runTestTool: AgentTool = {
+  name: "run_test",
+  description: "运行 Vitest 单元测试。返回测试结果。",
+  parameters: {
+    type: "object",
+    properties: {
+      filePath: {
+        type: "string",
+        description: "要测试的文件路径。不传则运行全部测试。",
+      },
+    },
+    required: [],
+  },
+  execute: async (args) => {
+    const filePath = args.filePath as string | undefined;
+    const cmd = filePath ? `pnpm test ${filePath}` : "pnpm test";
+    try {
+      const result = execSync(cmd, {
+        cwd: PROJECT_ROOT,
+        encoding: "utf-8",
+        timeout: 120000,
+      });
+      return `✅ 测试通过：\n${result.slice(0, 2000)}`;
+    } catch (error) {
+      const err = error as { stdout?: string; stderr?: string };
+      return `❌ 测试失败：\n${(err.stdout || err.stderr || "").slice(0, 2000)}`;
+    }
+  },
+};
+
+// ============================================================
+// 工具 6：查询知识图谱影响范围
+// ============================================================
+export const queryImpactTool: AgentTool = {
+  name: "query_impact",
+  description: "查询知识图谱，获取某个文件改动会影响哪些文件。",
+  parameters: {
+    type: "object",
+    properties: {
+      filePath: {
+        type: "string",
+        description: "要查询的文件路径",
+      },
+    },
+    required: ["filePath"],
+  },
+  execute: async (args) => {
+    const filePath = args.filePath as string;
+    const graphPath = path.resolve(PROJECT_ROOT, "knowledge-graph.json");
+    if (!fs.existsSync(graphPath)) {
+      return "❌ 知识图谱不存在，请先运行 pnpm graph";
+    }
+
+    const graph = JSON.parse(fs.readFileSync(graphPath, "utf-8"));
+    const impacted: string[] = [];
+
+    for (const edge of graph.edges || []) {
+      const from = (edge.from || "").replace(/^file:/, "");
+      const to = (edge.to || "").replace(/^file:/, "");
+      if (to === filePath || to.endsWith(filePath)) {
+        impacted.push(from);
+      }
+    }
+
+    if (impacted.length === 0) {
+      return `📊 ${filePath} 没有被其他文件依赖`;
+    }
+    return `📊 ${filePath} 被以下 ${impacted.length} 个文件依赖：\n${impacted.map((f) => `  - ${f}`).join("\n")}`;
+  },
+};
+
+// ============================================================
+// 工具 7：Git 操作（只读，安全）
+// ============================================================
+export const gitDiffTool: AgentTool = {
+  name: "git_diff",
+  description: "获取当前的 Git 改动内容。",
+  parameters: {
+    type: "object",
+    properties: {
+      staged: {
+        type: "boolean",
+        description: "是否只看已暂存的改动",
+      },
+    },
+    required: [],
+  },
+  execute: async (args) => {
+    const staged = args.staged as boolean | undefined;
+    const cmd = staged ? "git diff --cached" : "git diff HEAD";
+    try {
+      const result = execSync(cmd, {
+        cwd: PROJECT_ROOT,
+        encoding: "utf-8",
+        timeout: 10000,
+      });
+      return result || "✅ 没有检测到改动";
+    } catch {
+      return "❌ Git diff 失败";
+    }
+  },
+};
+
+// ============================================================
+// 工具集导出
+// ============================================================
+export const allTools: AgentTool[] = [
+  readFileTool,
+  writeFileTool,
+  runLintTool,
+  fixLintTool,
+  runTestTool,
+  queryImpactTool,
+  gitDiffTool,
+];
+
+/** 工具名到工具的映射，用于执行器快速查找 */
+export const toolMap = new Map(allTools.map((t) => [t.name, t]));
+```
+
+#### 为什么这么设计
+
+- 1.每一个工具都是一个对象：包含name,description,parameters,execute
+- 2.description写的非常详细，LLM根据描述决定“什么时候用这个工具”。描述越清楚越仔细，AI选错工具的概率越小
+- 3.parameters用JSON Schema，这是Function Calling的标准格式，LLM会按照这个schema生成参数
+- 4.安全白名单isPathAllowed:防止AI修改node_modules/,.git/等敏感目录。这是Agent安全的第一道防线
+- 5.错误返回字符串而不是抛异常：这样错误信息会作为“观察结果”反馈给AI 让AI自己决定要怎么办
+- 6.返回内容长度限制：防止一次返回几万行代码撑爆LLM的context window
+
+### 4.创建工具执行器scripts/agent/executor.ts
+
+```ts
+// scripts/agent/executor.ts
+// 导入工具Map：工具名字映射到工具对象
+import { toolMap } from "./tools";
+
+/**
+ * 执行工具调用
+ * @param toolName 工具名称
+ * @param args 工具参数
+ * @returns 执行结果字符串
+ */
+export async function executeTool(
+  toolName: string,
+  args: Record<string, unknown>,
+): Promise<string> {
+  // 打印日志：控制台输出，方便调试Agent每一步
+  console.log(`\n🔧 [工具调用] ${toolName}`);
+  console.log(`   参数: ${JSON.stringify(args, null, 2)}`);
+
+  // 根据工具名称，从Map里取出对应的工具定义（read_file / run_lint …）
+  const tool = toolMap.get(toolName);
+  if (!tool) {
+    const error = `❌ 工具不存在: ${toolName}`;
+    console.log(`   ${error}`);
+    return error;
+  }
+
+  try {
+    // 执行工具的execute函数，await等待执行完成
+    const result = await tool.execute(args);
+    // 截断超长返回内容，防止LLM上下文爆掉
+    const truncated =
+      result.length > 3000
+        ? result.slice(0, 3000) + "\n...(结果过长已截断)"
+        : result;
+    // 打印简短预览
+    console.log(`   ✅ 执行完成: ${truncated.slice(0, 200)}...`);
+    return truncated;
+  } catch (error) {
+    // 捕获工具内部异常，包装成错误信息返回给LLM
+    const err = error as Error;
+    const errorMsg = `❌ 工具执行失败: ${err.message}`;
+    console.log(`   ${errorMsg}`);
+    return errorMsg;
+  }
+}
+
+/**
+ * 将我们自定义的AgentTool数组，转换成OpenAI Function Calling 标准JSON结构
+ * 专门给OpenAI接口请求用
+ */
+export function toolsToOpenAIFormat() {
+  // 取出全部工具
+  const tools = Array.from(toolMap.values());
+  // 映射为OpenAI SDK要求的function工具格式
+  return tools.map((tool) => ({
+    type: "function" as const,
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.parameters,
+    },
+  }));
+}
+```
+
+> 为什么这么设计:
+
+```text
+统一的执行入口：所有工具调用都通过 executeTool，方便统一处理日志、错误、长度限制。
+
+toolsToOpenAIFormat：把内部工具定义转换为 OpenAI 的 Function Calling 格式。这是 API 的要求。
+
+结果截断：防止某个工具返回超长内容（比如读取一个大文件）撑爆 LLM 的 context window。
+```
+
+### 5.创建Agent核心循环scripts/agent/agent.ts
+
+这是整个Agent的心脏
+
+```ts
+// scripts/agent/agent.ts
+// 导入openai SDK（DeepSeek兼容OpenAI协议，直接复用这个包）
+import OpenAI from "openai";
+// 导入工具执行函数、工具格式转换函数（来自executor.ts）
+import { executeTool, toolsToOpenAIFormat } from "./executor";
+// 导入TS类型定义
+import type { AgentConfig, AgentStep, ChatMessage } from "./types";
+
+/**
+ * 创建 Agent 实例，Agent主入口运行函数
+ * @param userTask 用户交给Agent的任务描述文本
+ * @param config Agent配置（系统提示词、工具列表、最大步数、模型等）
+ * @returns 所有步骤快照数组 AgentStep[]（可以用来渲染D3知识图谱！）
+ */
+export async function runAgent(
+  userTask: string,
+  config: AgentConfig,
+): Promise<AgentStep[]> {
+  // 解构配置，设置默认值
+  const {
+    systemPrompt,
+    tools,
+    maxSteps = 15, // 默认最多循环15步，防止无限循环
+    model = "deepseek-chat",
+    temperature = 0.3, // 0.3 偏向严谨，适合代码修复、代码分析
+  } = config;
+
+  // ====================== 1. 初始化 LLM 客户端 ======================
+  // 读取环境变量，从系统环境拿DEEPSEEK密钥，不要硬编码写在代码里
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    throw new Error("❌ 请设置环境变量 DEEPSEEK_API_KEY");
+  }
+  // 实例化OpenAI客户端，替换baseURL指向DeepSeek接口（兼容OpenAI协议）
+  const client = new OpenAI({
+    apiKey,
+    baseURL: "https://api.deepseek.com",
+  });
+
+  // ====================== 2. 初始化消息历史（Memory记忆） ======================
+  // messages：对话上下文数组，就是Agent的记忆，每一轮消息都塞进去传给大模型
+  const messages: ChatMessage[] = [
+    { role: "system", content: systemPrompt }, // 系统提示词，设定Agent角色和规则
+    { role: "user", content: userTask }, // 用户的原始任务
+  ];
+
+  // ====================== 3. 转换工具格式 ======================
+  // 把我们自己定义的AgentTool数组，转成DeepSeek/OpenAI Function Calling标准格式
+  const openaiTools = toolsToOpenAIFormat();
+
+  // ====================== 4. 记录每一步的快照 ======================
+  // steps 保存每一轮的AgentStep，最后返回，用于日志、可视化图谱
+  const steps: AgentStep[] = [];
+
+  console.log("\n" + "=".repeat(60));
+  console.log("🤖 Agent 开始执行");
+  console.log("=".repeat(60));
+  console.log(`任务: ${userTask}\n`);
+
+  // ====================== 5. Agent核心循环（ReAct循环！重点） ======================
+  // 循环：最多执行maxSteps轮，防止死循环
+  for (let i = 1; i <= maxSteps; i++) {
+    console.log(`\n--- 第 ${i}/${maxSteps} 步 ---`);
+
+    // 5.1 调用LLM，发网络请求（这里才是真正的fetch/AJAX网络请求）
+    const response = await client.chat.completions.create({
+      model,
+      messages, // 把全部历史记忆传给大模型
+      tools: openaiTools.length > 0 ? openaiTools : undefined, // 传入工具定义
+      temperature,
+    });
+
+    // 拿到返回的第一条结果
+    const choice = response.choices[0];
+    const assistantMessage = choice.message;
+
+    // 5.2 把AI本次的消息加入消息记忆，下一轮请求一起发给大模型
+    messages.push(assistantMessage);
+
+    // 5.3 判断分支：AI是要调用工具，还是直接输出最终答案
+    if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
+      // ========== 情况A：AI决定调用工具（ReAct：思考→行动） ==========
+      console.log(
+        `🧠 AI 思考: ${assistantMessage.content || "（无文字思考）"}`,
+      );
+
+      // 遍历本次AI要调用的所有工具（支持一次调用多个工具）
+      for (const toolCall of assistantMessage.tool_calls) {
+        const toolName = toolCall.function.name;
+        // 把AI返回的字符串参数，解析成JS对象
+        const toolArgs = JSON.parse(toolCall.function.arguments);
+
+        // 【调用工具】执行本地工具逻辑（executor.ts的executeTool，本地函数，无网络）
+        const toolResult = await executeTool(toolName, toolArgs);
+
+        // 保存这一步快照，存入steps数组（后面用来做D3知识图谱）
+        steps.push({
+          step: i,
+          thought: assistantMessage.content || undefined,
+          toolCall: { name: toolName, args: toolArgs },
+          toolResult,
+        });
+
+        // ✅ 极其关键：把工具运行结果，包装成tool角色消息，追加到对话记忆
+        // 大模型才能知道工具执行返回了什么内容，继续下一步思考
+        messages.push({
+          role: "tool",
+          tool_call_id: toolCall.id, // 必须带上id，用来匹配本次对应的工具调用
+          content: toolResult,
+        });
+      }
+      // continue，进入循环下一轮，再次请求LLM
+      continue;
+    }
+
+    // ========== 情况B：AI不调用工具，输出最终回答，任务结束 ==========
+    console.log(`\n✅ AI 最终回答:\n${assistantMessage.content}`);
+    // 存入步骤快照，标记isFinal
+    steps.push({
+      step: i,
+      isFinal: true,
+      finalAnswer: assistantMessage.content || "",
+    });
+    break; // 跳出for循环，Agent任务终止
+  }
+
+  console.log("\n" + "=".repeat(60));
+  console.log(`🎉 Agent 执行完成，共 ${steps.length} 步`);
+  console.log("=".repeat(60));
+
+  // 返回全部步骤记录，交给上层：打印日志 / 渲染D3图谱
+  return steps;
+}
+```
+
+> 这个是整个Agent的核心，每一行都很关键！
+
+#### 1.为什么用message数组维护历史？
+
+LLM 是无状态的。每次调用都要把完整的对话历史发给他，他才知道“之前发生了什么”，这就是Agent的Memory。
+
+```ts
+const messages: ChatMessage[] = [
+  {
+    role: "system",
+    content: systemPrompt,
+  },
+  {
+    role: "user",
+    content: userTask,
+  },
+];
+```
+
+#### 2.为什么把assistant加入历史？
+
+因为下一次调用LLM时，它需要知道AI上一次的回答，才能继续下一步思考。如果不加会失去记忆。
+
+#### 3.为什么工具执行结果要用role:'tool'加回去？
+
+这是 Function Calling 协议的规定。每次工具执行完，必须把结果以 role: 'tool' 的形式加回 messages，并且带上 tool_call_id，这样 AI 才知道“这个结果是哪个工具调用产生的”。
+
+#### 4.为什么用 continue 而不是 break？
+
+因为工具执行完后，要让 AI 继续思考下一步。比如：
+
+- 第 1 步：AI 调用 run_lint → 发现错误
+
+- 第 2 步：AI 调用 write_file → 修复代码
+
+- 第 3 步：AI 调用 run_lint → 验证修复
+
+- 第 4 步：AI 输出最终回答
+  如果用 break，AI 调用一次工具就结束了，这不是 Agent。
+
+### 6.创建入口文件scripts/agent/main.ts
+
+```ts
+//scripts/agent/main.ts
+import { runAgent } from "./agent";
+import { allTools } from "./tools";
+
+/**system prompt*:定义Agent的角色与行为准则*/
+const SYSTEM_PROMPT = `你是一个资深前端工程师 Agent，负责自动修复代码问题。
+
+## 你的能力
+你可以调用以下工具：
+- read_file: 读取文件内容
+- write_file: 写入文件内容（用于修复代码）
+- run_lint: 运行 ESLint 检查
+- fix_lint: 自动修复 ESLint 格式问题
+- run_test: 运行单元测试
+- query_impact: 查询知识图谱影响范围
+- git_diff: 查看 Git 改动
+
+## 工作流程
+1. 先调用 git_diff 查看当前改动
+2. 如果有改动，调用 read_file 查看相关文件
+3. 调用 run_lint 或 run_test 检查问题
+4. 如果发现问题，尝试修复（fix_lint 或 write_file）
+5. 修复后再次验证（run_lint 或 run_test）
+6. 确认修复成功后，输出最终总结
+
+## 重要规则
+- 每次修复后必须验证，不能只改不验
+- 如果同一个问题修复 3 次仍然失败，停止并报告
+- 不要修改 src/ 和 scripts/ 之外的文件
+- 最终回答要包含：做了什么、验证结果、是否成功
+
+## 输出格式
+最终回答用 Markdown 格式，包含：
+- 📋 任务总结
+- 🔧 执行的步骤
+- ✅ 验证结果
+`;
+
+// 程序入口函数
+async function main() {
+  // process.argv：Node命令行参数
+  // process.argv[0] = node，argv[1]=当前脚本路径
+  // .slice(2) 取出用户在命令行传入的参数，拼接成任务文本
+  // 如果命令行没有传任务，使用默认任务：检查当前代码改动，修复发现的 ESLint 问题
+  const task =
+    process.argv.slice(2).join(" ") ||
+    "检查当前代码改动，修复发现的 ESLint 问题";
+
+  try {
+    // 启动Agent，传入任务 + Agent配置
+    const steps = await runAgent(task, {
+      systemPrompt: SYSTEM_PROMPT, // 角色提示词
+      tools: allTools, // 可用工具集合
+      maxSteps: 15, // 最大循环步数，防止无限调用工具
+      temperature: 0.3, // 模型随机性，越低越严谨，适合代码场景
+    });
+
+    // 找到标记 isFinal=true 的那一步，也就是AI最终回答
+    const finalStep = steps.find((s) => s.isFinal);
+    if (finalStep) {
+      console.log("\n" + "=".repeat(60));
+      console.log("📋 最终报告");
+      console.log("=".repeat(60));
+      console.log(finalStep.finalAnswer);
+    }
+  } catch (error) {
+    // 捕获顶层异常：例如没有配置API Key、网络请求报错
+    console.error("❌ Agent 执行失败:", (error as Error).message);
+    // process.exit(1) 退出进程，返回非0退出码，CI可以识别为任务失败
+    process.exit(1);
+  }
+}
+
+// 执行入口函数，启动整个Agent程序
+main();
+```
+
+#### 为什么System Prompt要写的如此详细？
+
+因为LLM是"跟着提示走"的,System Prompt越清晰：
+
+- AI越明白自己的角色
+- AI越明白自己的能力 有什么工具可以用
+- AI越明白自己的工作流程
+- AI越明白自己的重要规则 不会乱来
+  **是Agent设计的标准做法**
+
+### 7.配置package.json的脚本
+
+```json
+{
+  "scripts": {
+    "agent": "ts-node --esm scripts/agent/main.ts",
+    "agent:fix": "ts-node --esm scripts/agent/main.ts 检查当前改动并修复所有 ESLint 问题"
+  }
+}
+```
+
+### 这样 一个基础的agent就配置好了 功能是**自主完成了“发现 → 修复 → 验证”的完整闭环**，没有任何固定流程
+
+## 测试是否成功
+
+````md
+# 确保在目标目录下运行
+
+cd Demo2/demo2-env
+
+# 在当前环境设置API Key
+
+export DEEPSEEK_API_KEY=xxx
+
+# 故意引入一个Eslint错误
+
+在src/utils/retry.ts末尾加一行
+
+```bash
+echo "const a = 1" >> src/utils/retry.ts
+```
+
+# 运行
+
+```bash
+pnpm agent
+```
+````
+
+![alt text](<screenshots/Screenshot 2026-09-11 153452.png>)
+发现报错
+
+# 修复
+
+**发现是因为Agent的ESM引入是错误的的，出现了大量的cjs写法** 比如说：
+
+```text
+**__dirname**
+**__filename**
+**导入文件不加后缀**
+...等等
+```
+
+```text
+- 以及**项目中的各工具导入方式的错误** 全部**在其后面加上.js的后缀**
+  这是由于**这是ESM+TS 的硬性写法** 否则无法正常运行
+
+- 以及tool.ts中的__dirname的**esm正确使用方法**
+```
+
+```ts
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+```
+
+- 以及修改package.json中的**scripts**
+  把agent的运行命令改为**tsx**
+
+## 以下情况使用 tsx 通常更合适：
+
+```md
+- 直接运行 TypeScript 脚本：例如 Agent、构建脚本、数据迁移脚本。
+- 项目使用 ESM：package.json 中有 "type": "module"。
+- 需要简洁配置：不想额外配置 Node loader、编译目录和 ESM 解析规则。
+- 频繁开发调试：启动速度通常比完整编译更快。
+- 使用 .js 导入 .ts 文件：tsx 对这种 TypeScript + ESM 场景支持更顺畅。
+```
+
+## ts-node更适合
+
+```md
+- 项目以及配置好CommonJS
+- 团队约定好统一使用ts-node
+- 严格控制TS的编译选项
+- 使用ts-node的注册钩子 调试或特定集成功能
+```
+
+```json
+"agent": "tsx scripts/agent/main.ts",
+```
+
+![alt text](<screenshots/Screenshot 2026-09-11 155657.png>)
+发现成功运行
+
+![alt text](<screenshots/Screenshot 2026-09-11 161033.png>)
+在提交时又出现了这样的情况 触发了eslint的警告 阻止提交
+可以把tools的声明改成
+
+```ts
+tools: _tools;
+```
+
+**就可以避免了目前没使用 但后续可能会使用 成功把警告去掉 成功提交**
+但是我们还需要在eslint配置里面配一下 否则无效
+在**eslintrc.cjs的rules配置**里配置
+
+```cjs
+'@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_' },
+    ],
+```
+
+这三个里，**varsIgnorePattern**是来解决上面的问题的，按照下面的配置 对应的未使用变量都可以通过ESLint的检查
+
+```ts
+// varsIgnorePattern：对象解构
+const { tools: _tools } = config;
+
+// destructuredArrayIgnorePattern：数组解构
+const [_first, second] = [1, 2];
+
+// argsIgnorePattern：函数参数
+function demo(_unusedArg: string, name: string) {
+  // varsIgnorePattern：普通变量
+  const _temp = 123;
+  console.log(name);
+}
+```
+
+---
+
 # 附：ignore文件内部书写格式
 
 ```
@@ -8796,19 +9742,30 @@ deploy:
 
 # 附：md文档```后缀类型
 
-````text
-```js       // JavaScript
-```json     // JSON数据
-```html     // HTML
-```css      // CSS样式
-```vue      // Vue单文件
-```bash     // shell终端命令(git/pnpm/ls)
-```sh       // 和bash几乎等价
-```python   // python
-```go       // golang
-```sql      // SQL数据库语句
-```yaml     // yaml配置文件
-```md       // markdown代码
+````md
+# ```js // JavaScript
+
+# ```json // JSON数据
+
+# ```html // HTML
+
+# ```css // CSS样式
+
+# ```vue // Vue单文件
+
+# ```bash // shell终端命令(git/pnpm/ls)
+
+# ```sh // 和bash几乎等价
+
+# ```python // python
+
+# ```go // golang
+
+# ```sql // SQL数据库语句
+
+# ```yaml // yaml配置文件
+
+# ```md // markdown代码
 ````
 
 ---
