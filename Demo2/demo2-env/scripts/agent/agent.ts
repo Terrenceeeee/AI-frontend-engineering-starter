@@ -66,6 +66,10 @@ export async function runAgent(userTask: string, config: AgentConfig): Promise<A
       console.log(`🧠 AI 思考: ${assistantMessage.content || '（无文字思考）'}`);
 
       for (const toolCall of assistantMessage.tool_calls) {
+        if (toolCall.type !== 'function') {
+          continue;
+        }
+
         const toolName = toolCall.function.name;
         const toolArgs = JSON.parse(toolCall.function.arguments);
 
