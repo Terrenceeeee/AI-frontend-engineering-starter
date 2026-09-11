@@ -259,6 +259,48 @@
       "filePath": "scripts/ai-review.ts"
     },
     {
+      "id": "file:scripts/agent/types.ts",
+      "type": "script",
+      "name": "types.ts",
+      "filePath": "scripts/agent/types.ts"
+    },
+    {
+      "id": "file:scripts/agent/tools.ts",
+      "type": "script",
+      "name": "tools.ts",
+      "filePath": "scripts/agent/tools.ts"
+    },
+    {
+      "id": "file:scripts/agent/main.ts",
+      "type": "script",
+      "name": "main.ts",
+      "filePath": "scripts/agent/main.ts"
+    },
+    {
+      "id": "file:scripts/agent/loop.ts",
+      "type": "script",
+      "name": "loop.ts",
+      "filePath": "scripts/agent/loop.ts"
+    },
+    {
+      "id": "file:scripts/agent/guard.ts",
+      "type": "script",
+      "name": "guard.ts",
+      "filePath": "scripts/agent/guard.ts"
+    },
+    {
+      "id": "file:scripts/agent/executor.ts",
+      "type": "script",
+      "name": "executor.ts",
+      "filePath": "scripts/agent/executor.ts"
+    },
+    {
+      "id": "file:scripts/agent/agent.ts",
+      "type": "script",
+      "name": "agent.ts",
+      "filePath": "scripts/agent/agent.ts"
+    },
+    {
       "id": "file:e2e/homepage.spec.ts",
       "type": "test",
       "name": "homepage.spec.ts",
@@ -520,6 +562,11 @@
       "type": "runs"
     },
     {
+      "from": "file:package.json",
+      "to": "file:scripts/agent/main.ts",
+      "type": "runs"
+    },
+    {
       "from": "file:../../.github/workflows/deploy.yml",
       "to": "file:package.json",
       "type": "triggers"
@@ -533,6 +580,11 @@
       "from": "file:../../.github/workflows/ai-review.yml",
       "to": "file:package.json",
       "type": "triggers"
+    },
+    {
+      "from": "file:package.json",
+      "to": "file:src/main.ts",
+      "type": "configures"
     },
     {
       "from": "file:tsconfig.json",
