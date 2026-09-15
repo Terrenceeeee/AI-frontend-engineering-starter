@@ -26,6 +26,7 @@
     "serve:cdn": "http-server dist --port 8080 --cors",
     "ai-review": "ts-node --esm scripts/ai-review.ts",
     "agent": "tsx scripts/agent/main.ts",
+    "agent:dry-run": "tsx scripts/agent/main.ts --dry-run",
     "agent:fix": "tsx scripts/agent/main.ts 检查当前改动并修复所有 ESLint 问题"
   },
   "lint-staged": {

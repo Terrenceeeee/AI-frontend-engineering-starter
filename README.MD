@@ -243,6 +243,7 @@ Interaction to Next Paint (交互至下一次绘制【全部交互响应】)|
 - 路径别名 `@` 指向 `src`，统一源码导入方式
 - `pnpm type-check`、`pnpm lint:check`、`pnpm format:check` 分别校验类型、代码规范和格式
 - `pnpm agent` 启动 AI 自动修复 Agent，按任务调用读取、写入、Lint、测试和 Git Diff 工具
+- `pnpm agent:dry-run` 启动只分析不写文件的 Agent，适合先预览执行计划
 ```
 
 ### 2.构建与性能优化

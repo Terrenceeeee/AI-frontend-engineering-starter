@@ -35,6 +35,20 @@ export interface AgentTool {
   execute: (args: Record<string, unknown>) => Promise<string> | string;
 }
 
+export interface ToolExecutionResult {
+  success: boolean;
+  message: string;
+  stdout?: string;
+  stderr?: string;
+  exitCode?: number;
+  truncated?: boolean;
+}
+
+export interface AgentRuntimeState {
+  readFiles: Set<string>;
+  writeCounts: Map<string, number>;
+}
+
 /**
  * Agent 的每一步记录
  * 用来保存Agent循环中每一轮的完整信息，对应截图里的AgentStep
@@ -81,8 +95,13 @@ export interface AgentConfig {
 
   /** 温度参数，控制模型随机性 0~2；越低越严谨，越高越有创造性，可选 */
   temperature?: number;
+
+  /** 是否只演练不真正写文件 */
+  dryRun?: boolean;
 }
 
 /** OpenAI 消息类型别名（方便使用） */
 // 直接复用OpenAI SDK自带的消息类型，ChatCompletionMessageParam就是对话消息（用户消息/AI消息）
 export type ChatMessage = OpenAI.Chat.ChatCompletionMessageParam;
+
+export type ToolMap = Map<string, AgentTool>;

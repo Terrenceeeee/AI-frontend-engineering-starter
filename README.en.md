@@ -234,6 +234,7 @@ Interaction to Next Paint (interaction response)
 ```text
 - ESLint + Prettier + Husky enforce code standards; invalid code cannot be committed.
 - `pnpm agent` starts an AI auto-fix Agent that can read, write, lint, test, and inspect Git changes through tools.
+- `pnpm agent:dry-run` runs the Agent without writing files, so you can preview its plan first.
 - Multi-environment configuration (.env.production/.env.staging/.env.development): one codebase supports three environments.
 - Automated code generator (`pnpm gen`): one command generates page, API, and Store skeletons.
 ```
