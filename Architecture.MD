@@ -8940,6 +8940,741 @@ function demo(_unusedArg: string, name: string) {
 }
 ```
 
+# Demo34：AI Agent 工程化升级
+
+## 一、Demo34 的目标
+
+本 Demo 在原有 DeepSeek Agent 的基础上，增加安全边界、工具配置、运行状态、完整验证和 dry-run 能力，使 Agent 从“可以调用工具的脚本”升级为“可控、可观测、可验证的代码修复 Agent”。
+
+原 Agent 的主要问题：
+
+1. `AgentConfig.tools` 被接收但没有真正使用，运行时依赖全局工具表。
+2. Agent 循环、工具调度、安全校验全部混在不同位置，难以维护。
+3. 路径通过字符串前缀判断，存在目录越权边界问题。
+4. 命令通过字符串拼接执行，存在 Shell 注入风险。
+5. Agent 可以不读取文件就直接覆盖文件。
+6. 修改后只有 lint 和测试，缺少类型、格式和生产构建检查。
+7. 工具输出统一截断，可能丢失重要错误。
+8. 模型返回非法 JSON 时 Agent 会直接崩溃。
+9. 达到最大步数后没有明确报告任务是否完成。
+
+改造后的目标流程：
+
+```text
+用户任务
+  -> Agent 读取当前状态
+  -> 查询影响范围
+  -> 执行检查
+  -> 在权限范围内修改
+  -> 再次执行检查
+  -> 输出真实执行结果
+```
+
+## 二、文件结构与职责
+
+```text
+Demo2/demo2-env/scripts/agent/
+├── main.ts       # CLI 入口、任务参数和 System Prompt
+├── agent.ts      # 初始化模型、工具和运行配置
+├── loop.ts       # Agent 主循环和终止条件
+├── executor.ts   # 工具分发、结果处理和运行状态
+├── tools.ts      # 具体工具实现
+├── guard.ts      # 路径、命令和写入权限安全层
+└── types.ts      # Agent 共享类型
+```
+
+划分原则是：
+
+```text
+main.ts      负责“怎么启动”
+agent.ts     负责“用什么模型和工具”
+loop.ts      负责“怎么循环”
+executor.ts  负责“怎么执行工具”
+tools.ts     负责“工具具体做什么”
+guard.ts     负责“工具允许做什么”
+types.ts     负责“数据长什么样”
+```
+
+这样做的原因是避免把模型调用、文件写入、Shell 执行和安全判断写成一个大脚本。
+
+## 三、第一步：让工具配置真正生效
+
+### 1. 修改前
+
+```ts
+const {
+  systemPrompt,
+  tools: _tools,
+  maxSteps = 15,
+  model = "deepseek-chat",
+  temperature = 0.3,
+} = config;
+
+const openaiTools = toolsToOpenAIFormat();
+```
+
+这里虽然接收了 `_tools`，但没有使用它。
+
+### 2. 修改后
+
+```ts
+const {
+  systemPrompt,
+  tools,
+  maxSteps = 15,
+  model = "deepseek-chat",
+  temperature = 0.3,
+  dryRun = false,
+} = config;
+
+const openaiTools = toolsToOpenAIFormat(tools);
+const toolMap = createToolMap(tools);
+```
+
+`executor.ts`：
+
+```ts
+export function toolsToOpenAIFormat(tools: AgentTool[]) {
+  return tools.map((tool) => ({
+    type: "function" as const,
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.parameters,
+    },
+  }));
+}
+
+export function createToolMap(tools: AgentTool[]): ToolMap {
+  return new Map(tools.map((tool) => [tool.name, tool]));
+}
+```
+
+### 3. 改动原因
+
+工具必须由 Agent 配置注入，而不能隐式依赖全局变量。这样可以分别创建：
+
+- 只读 Review Agent
+- 可修改代码的 Auto-Fix Agent
+- 只执行测试的 Validation Agent
+
+调用方没有注册的工具，Agent 就无法调用。
+
+## 四、第二步：增加结构化结果和运行状态
+
+### 1. 修改前
+
+```ts
+execute: (args: Record<string, unknown>) => Promise<string> | string;
+```
+
+所有结果都是字符串，成功、失败、退出码和错误输出混在一起。
+
+### 2. 修改后
+
+在 `types.ts` 增加：
+
+```ts
+export interface ToolExecutionResult {
+  success: boolean;
+  message: string;
+  stdout?: string;
+  stderr?: string;
+  exitCode?: number;
+  truncated?: boolean;
+}
+
+export interface AgentRuntimeState {
+  readFiles: Set<string>;
+  writeCounts: Map<string, number>;
+}
+
+export type ToolMap = Map<string, AgentTool>;
+```
+
+### 3. 改动原因
+
+结构化结果便于：
+
+- 判断工具是否成功
+- 区分 stdout 和 stderr
+- 获取进程退出码
+- 判断输出是否截断
+- 将来保存 Agent Trace
+- 将来在页面中展示每一步状态
+
+`AgentRuntimeState` 用来记录：
+
+```text
+哪些文件已经读取
+每个文件被修改了几次
+```
+
+## 五、第三步：增加 guard.ts 安全层
+
+### 1. 修改前的路径判断
+
+```ts
+function isPathAllowed(filePath: string): boolean {
+  const absolutePath = path.resolve(PROJECT_ROOT, filePath);
+  return ALLOWED_DIRS.some((dir) => absolutePath.startsWith(dir));
+}
+```
+
+问题是 `startsWith()` 只比较字符串。例如允许目录为 `src` 时，`src-backup` 也可能被错误放行。
+
+### 2. 修改后的路径判断
+
+```ts
+function isInside(parent: string, child: string): boolean {
+  const relative = path.relative(parent, child);
+  return (
+    relative === "" ||
+    (!relative.startsWith("..") && !path.isAbsolute(relative))
+  );
+}
+
+export function isReadablePath(filePath: string): boolean {
+  const absolutePath = resolveProjectPath(filePath);
+  return ALLOWED_READ_DIRS.some((dir) => isInside(dir, absolutePath));
+}
+```
+
+这里使用 `path.relative()` 判断真实目录关系，兼容 Windows 和 Linux。
+
+### 3. 读写权限分离
+
+```ts
+const ALLOWED_READ_DIRS = [
+  path.join(PROJECT_ROOT, "src"),
+  path.join(PROJECT_ROOT, "scripts"),
+];
+
+const ALLOWED_WRITE_DIRS = [
+  path.join(PROJECT_ROOT, "src"),
+  path.join(PROJECT_ROOT, "scripts"),
+];
+
+const BLOCKED_WRITE_PATHS = [
+  "package.json",
+  "pnpm-lock.yaml",
+  "vite.config.ts",
+  "tsconfig.json",
+  ".env",
+  ".github",
+  "scripts/agent",
+];
+```
+
+写入判断：
+
+```ts
+export function isWritablePath(filePath: string): boolean {
+  const normalized = normalizeProjectPath(filePath);
+  const absolutePath = resolveProjectPath(filePath);
+
+  if (!ALLOWED_WRITE_DIRS.some((dir) => isInside(dir, absolutePath))) {
+    return false;
+  }
+
+  return !BLOCKED_WRITE_PATHS.some((blocked) => {
+    const normalizedBlocked = normalizeProjectPath(blocked);
+    return (
+      normalized === normalizedBlocked ||
+      normalized.startsWith(`${normalizedBlocked}/`)
+    );
+  });
+}
+```
+
+### 4. 为什么禁止修改这些文件
+
+- `package.json`：可能改变依赖和命令
+- `pnpm-lock.yaml`：可能改变依赖解析结果
+- `.env`：可能涉及密钥
+- `.github`：可能改变 CI/CD 权限和部署逻辑
+- `scripts/agent`：可能破坏 Agent 自己的安全边界
+- `vite.config.ts`、`tsconfig.json`：可能影响整个项目构建
+
+因此本 Demo 只允许 Agent 修改 `src/` 和普通 `scripts/` 文件。
+
+## 六、第四步：避免 Shell 命令注入
+
+### 1. 修改前
+
+```ts
+execSync(`pnpm exec eslint ${filePath} --fix`, {
+  cwd: PROJECT_ROOT,
+});
+```
+
+AI 生成的 `filePath` 被直接拼进 Shell 字符串。
+
+### 2. 修改后
+
+```ts
+export function runCommand(
+  command: string,
+  args: string[],
+  options: { timeout?: number; maxOutput?: number } = {},
+): ToolExecutionResult {
+  try {
+    const stdout = execFileSync(command, args, {
+      cwd: PROJECT_ROOT,
+      encoding: "utf-8",
+      timeout: options.timeout || 60_000,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    return {
+      success: true,
+      message: "命令执行成功",
+      stdout,
+      exitCode: 0,
+    };
+  } catch (error) {
+    const err = error as {
+      status?: number;
+      stdout?: Buffer | string;
+      stderr?: Buffer | string;
+      message?: string;
+    };
+
+    return {
+      success: false,
+      message: "命令执行失败",
+      stdout: String(err.stdout || ""),
+      stderr: String(err.stderr || err.message || ""),
+      exitCode: err.status,
+    };
+  }
+}
+```
+
+工具调用改成参数数组：
+
+```ts
+runCommand(pnpm, ["exec", "eslint", filePath, "--fix"], {
+  timeout: 60_000,
+  maxOutput: 8000,
+});
+```
+
+### 3. Windows 和 Linux 兼容
+
+```ts
+export function getPnpmCommand(): string {
+  return process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+}
+```
+
+`execFileSync()` 不通过 Shell 解释参数，避免把 AI 参数当成额外命令执行。
+
+## 七、第五步：强制先读后写
+
+### 1. 修改前
+
+```ts
+fs.writeFileSync(absolutePath, content, "utf-8");
+```
+
+Agent 可以不查看旧内容直接覆盖文件。
+
+### 2. 修改后
+
+```ts
+function guardToolCall(
+  toolName: string,
+  args: Record<string, unknown>,
+  state: AgentRuntimeState,
+): string | null {
+  if (toolName !== "write_file") return null;
+
+  const filePath = args.filePath as string | undefined;
+  if (!filePath) return "❌ write_file 缺少 filePath 参数。";
+
+  const normalizedFilePath = normalizeProjectPath(filePath);
+  if (!state.readFiles.has(normalizedFilePath)) {
+    return `❌ 写入被拒绝：必须先 read_file 读取 ${filePath}。`;
+  }
+
+  const writeCount = state.writeCounts.get(normalizedFilePath) || 0;
+  if (writeCount >= 2) {
+    return `❌ 写入被拒绝：${filePath} 已被修改两次。`;
+  }
+
+  return null;
+}
+```
+
+状态只在工具成功后更新：
+
+```ts
+if (!normalized.startsWith("❌")) {
+  updateRuntimeState(toolName, args, state);
+}
+```
+
+这样可以避免失败的读取被误判成成功读取，也可以防止模型反复覆盖同一个文件。
+
+## 八、第六步：新增 dry-run 模式
+
+### 1. package.json
+
+```json
+{
+  "scripts": {
+    "agent": "tsx scripts/agent/main.ts",
+    "agent:dry-run": "tsx scripts/agent/main.ts --dry-run",
+    "agent:fix": "tsx scripts/agent/main.ts 检查当前改动并修复所有 ESLint 问题"
+  }
+}
+```
+
+### 2. main.ts 参数处理
+
+```ts
+const rawArgs = process.argv.slice(2);
+const dryRun = rawArgs.includes("--dry-run");
+const taskArgs = rawArgs.filter((arg) => arg !== "--dry-run");
+const task = taskArgs.join(" ") || "检查当前代码改动，修复发现的 ESLint 问题";
+```
+
+### 3. write_file 的 dry-run 行为
+
+```ts
+if (process.env.AGENT_DRY_RUN === "1") {
+  return resultToString({
+    success: true,
+    message: `dry-run：将写入 ${filePath}，实际未修改文件。`,
+    stdout: `计划写入 ${content.length} 字符。`,
+  });
+}
+```
+
+使用方式：
+
+```bash
+pnpm agent:dry-run
+```
+
+确认执行计划后再使用：
+
+```bash
+pnpm agent:fix
+```
+
+## 九、第七步：增加完整验证工具
+
+原来 Agent 只有：
+
+```text
+run_lint
+fix_lint
+run_test
+```
+
+现在增加：
+
+```text
+run_typecheck
+run_format_check
+run_build
+```
+
+示例：
+
+```ts
+export const runTypecheckTool: AgentTool = {
+  name: "run_typecheck",
+  description: "运行 TypeScript 类型检查。",
+  parameters: {
+    type: "object",
+    properties: {},
+    required: [],
+  },
+  execute: async () =>
+    resultToString(
+      runCommand(pnpm, ["type-check"], {
+        timeout: 120_000,
+        maxOutput: 6000,
+      }),
+    ),
+};
+```
+
+修改后的验证顺序：
+
+```text
+git_diff
+  -> read_file
+  -> query_impact
+  -> run_lint
+  -> run_typecheck
+  -> run_test
+  -> run_format_check
+  -> run_build
+  -> 修复
+  -> 再次验证
+```
+
+这样 Agent 的“成功”不再只代表模型说修好了，而是必须有真实命令结果支持。
+
+## 十、第八步：改进工具输出
+
+### 1. 修改前
+
+所有工具统一使用 3000 字符限制：
+
+```ts
+result.length > 3000 ? result.slice(0, 3000) : result;
+```
+
+### 2. 修改后
+
+```ts
+const TOOL_OUTPUT_LIMITS: Record<string, number> = {
+  read_file: 9000,
+  git_diff: 12000,
+  run_lint: 8000,
+  fix_lint: 8000,
+  run_test: 8000,
+  run_typecheck: 6000,
+  run_format_check: 6000,
+  run_build: 9000,
+  query_impact: 6000,
+};
+```
+
+超长结果保留开头和结尾：
+
+```ts
+const head = normalized.slice(0, Math.floor(maxLength * 0.65));
+const tail = normalized.slice(-Math.floor(maxLength * 0.35));
+
+const truncated = `${head}
+...（工具结果过长，保留开头和结尾）...
+${tail}`;
+```
+
+这样既保留命令上下文，也保留测试或构建最后的错误摘要。
+
+## 十一、第九步：处理非法工具参数
+
+### 1. 修改前
+
+```ts
+const toolArgs = JSON.parse(toolCall.function.arguments);
+```
+
+### 2. 修改后
+
+```ts
+function parseToolArguments(
+  raw: string,
+): { ok: true; args: Record<string, unknown> } | { ok: false; error: string } {
+  try {
+    const parsed = JSON.parse(raw);
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return { ok: false, error: "参数必须是 JSON object" };
+    }
+
+    return { ok: true, args: parsed as Record<string, unknown> };
+  } catch (error) {
+    return { ok: false, error: (error as Error).message };
+  }
+}
+```
+
+如果参数无效，错误会作为 tool message 返回给模型，模型可以重新生成参数，而不是让整个 Agent 直接崩溃。
+
+## 十二、第十步：处理最大步数
+
+```ts
+let completed = false;
+
+for (let i = 1; i <= maxSteps; i++) {
+  // 调用模型和工具
+
+  if (
+    !assistantMessage.tool_calls ||
+    assistantMessage.tool_calls.length === 0
+  ) {
+    completed = true;
+    break;
+  }
+}
+
+if (!completed) {
+  const finalAnswer = `Agent 已达到最大执行步数 ${maxSteps}，任务可能未完成。`;
+
+  steps.push({
+    step: maxSteps,
+    isFinal: true,
+    finalAnswer,
+  });
+}
+```
+
+最大步数用于限制：
+
+- 无限工具循环
+- 重复修复
+- API 成本
+- 总执行时间
+
+## 十三、第十一步：修正知识图谱查询
+
+当前图谱格式：
+
+```json
+{
+  "nodes": [
+    {
+      "id": "component:Home",
+      "type": "page",
+      "name": "Home",
+      "filePath": "src\\views\\Home.vue"
+    }
+  ],
+  "edges": [
+    {
+      "from": "route:/",
+      "to": "component:Home",
+      "type": "navigates-to"
+    }
+  ]
+}
+```
+
+正确查询过程：
+
+```text
+文件路径
+  -> 找到 node.filePath
+  -> 得到 node.id
+  -> 查询 edge.from 或 edge.to
+  -> 输出影响关系
+```
+
+核心代码：
+
+```ts
+const matchedNodes = nodes.filter(
+  (node) => normalizeProjectPath(node.filePath) === filePath,
+);
+
+const relatedEdges = edges.filter(
+  (edge) => edge.from === node.id || edge.to === node.id,
+);
+```
+
+以前直接把文件路径和节点 ID 比较，容易得到错误的“没有依赖”结论。
+
+## 十四、第十二步：更新 System Prompt
+
+新增规则：
+
+```text
+1. 先调用 git_diff 查看当前改动
+2. 修改前必须调用 read_file
+3. 调用 query_impact 判断影响范围
+4. 使用 run_lint、run_typecheck、run_test 检查
+5. 发现问题后才允许修复
+6. 每次修复后必须再次验证
+7. 最终报告只能引用真实执行过的检查结果
+8. 不得修改 package.json、pnpm-lock.yaml、.env、.github 和 scripts/agent
+9. 无法确认成功时必须报告任务未完成
+```
+
+Prompt 负责引导模型，真正的权限限制仍由 `guard.ts` 和 `executor.ts` 强制执行。
+
+## 十五、验证与使用
+
+执行前配置：
+
+```powershell
+$env:DEEPSEEK_API_KEY="sk-xxx"
+```
+
+先预览：
+
+```bash
+pnpm agent:dry-run
+```
+
+自定义任务：
+
+```bash
+pnpm agent "检查当前改动，分析影响范围并运行类型检查"
+```
+
+自动修复：
+
+```bash
+pnpm agent:fix
+```
+
+本次改造后验证：
+
+```bash
+pnpm type-check
+pnpm lint:check
+pnpm test
+pnpm build
+pnpm prettier --check scripts/agent package.json
+```
+
+验证结果：
+
+```text
+TypeScript 类型检查：通过
+ESLint：通过
+单元测试：4 个测试文件、8 个测试用例通过
+生产构建：通过
+Agent 文件格式检查：通过
+```
+
+## 十六、Demo34 的最终收益
+
+改造前：
+
+```text
+模型
+  -> 全局工具
+  -> 字符串拼接命令
+  -> 直接覆盖文件
+  -> 普通字符串结果
+```
+
+改造后：
+
+```text
+模型
+  -> 配置限定的工具集
+  -> JSON 参数校验
+  -> 路径和命令安全层
+  -> 先读后写
+  -> 修改次数限制
+  -> 结构化结果
+  -> lint/type-check/test/build 验证
+  -> 明确成功或未完成状态
+```
+
+这就是工程 Agent 和简单 AI 脚本的区别：Agent 不只是会调用工具，还必须知道自己能调用什么、不能修改什么，以及如何证明任务已经完成。
+
+## 十七、后续可扩展方向
+
+1. 增加人工审批工具，高风险写入前等待确认。
+2. 使用 `patch_file` 替代整文件覆盖。
+3. 保存 JSON 格式 Agent Trace。
+4. 支持中断后恢复任务。
+5. 区分代码失败、依赖失败和环境失败。
+6. PR 模式使用 GitHub Actions 提供的 base/head SHA，而不是固定 `HEAD~1`。
+7. 限制 Token、调用次数和总耗时。
+8. 将只读 Review Agent 与可写 Auto-Fix Agent 分离。
+
 ---
 
 # 附：ignore文件内部书写格式

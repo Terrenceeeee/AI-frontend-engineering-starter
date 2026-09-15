@@ -3380,6 +3380,537 @@ This is the same reason many engineering tools still keep a few CommonJS compati
 
 ---
 
+# Demo34: AI Agent Engineering Upgrade
+
+## 1. Goal
+
+Demo34 upgrades the existing DeepSeek Agent from a simple tool-calling script into a controlled, observable, and verifiable code-fixing Agent.
+
+The original Agent had these problems:
+
+1. `AgentConfig.tools` was received but ignored at runtime.
+2. Loop control, tool execution, and safety checks were not clearly separated.
+3. Path validation relied on string prefixes.
+4. Shell commands were built through string interpolation.
+5. The Agent could overwrite a file without reading it first.
+6. Validation did not include type-checking, formatting, or production builds.
+7. Invalid JSON tool arguments could crash the Agent.
+8. Reaching the maximum step count did not clearly report incomplete work.
+
+The upgraded flow is:
+
+```text
+User task
+  -> inspect current state
+  -> query impact
+  -> run checks
+  -> modify only allowed files
+  -> verify again
+  -> report real results
+```
+
+## 2. Directory Responsibilities
+
+```text
+Demo2/demo2-env/scripts/agent/
+├── main.ts       # CLI entry point and system prompt
+├── agent.ts      # model, tools, and runtime configuration
+├── loop.ts       # Agent loop and termination conditions
+├── executor.ts   # tool dispatch and runtime state
+├── tools.ts      # concrete tools
+├── guard.ts      # path, command, and write safety
+└── types.ts      # shared Agent types
+```
+
+The separation is intentional:
+
+```text
+main.ts      starts the Agent
+agent.ts     assembles dependencies
+loop.ts      controls the reasoning/tool loop
+executor.ts  executes registered tools
+tools.ts     implements capabilities
+guard.ts     enforces permissions
+types.ts     defines data structures
+```
+
+## 3. Tool Configuration
+
+### Before
+
+```ts
+const { systemPrompt, tools: _tools, maxSteps = 15 } = config;
+
+const openaiTools = toolsToOpenAIFormat();
+```
+
+The configured tools were ignored and a global registry was used instead.
+
+### After
+
+```ts
+const {
+  systemPrompt,
+  tools,
+  maxSteps = 15,
+  model = "deepseek-chat",
+  temperature = 0.3,
+  dryRun = false,
+} = config;
+
+const openaiTools = toolsToOpenAIFormat(tools);
+const toolMap = createToolMap(tools);
+```
+
+```ts
+export function toolsToOpenAIFormat(tools: AgentTool[]) {
+  return tools.map((tool) => ({
+    type: "function" as const,
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.parameters,
+    },
+  }));
+}
+
+export function createToolMap(tools: AgentTool[]): ToolMap {
+  return new Map(tools.map((tool) => [tool.name, tool]));
+}
+```
+
+This allows separate read-only Review Agents, writable Auto-Fix Agents, and validation-only Agents.
+
+## 4. Structured Results and Runtime State
+
+### Before
+
+```ts
+execute: (args: Record<string, unknown>) => Promise<string> | string;
+```
+
+### After
+
+```ts
+export interface ToolExecutionResult {
+  success: boolean;
+  message: string;
+  stdout?: string;
+  stderr?: string;
+  exitCode?: number;
+  truncated?: boolean;
+}
+
+export interface AgentRuntimeState {
+  readFiles: Set<string>;
+  writeCounts: Map<string, number>;
+}
+```
+
+Structured results let the runtime distinguish success, stderr, exit codes, and truncated output. Runtime state enables read-before-write and per-file write limits.
+
+## 5. `guard.ts`: Security Boundary
+
+### Before
+
+```ts
+function isPathAllowed(filePath: string): boolean {
+  const absolutePath = path.resolve(PROJECT_ROOT, filePath);
+  return ALLOWED_DIRS.some((dir) => absolutePath.startsWith(dir));
+}
+```
+
+### After
+
+```ts
+function isInside(parent: string, child: string): boolean {
+  const relative = path.relative(parent, child);
+  return (
+    relative === "" ||
+    (!relative.startsWith("..") && !path.isAbsolute(relative))
+  );
+}
+
+export function isReadablePath(filePath: string): boolean {
+  const absolutePath = resolveProjectPath(filePath);
+  return ALLOWED_READ_DIRS.some((dir) => isInside(dir, absolutePath));
+}
+```
+
+The Agent can read and write only inside `src/` and `scripts/`. These paths are blocked for writing:
+
+```ts
+const BLOCKED_WRITE_PATHS = [
+  "package.json",
+  "pnpm-lock.yaml",
+  "vite.config.ts",
+  "tsconfig.json",
+  ".env",
+  ".github",
+  "scripts/agent",
+];
+```
+
+This prevents accidental dependency, environment, CI, or self-modification.
+
+## 6. Safe Command Execution
+
+### Before
+
+```ts
+execSync(`pnpm exec eslint ${filePath} --fix`, {
+  cwd: PROJECT_ROOT,
+});
+```
+
+### After
+
+```ts
+export function runCommand(
+  command: string,
+  args: string[],
+  options: { timeout?: number; maxOutput?: number } = {},
+): ToolExecutionResult {
+  try {
+    const stdout = execFileSync(command, args, {
+      cwd: PROJECT_ROOT,
+      encoding: "utf-8",
+      timeout: options.timeout || 60_000,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    return {
+      success: true,
+      message: "Command completed successfully",
+      stdout,
+      exitCode: 0,
+    };
+  } catch (error) {
+    const err = error as {
+      status?: number;
+      stdout?: Buffer | string;
+      stderr?: Buffer | string;
+      message?: string;
+    };
+
+    return {
+      success: false,
+      message: "Command failed",
+      stdout: String(err.stdout || ""),
+      stderr: String(err.stderr || err.message || ""),
+      exitCode: err.status,
+    };
+  }
+}
+```
+
+Commands are invoked with separate arguments:
+
+```ts
+runCommand(pnpm, ["exec", "eslint", filePath, "--fix"], {
+  timeout: 60_000,
+  maxOutput: 8000,
+});
+```
+
+The pnpm executable is platform-aware:
+
+```ts
+export function getPnpmCommand(): string {
+  return process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+}
+```
+
+## 7. Read-Before-Write
+
+### Before
+
+```ts
+fs.writeFileSync(absolutePath, content, "utf-8");
+```
+
+### After
+
+```ts
+function guardToolCall(
+  toolName: string,
+  args: Record<string, unknown>,
+  state: AgentRuntimeState,
+): string | null {
+  if (toolName !== "write_file") return null;
+
+  const filePath = args.filePath as string | undefined;
+  if (!filePath) return "write_file requires filePath.";
+
+  const normalizedFilePath = normalizeProjectPath(filePath);
+  if (!state.readFiles.has(normalizedFilePath)) {
+    return `Write rejected: read ${filePath} first.`;
+  }
+
+  const writeCount = state.writeCounts.get(normalizedFilePath) || 0;
+  if (writeCount >= 2) {
+    return `Write rejected: ${filePath} has already been modified twice.`;
+  }
+
+  return null;
+}
+```
+
+Runtime state is updated only after successful tool execution:
+
+```ts
+if (!normalized.startsWith("❌")) {
+  updateRuntimeState(toolName, args, state);
+}
+```
+
+This prevents failed reads from satisfying the write precondition and prevents repeated blind rewrites.
+
+## 8. Dry-Run Mode
+
+`package.json` now provides:
+
+```json
+{
+  "scripts": {
+    "agent": "tsx scripts/agent/main.ts",
+    "agent:dry-run": "tsx scripts/agent/main.ts --dry-run",
+    "agent:fix": "tsx scripts/agent/main.ts Check current changes and fix ESLint issues"
+  }
+}
+```
+
+CLI parsing:
+
+```ts
+const rawArgs = process.argv.slice(2);
+const dryRun = rawArgs.includes("--dry-run");
+const taskArgs = rawArgs.filter((arg) => arg !== "--dry-run");
+const task =
+  taskArgs.join(" ") || "Inspect current changes and fix ESLint issues";
+```
+
+In dry-run mode, `write_file` reports the planned write without changing the file:
+
+```ts
+if (process.env.AGENT_DRY_RUN === "1") {
+  return resultToString({
+    success: true,
+    message: `${filePath} would be written; no file was changed.`,
+    stdout: `Planned write size: ${content.length} characters.`,
+  });
+}
+```
+
+Use:
+
+```bash
+pnpm agent:dry-run
+pnpm agent:fix
+```
+
+## 9. Complete Validation Tools
+
+The original Agent had lint and unit-test tools. Demo34 adds:
+
+```text
+run_typecheck
+run_format_check
+run_build
+```
+
+The complete validation flow is:
+
+```text
+git_diff
+  -> read_file
+  -> query_impact
+  -> run_lint
+  -> run_typecheck
+  -> run_test
+  -> run_format_check
+  -> run_build
+  -> fix
+  -> verify again
+```
+
+An Agent is successful only when the actual checks support that conclusion.
+
+## 10. Output Limits and Error Handling
+
+Different tools now use different output limits:
+
+```ts
+const TOOL_OUTPUT_LIMITS: Record<string, number> = {
+  read_file: 9000,
+  git_diff: 12000,
+  run_lint: 8000,
+  fix_lint: 8000,
+  run_test: 8000,
+  run_typecheck: 6000,
+  run_format_check: 6000,
+  run_build: 9000,
+  query_impact: 6000,
+};
+```
+
+Long output retains both the beginning and end:
+
+```ts
+const head = normalized.slice(0, Math.floor(maxLength * 0.65));
+const tail = normalized.slice(-Math.floor(maxLength * 0.35));
+
+const truncated = `${head}
+...(output truncated; beginning and end retained)...
+${tail}`;
+```
+
+Malformed tool arguments are handled without crashing:
+
+```ts
+function parseToolArguments(
+  raw: string,
+): { ok: true; args: Record<string, unknown> } | { ok: false; error: string } {
+  try {
+    const parsed = JSON.parse(raw);
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return { ok: false, error: "Arguments must be a JSON object" };
+    }
+
+    return { ok: true, args: parsed as Record<string, unknown> };
+  } catch (error) {
+    return { ok: false, error: (error as Error).message };
+  }
+}
+```
+
+The error is returned as a tool message so the model can correct its parameters.
+
+## 11. Maximum Steps and Knowledge-Graph Queries
+
+If the Agent reaches its maximum number of steps, it now returns an explicit incomplete status:
+
+```ts
+if (!completed) {
+  const finalAnswer = `Agent reached the maximum of ${maxSteps} steps; the task may be incomplete.`;
+
+  steps.push({
+    step: maxSteps,
+    isFinal: true,
+    finalAnswer,
+  });
+}
+```
+
+Knowledge-graph queries now use the actual `nodes / edges` structure:
+
+```text
+File path
+  -> match node.filePath
+  -> obtain node.id
+  -> find edges connected to node.id
+  -> report upstream and downstream relationships
+```
+
+## 12. System Prompt Rules
+
+The System Prompt now requires:
+
+```text
+1. Call git_diff first.
+2. Call read_file before modifying a file.
+3. Call query_impact to understand affected scope.
+4. Run lint, type-check, and tests.
+5. Fix only when a real issue is found.
+6. Verify after every fix.
+7. Report only checks that were actually executed.
+8. Do not modify package.json, pnpm-lock.yaml, .env, .github, or scripts/agent.
+9. Report clearly when the task is incomplete.
+```
+
+The prompt guides the model, but `guard.ts` and `executor.ts` enforce the important rules in code.
+
+## 13. Usage and Verification
+
+PowerShell:
+
+```powershell
+$env:DEEPSEEK_API_KEY="sk-xxx"
+pnpm agent:dry-run
+```
+
+Custom task:
+
+```bash
+pnpm agent "Inspect current changes, analyze impact, and run type-check"
+```
+
+Auto-fix:
+
+```bash
+pnpm agent:fix
+```
+
+Verification:
+
+```bash
+pnpm type-check
+pnpm lint:check
+pnpm test
+pnpm build
+pnpm prettier --check scripts/agent package.json
+```
+
+Results:
+
+```text
+TypeScript: passed
+ESLint: passed
+Unit tests: 4 files and 8 test cases passed
+Production build: passed
+Agent formatting: passed
+```
+
+## 14. Engineering Benefits and Next Steps
+
+Before:
+
+```text
+Model
+  -> global tools
+  -> interpolated shell command
+  -> direct file overwrite
+  -> plain text result
+```
+
+After:
+
+```text
+Model
+  -> configured tool set
+  -> JSON argument validation
+  -> path and command guard
+  -> read-before-write
+  -> write-count limit
+  -> structured result
+  -> lint/type-check/test/build validation
+  -> explicit success or incomplete state
+```
+
+Future extensions:
+
+1. Human approval for high-risk writes.
+2. A `patch_file` tool instead of full-file replacement.
+3. Persistent JSON execution traces.
+4. Resumable tasks.
+5. Failure classification for code, dependency, and environment failures.
+6. PR mode based on GitHub Actions base/head SHAs instead of fixed `HEAD~1`.
+7. Token, call-count, and total-time budgets.
+8. Separate read-only Review Agents from writable Auto-Fix Agents.
+
+---
+
 # Appendix: .gitignore Syntax Reference
 
 ```
