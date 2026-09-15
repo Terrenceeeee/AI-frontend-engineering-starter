@@ -6,7 +6,7 @@
 
 # 📚 Frontend Engineering Architecture in Practice — Table of Contents
 
-> Covers 33 core demos + 3 specification appendices, spanning the entire engineering toolchain from local development to AI-assisted workflows.
+> Covers 34 core demos + 3 specification appendices, spanning the entire engineering toolchain from local development to AI-assisted workflows.
 
 ---
 
