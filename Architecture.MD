@@ -10316,6 +10316,136 @@ vitest原生支持ESM 无需额外配置Babel/webpack就可以直接解析import
 
 # 附：spec.ts文件的写法（Vitest/Jest的测试文件）
 
+## 1.最简模板（普通工具函数spec.ts）
+
+**新建src/utils/**tests**/testName.spec.ts**
+
+```ts
+import { describe, it, expect } from "vitest";
+import { functionName } from "../fileName"; //导入要测试的函数
+
+//describe：分组，一组相关测试用例
+describe("函数名", () => {
+  it("测试用例名", () => {
+    const res = functionName(参数);
+    //expect：断言，预期结果
+    expect(functionName()).toBe(预期值);
+  });
+  it("测试用例名", () => {
+    expect(functionName()).toBe(预期值);
+  });
+});
+```
+
+## 2.Vue3组件spec.ts（组件单元测试，最常用）
+
+需要提前安装：
+
+```bash
+pnpm add -D vitest @vue/test-utils vitest
+```
+
+**新建src/components/**tests**/testName.spec.ts**
+
+```ts
+import { describe, it, expect } from "vitest";
+import { mount } from "@vue/test-utils";
+import componentName from "../fileName"; //导入要测试的组件
+
+describe("组件名", () => {
+  it("测试用例名（组件可以正常挂载）", () => {
+    // mount渲染组件
+    const wrapper = mount(componentName，{
+      props:{
+        modelValue:'';
+        options:[]
+      }
+    });
+    //断言：组件存在，渲染成功
+    expect(wrapper.exists()).toBe(预期值(true/false));
+  });
+  it("测试用例名（传入选项，渲染项目数量正确）", () => {
+    const wrapper = mount(componentName，{
+      props:{
+        modelValue:'';
+        options:[
+          {label:'a',value:'a'},
+          {label:'b',value:'b'}
+        ]
+      }
+    })
+    //查找元素，断言数量
+    const items =wrapper.findAll('.option-item');
+    expect(items.length).toBe(预期值);
+  })
+})
+```
+
+## 3.核心 API 简单解释
+
+- describe:用于定义测试组
+- it:用于定义测试用例
+- expect:用于断言预期结果
+- mount:用于渲染组件
+
+```ts
+describe("分组名称", () => {}); // 测试套件，归类一组测试
+it("用例描述", () => {}); // 单个测试用例，test()别名
+expect(值).xxx(); // 断言
+```
+
+### 常用断言
+
+```ts
+expect(xxx).toBe(1); // 全等 ===
+expect(xxx).toEqual({ a: 1 }); // 对象/数组深度相等
+expect(xxx).toBeTruthy(); // 真值
+expect(xxx).toBeFalsy();
+expect(xxx).toBeNull();
+expect(xxx).toContain("abc"); // 包含字符串/数组元素
+```
+
+## 4.钩子函数（前置/后置，setup）
+
+```ts
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+
+describe("demo", () => {
+  //每个it执行之前运行
+  beforeEach(() => {
+    console.log("beforeEach用例前执行");
+  });
+  //每个it跑完之后
+  afterEach(() => {
+    console.log("afterEach用例后执行");
+  });
+  it("test", () => {
+    expect(1).toBe(1);
+  });
+});
+```
+
+## 5.执行函数（终端中）
+
+在**package.json**中添加脚本
+
+```json
+{
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  }
+}
+```
+
+```bash
+pnpm test
+```
+
+## 6.存放规则
+
+最好都放在**test/**文件夹中，方便管理
+
 ---
 
 # 附：yml的写法
