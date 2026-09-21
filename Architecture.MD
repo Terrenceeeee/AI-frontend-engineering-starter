@@ -10314,6 +10314,10 @@ vitest原生支持ESM 无需额外配置Babel/webpack就可以直接解析import
 
 ---
 
+# 附：spec.ts文件的写法（Vitest/Jest的测试文件）
+
+---
+
 # 附：yml的写法
 
 ## yml基本语法
