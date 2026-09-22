@@ -10350,35 +10350,80 @@ pnpm add -D vitest @vue/test-utils vitest
 ```ts
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
-import componentName from "../fileName"; //导入要测试的组件
-
-describe("组件名", () => {
-  it("测试用例名（组件可以正常挂载）", () => {
-    // mount渲染组件
-    const wrapper = mount(componentName，{
-      props:{
-        modelValue:'';
-        options:[]
-      }
+import testName from "./testNamel.vue";
+// 测试套件：描述这一组测试是针对 AccessPanel 权限提示组件 AccessPanel权限提示面板组件（来自于AccessPanel.vue文件，类似的还有- UserSelectPanel 用户选择面板
+// - ConfirmPanel 确认弹窗面板
+// - AlertPanel 警告提示面板）
+describe("testName 权限提示组件）", () => {
+  // ====================== 👉 1. Props传参测试 ======================
+  // 测试用例描述：当传入state="normal"时，页面应该渲染「访问正常」提示文字
+  it("传入normal，渲染正常提示", () => {
+    // mount挂载组件，第二个配置对象可以传 props、slots、global等
+    const wrapper = mount(testName, {
+      props: {
+        state: "normal", // 给组件传入props：state为normal（正常访问状态）
+      },
     });
-    //断言：组件存在，渲染成功
-    expect(wrapper.exists()).toBe(预期值(true/false));
+    // wrapper.text()：提取组件渲染后DOM里面全部纯文本
+    // .toContain("访问正常")：断言：提取出来的文本里面，必须包含“访问正常”四个字
+    // 如果页面没有这个文字，这条测试直接失败
+    expect(wrapper.text()).toContain("访问正常");
   });
-  it("测试用例名（传入选项，渲染项目数量正确）", () => {
-    const wrapper = mount(componentName，{
-      props:{
-        modelValue:'';
-        options:[
-          {label:'a',value:'a'},
-          {label:'b',value:'b'}
-        ]
-      }
-    })
-    //查找元素，断言数量
-    const items =wrapper.findAll('.option-item');
-    expect(items.length).toBe(预期值);
-  })
-})
+
+  // 第二条测试用例：传入 forbidden 状态，页面渲染暂无访问权限
+  it("传入forbidden，渲染暂无访问权限", () => {
+    // 挂载组件，props.state 设置 forbidden（无权限403状态）
+    const wrapper = mount(testName, {
+      props: {
+        state: "forbidden",
+      },
+    });
+    // 断言：页面文本包含「暂无访问权限」
+    expect(wrapper.text()).toContain("暂无访问权限");
+  });
+
+  // ====================== 👉 2. 测试组件自定义事件 $emit ======================
+  // 用例描述：点击重试按钮，组件需要向外触发 access-retry 自定义事件
+  // 这里必须加 async，因为 trigger模拟点击是异步操作，下面要用await等待DOM更新
+  it("点击重试按钮，触发 access-retry 事件", async () => {
+    // 挂载组件，状态为 forbidden（此时重试按钮才会显示）
+    const wrapper = mount(testName, {
+      props: {
+        state: "forbidden",
+      },
+    });
+    // wrapper.get(选择器)：根据css选择器查找DOM元素
+    // .status-panel button：找 class="status-panel" 容器内部的button按钮
+    // get特点：找不到元素直接抛出错误，测试失败，适合【预期一定存在】的元素
+    const retryBtn = wrapper.get(".status-panel button");
+
+    // .trigger('click')：模拟原生点击事件；必须 await，等待Vue完成DOM更新、事件处理
+    await retryBtn.trigger("click");
+
+    // wrapper.emitted("access-retry")：收集组件 $emit('access-retry') 的所有触发记录
+    // 返回一个二维数组，记录每一次触发和携带的参数；
+    // .toBeTruthy() 断言：事件有被触发，不是undefined/null
+    expect(wrapper.emitted("access-retry")).toBeTruthy();
+
+    // emitted返回格式示例：[[param1, param2]]
+    // [0]代表第1次触发事件，.toEqual([]) 断言：本次事件传出参数是空数组，没有传值
+    expect(wrapper.emitted("access-retry")?.[0]).toEqual([]);
+  });
+
+  // ====================== 👉 3. 插槽 slot 测试 ======================
+  // 用例描述：组件默认插槽可以正常渲染传入的插槽内容
+  it("渲染默认插槽内容", () => {
+    // 挂载组件，配置 slots，default 就是默认插槽
+    const wrapper = mount(testName, {
+      slots: {
+        // default默认插槽，传入html字符串内容
+        default: "<span>自定义插槽文字</span>",
+      },
+    });
+    // 断言：页面渲染文本包含插槽传入的文字
+    expect(wrapper.text()).toContain("自定义插槽文字");
+  });
+});
 ```
 
 ## 3.核心 API 简单解释
