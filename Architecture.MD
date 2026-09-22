@@ -10470,7 +10470,101 @@ describe("demo", () => {
 });
 ```
 
-## 5.执行函数（终端中）
+## 5.测试 Vue Composition API 自定义 Hook（useXXX.ts）
+
+```ts
+import { describe, it, expect } from "vitest";
+import { renderHook } from "@vue/test-utils";
+import { useSubmitState } from "./useSubmitState";
+
+describe("useSubmitState 提交状态hook", () => {
+  it("初始状态是 idle", () => {
+    // renderHook 专门测试hooks
+    const { result } = renderHook(() => useSubmitState());
+    expect(result.current.state).toBe("idle");
+  });
+
+  it("调用start后状态变成submitting", () => {
+    const { result } = renderHook(() => useSubmitState());
+    result.current.start();
+    expect(result.current.state).toBe("submitting");
+  });
+});
+```
+
+## 6.异步测试 + flushPromises
+
+```ts
+import { describe, it, expect } from "vitest";
+import { mount, flushPromises } from "@vue/test-utils";
+import UserList from "./UserList.vue";
+import { getUserApi } from "./api";
+
+// 模拟接口函数，假数据
+vi.mock("./api", () => {
+  return {
+    getUserApi: vi.fn(() => Promise.resolve([{ id: 1, name: "张三" }])),
+  };
+});
+
+describe("UserList 用户列表组件", () => {
+  it("页面加载，请求接口并渲染用户", async () => {
+    const wrapper = mount(UserList);
+    // 等待所有异步Promise执行完毕，DOM更新
+    await flushPromises();
+
+    expect(getUserApi).toHaveBeenCalled(); // 断言接口被调用
+    expect(wrapper.text()).toContain("张三");
+  });
+});
+```
+
+## 7.常用断言大全
+
+```ts
+// 相等
+expect(1).toBe(1);
+expect({ a: 1 }).toEqual({ a: 1 }); // 对象/数组要用toEqual，不能toBe
+
+// 布尔判断
+expect(true).toBeTruthy();
+expect(false).toBeFalsy();
+
+// 包含文本（DOM文本最常用）
+expect(wrapper.text()).toContain("文字");
+
+// 数组包含
+expect([1, 2, 3]).toContain(2);
+
+// 大于小于
+expect(10).toBeGreaterThan(5);
+
+// 断言抛出异常
+expect(() => {
+  throw new Error();
+}).toThrow();
+```
+
+## 8.get/find查询两种API
+
+```ts
+// get：**一定存在**，找不到直接抛测试失败
+const btn = wrapper.get(".status-panel button");
+
+// find：元素可能不存在，找不到返回null，不会报错
+const btn2 = wrapper.find(".status-panel button");
+expect(btn2.exists()).toBe(true); // 判断元素是否存在
+```
+
+## 9.触发DOM trigger
+
+```ts
+await wrapper.get("input").trigger("input", { target: { value: "test" } });
+await wrapper.get("button").trigger("click");
+await wrapper.get("input").trigger("blur");
+```
+
+## 10.执行函数（终端中）
 
 在**package.json**中添加脚本
 
@@ -10487,7 +10581,7 @@ describe("demo", () => {
 pnpm test
 ```
 
-## 6.存放规则
+## 11.存放规则
 
 最好都放在**test/**文件夹中，方便管理
 
