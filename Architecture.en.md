@@ -71,7 +71,7 @@
 - [DEMO 29: AI-Assisted PR Development (DeepSeek Code Review & Impact Analysis)](#demo29-ai-assisted-development-with-pr-analyzing-code-change-risk-and-more)
 - [DEMO 30: AI-Enhanced D3.js Visualization for File Import Relationship Graphs](#intelligent-ai-assisted-development-supplement-demo30-ai-enhanced-d3js-visualization--major-expansion-for-code-file-import-relationship-knowledge-graph-functionality)
 - [DEMO 31: AI Instant Feedback in Personal Development Environments and Shortcut Review](#ai-assisted-development-supplement-demo31--extension-of-demo29-ai-powered-instant-feedback-for-personal-development-environments-and-activate-the-shortcut-key-to-automatically-review-all-modified-files)
-- [DEMO 32: VS Code Extension for Knowledge Graph Sidebar Display](#ai-assisted-development-supplement-demo32-vscode-插件的创建与配置-使得知识图谱可以在侧栏显示-无需打开网页)
+- [DEMO 32: VS Code Extension for Knowledge Graph Sidebar Display](#ai-assisted-development-supplement-demo32---create-and-configure-a-vs-code-extension-so-the-knowledge-graph-can-be-displayed-in-the-sidebar-without-opening-a-browser)
 - [DEMO 33: DeepSeek AI Auto-Fix Agent](#ai-assisted-development-supplement-demo33-deepseek-ai-auto-fix-agent)
 
 ---
