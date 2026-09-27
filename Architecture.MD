@@ -10104,6 +10104,29 @@ git config core.hooksPath
 .husky/_
 ```
 
+# 附：bash/shell文件的写法
+
+**无法在VSCODE的终端中运行 只能借助Git 的在bash终端中打开后输入shell指令**
+
+## 命名规范
+
+必须在文件首行说明一句 否则bash终端无法识别出来是shell脚本
+
+```bash
+#!/usr/bin/env sh
+.....
+```
+
+并且需要在尾部加上后缀 **.sh**
+如果不加也行 但需要的是 在终端中输入的指令需要多一些
+
+```bash
+chmod +x demo
+./demo
+```
+
+❌ 不是必须无后缀！很多新手会踩这个误区
+
 ---
 
 # 附：ESModule和Commonjs两种依赖的不同与具体写法
