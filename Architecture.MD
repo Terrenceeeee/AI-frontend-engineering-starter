@@ -10127,6 +10127,156 @@ chmod +x demo
 
 ❌ 不是必须无后缀！很多新手会踩这个误区
 
+## bash终端常用命令指令：
+
+### 1.目录跳转&查看文件
+
+```bash
+# 打印目前所在路径：
+pwd
+
+# 切换目录
+cd /Users/xxx # 绝对路径
+cd ./test # 相对路径
+cd .. # 上级目录
+cd ~ # 回到家目录
+cd - # 回到上一次所在目录
+
+# 列出目录内容
+ls # 列出文件
+ls -l # 详细信息（权限，大小，时间）
+ls -a # 显示隐藏文件（.gitignore这类）
+ls -la # 组合，最常用
+ls -lh # 人性化大小（KB/MB）
+
+# 创建文件夹
+mkdir test
+mkdir -p test/test1/test2 # 递归创建多级目录（-p ：父目录不存在自动创建）
+```
+
+### 2.文件操作
+
+```bash
+# 创建空文件
+touch index.ts
+
+# 复制
+cp a.js b.js # 复制文件
+cp -r folderA folderB # 复制文件夹
+
+# 移动/重命名
+mv oldname.js newname.js # 重命名
+mv app.ts src/ # 移动文件到目录
+
+# 删除
+rm a.js # 删除文件
+rm -r folderA # 删除文件夹
+rm -rf folderA # 删除文件夹（强制）(最好别用，容易误删)
+
+# 查看文件内容
+cat package.json # 一次性打印全部
+less README.md # 分页打印，空格翻页 q退出
+head -n 20 log.txt # 看前20行
+tail -n 20 log.txt # 看后20行
+tail -f log.txt # 实时查看文件变化(跟踪日志)
+
+```
+
+### 3.查找，搜素
+
+```bash
+find . -name "*.js" # 当前目录递归查找所有.js文件
+# grep:文本搜索
+grep "TODO" index.ts # 在文件内部搜索关键词
+grep -r "TODO" ./src # 在当前src目录递归搜索关键词
+grep -r -i "error" ./src # -i忽略不区分大小写
+```
+
+### 4.进程&端口（启动Node服务，排查端口占用）
+
+```bash
+# 查看进程
+ps aux # 查看所有进程
+ps aux | grep node #查看node进程
+# 查看端口占用 （查看哪个程序占用了3000端口）
+ss -tulpn | grep 3000
+# 老系统用 netstat -lntup | grep 3000
+
+# 杀死进程
+kill 12345  #杀死进程 12345是进程PID
+kill -9 12345 #强杀，无论进程是不是孤儿进程
+
+# 后台运行程序
+nohup node index.js & # 后台跑，关闭终端不终止
+```
+
+### 5.压缩解压
+
+```bash
+# tar打包解压（linux最常用）
+tar -zcvf code.tar.gz ./src # 压缩
+tar -zxvf code.tar.gz # 解压到当前目录
+tar -zxvf code.tar.gz -C /usr/local # 解压到指定目录
+```
+
+### 6.权限（遇到permission denied用）
+
+```bash
+chmod +x script.sh # 给脚本添加执行权限
+chmod 755 folder # 设置目录权限
+chown user:user file # 修改文件归属用户
+```
+
+### 7.管道|、重定向
+
+```bash
+# | 管道:把前面的命令输出交给后面处理
+ls -l | grep package
+
+# > 输出覆盖写入文件
+echo "hello" > test.txt
+
+# >> 追加写入文件（不覆盖）
+echo "hello" >> test.txt
+```
+
+### 8.环境变量&简易工具
+
+```bash
+echo $PATH # 打印环境变量
+echo "hello" # 输出文本
+env # 打印环境变量
+
+# 查看系统信息
+uname -a # 系统信息
+df -h # 磁盘信息
+free -h # 内存信息
+```
+
+### 9.dd命令
+
+```bash
+dd if=输入源 of=输出目标 bs=块大小 count=块数量
+dd if=/dev/zero of=/dev/urandom bs=1024 count=1024
+```
+
+- if=input file：来源
+- of=output file：写入目标
+- bs:一次读写多大一块（常用bs=4M）
+- count:无论复制多少个块，不写就一直复制到读完为止
+
+### 前端开发常用命令
+
+```bash
+# 1. 查找src下面所有包含console.log的代码
+grep -r "console.log" ./src
+
+# 2. 查看node服务实时日志
+tail -f app.log
+# 3.删除dist打包产物并且重新打包
+rm -rf dist && npm run build
+```
+
 ---
 
 # 附：ESModule和Commonjs两种依赖的不同与具体写法
