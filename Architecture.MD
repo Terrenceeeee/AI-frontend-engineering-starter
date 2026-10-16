@@ -11052,3 +11052,242 @@ END FUNCTION
 ```pseudo 代码块包裹，并保持统一的关键字大写风格和缩进结构。
 
 ```
+
+---
+
+# 附：JSDoc代码的写法用法
+
+**JSDoc**是JS生态中使用最广泛的API文档标准，他用特殊格式的注释样式来标记描述代码，既可以被IDE识别，也可以通过工具生成HTML文档网站
+
+## 写法
+
+注释格式：JSDoc注释必须以`/**`开头，以`*/`结尾
+
+```js
+/**
+ * 这是 JSDoc 注释
+ */
+```
+
+注释通常放在被描述代码的**正上方**
+
+## 万能起手模板
+
+每个文件或模块开头可以加上文件级注释：
+
+```js
+/**
+ * @file 用户模块入口
+ * @author 张三 <zhangsan@example.com>
+ * @license MIT
+ * @version 1.0.0
+ * @since 2025-01-01
+ */
+```
+
+## 核心标签详解
+
+1. @param — 参数
+   @param 用于描述函数的参数，语法为：
+
+```text
+@param {类型} 参数名 - 描述
+类型放在花括号中，描述前的连字符两边要加空格。
+```
+
+```js
+/**
+ * 计算总价
+ * @param {number} price - 单价
+ * @param {number} quantity - 数量
+ * @returns {number} 总价
+ */
+function calculateTotal(price, quantity) {
+  return price * quantity;
+}
+可选参数用中括号包裹：
+```
+
+````js
+/**
+ * @param {string} name - 必传参数
+ * @param {number} [age=18] - 可选参数，默认值 18
+ */
+function greet(name, age) {}
+也可以用 {number=} 表示可选。
+
+参数具有对象属性时，可以嵌套描述：
+
+```js
+/**
+ * @param {Object} options - 配置
+ * @param {boolean} [options.cache=true] - 是否缓存
+ * @param {number} [options.timeout=5000] - 超时时间
+ */
+function fetchData(options) {}
+参数可接受多种类型用管道符 |：
+````
+
+```js
+/**
+ * @param {string|number} id - 用户 ID
+ */
+function getUser(id) {}
+```
+
+2. @returns — 返回值
+
+```js
+/**
+ * @param {number} a
+ * @param {number} b
+ * @returns {number} 两数之和
+ */
+function add(a, b) {
+  return a + b;
+}
+```
+
+支持 Promise、联合类型等复杂类型：
+
+```js
+/**
+ * @returns {Promise<User|Error>}
+ */
+async function fetchUser() {}
+```
+
+3. @typedef + @property — 自定义类型
+   用 @typedef 定义可复用的类型别名，再用 @property 描述其属性：
+
+```js
+/**
+ * 用户信息
+ * @typedef {Object} UserInfo
+ * @property {string} name - 姓名
+ * @property {number} age - 年龄
+ * @property {string} [email] - 邮箱（可选）
+ */
+
+/**
+ * @param {UserInfo} user - 用户信息
+ */
+function printUser(user) {
+  console.log(user.name, user.age);
+}
+```
+
+4. @type — 变量类型
+   直接给变量标注类型：
+
+```js
+/** @type {string} */
+let name;
+
+/** @type {number[]} */
+const nums = [1, 2, 3];
+
+/** @type {string | boolean} */
+let value;
+
+/** @type {{a: string, b: number}} */
+const point = { a: "x", b: 1 };
+```
+
+5. @template — 泛型
+   用 @template 声明泛型参数，适用于函数、类、类型别名：
+
+```js
+/**
+ * 获取数组第一个元素
+ * @template T
+ * @param {Array<T>} arr - 任意数组
+ * @returns {T} 第一个元素
+ */
+function first(arr) {
+  return arr[0];
+}
+
+// 使用
+const n = first([1, 2, 3]); // n 推断为 number
+const s = first(["a", "b"]); // s 推断为 string
+```
+
+6. @throws — 异常
+
+```js
+/**
+ * @param {string} name
+ * @throws {Error} 当名称为空时抛出
+ */
+function sayHello(name) {
+  if (!name) throw new Error("名称不能为空");
+}
+```
+
+7. @example — 使用示例
+
+```js
+/**
+ * 获取用户详情
+ * @param {string} id - 用户 ID
+ * @returns {Promise<User>}
+ * @example
+ * getUser('123').then(user => console.log(user));
+ */
+async function getUser(id) {}
+```
+
+8. @deprecated — 标记弃用
+
+```js
+/**
+ * @deprecated 用 fetchDataAsync 代替
+ */
+function fetchDataSync() {}
+```
+
+IDE 中会显示删除线，提示不要使用。
+
+## 写法实例
+
+````md
+## 函数名：`xxx`
+
+**功能**：一句话描述
+
+**参数**：
+
+- `param1` `{type}`：描述
+- `param2` `{type}`（可选）：描述
+
+**返回**：`{type}` 描述
+
+**异常**：`{Error}` 抛出条件
+
+**示例**：
+
+```js
+// 调用示例
+xxx(param1, param2);
+```
+````
+
+```js
+/**
+ * 功能描述
+ * @param {string} param1 - 参数说明
+ * @param {number} [param2=0] - 可选参数
+ * @returns {boolean} 返回说明
+ * @throws {Error} 异常条件
+ * @example
+ * xxx('hello', 1);
+ */
+function xxx(param1, param2 = 0) {
+  // 实现
+}
+```
+
+```
+
+```
